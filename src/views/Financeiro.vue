@@ -31,7 +31,9 @@ function delCusto(c) {
 <template>
   <div class="stack">
     <section class="grid cols-4">
-      <StatTile label="Custos fixos mensais" :value="brl(fin.fixos)" hint="Soma da tabela abaixo" />
+      <StatTile label="Custos fixos mensais" :value="brl(fin.fixos)">
+        Gerais {{ brl(fin.fixosGerais) }} + despesas dos espaços {{ brl(fin.despesasEspacos) }}
+      </StatTile>
       <StatTile label="Margem de contribuição" :value="pct(fin.margem)" hint="1 − impostos − comissões" />
       <StatTile label="Receita no ponto de equilíbrio" :value="brl(fin.pontoEquilibrio)">
         Equivale a {{ pct(ocupNecessaria) }} de ocupação por receita
@@ -50,7 +52,7 @@ function delCusto(c) {
       <div class="card span-2">
         <div class="card-head">
           <div>
-            <h2>Custos fixos</h2>
+            <h2>Custos gerais da clínica</h2>
             <p>Valores mensais em reais. As edições salvam automaticamente.</p>
           </div>
           <button class="btn" type="button" @click="addCusto"><Icon name="plus" :size="16" /> Adicionar custo</button>
@@ -65,7 +67,10 @@ function delCusto(c) {
                 <td><button class="btn icon sm ghost danger" type="button" aria-label="Remover" @click="delCusto(c)"><Icon name="trash" :size="15" /></button></td>
               </tr>
             </tbody>
-            <tfoot><tr><td>Total</td><td class="num">{{ brl(fin.fixos) }}</td><td /></tr></tfoot>
+            <tfoot>
+              <tr><td>Total geral</td><td class="num">{{ brl(fin.fixosGerais) }}</td><td /></tr>
+              <tr><td><RouterLink to="/espacos">Despesas associadas aos espaços</RouterLink></td><td class="num">{{ brl(fin.despesasEspacos) }}</td><td /></tr>
+            </tfoot>
           </table>
         </div>
       </div>

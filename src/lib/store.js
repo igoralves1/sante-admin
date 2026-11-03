@@ -1,7 +1,9 @@
 import { reactive, watch } from 'vue'
 import { clone, mesAtual } from './format'
+import { normalizar } from './calc'
 
-const KEY = 'sante-ocupacao:v1'
+const KEY = 'sante-admin:v2'
+const KEY_ANTIGA = 'sante-ocupacao:v1'
 
 // data: dados em uso (publicados ou editados neste navegador)
 // publicado: conteúdo de public/data/sante.json, o que todos veem no link
@@ -17,28 +19,34 @@ export const state = reactive({
 
 let pularProximo = false
 
-export async function carregar() {
-  let salvo = null
+function lerSalvo() {
   try {
-    salvo = JSON.parse(localStorage.getItem(KEY) || 'null')
+    const v2 = JSON.parse(localStorage.getItem(KEY) || 'null')
+    if (v2?.data) return v2
+    const v1 = JSON.parse(localStorage.getItem(KEY_ANTIGA) || 'null')
+    if (v1?.data) return { salvoEm: v1.salvoEm, data: normalizar(v1.data) }
   } catch {
-    salvo = null
+    /* armazenamento indisponível ou corrompido */
   }
+  return null
+}
+
+export async function carregar() {
+  const salvo = lerSalvo()
   try {
     const res = await fetch(`${import.meta.env.BASE_URL}data/sante.json`, { cache: 'no-store' })
-    state.publicado = await res.json()
-  } catch (e) {
+    state.publicado = normalizar(await res.json())
+  } catch {
     state.erro = 'Não foi possível carregar data/sante.json.'
     if (!salvo) return
   }
-  if (salvo?.data) {
-    state.data = salvo.data
+  if (salvo) {
+    state.data = normalizar(salvo.data)
     state.local = true
     state.salvoEm = salvo.salvoEm
   } else {
     state.data = clone(state.publicado)
   }
-  state.mes = state.data.meta?.mesPadrao || mesAtual()
   state.loaded = true
 
   watch(
@@ -53,7 +61,7 @@ export async function carregar() {
       try {
         localStorage.setItem(KEY, JSON.stringify({ salvoEm: state.salvoEm, data: v }))
       } catch {
-        /* armazenamento indisponível: segue só em memória */
+        /* segue só em memória */
       }
     },
     { deep: true },
@@ -63,6 +71,7 @@ export async function carregar() {
 export function descartarLocal() {
   try {
     localStorage.removeItem(KEY)
+    localStorage.removeItem(KEY_ANTIGA)
   } catch {
     /* ignore */
   }
@@ -73,15 +82,16 @@ export function descartarLocal() {
 }
 
 export function substituirDados(novo) {
-  state.data = novo
+  state.data = normalizar(novo)
 }
 
-// A versão publicada é mais nova que a cópia local?
 export function publicadoMaisNovo() {
   const pub = state.publicado?.meta?.atualizadoEm
   if (!state.local || !pub || !state.salvoEm) return false
   return pub > state.salvoEm.slice(0, 10)
 }
+
+export const espacoPorId = (id) => state.data.espacos.find((e) => e.id === id)
 
 export function baixar(nome, conteudo, tipo = 'application/json') {
   const blob = conteudo instanceof Blob ? conteudo : new Blob([conteudo], { type: tipo })

@@ -3,13 +3,13 @@ import { computed, ref } from 'vue'
 import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import StatTile from '../components/StatTile.vue'
-import { state } from '../lib/store'
+import { state, espacoPorId } from '../lib/store'
 import { STATUS_CAMPANHA, resumoMes, resultadoCampanha } from '../lib/calc'
 import { brl, brl0, clone, dataBR, num, pct, uid } from '../lib/format'
 
 const r = computed(() => resumoMes(state.data, state.mes))
 const meta = computed(() => state.data.metas?.ocupacaoAlvo || 0)
-const camps = computed(() => state.data.campanhas.map((c) => ({ ...c, res: resultadoCampanha(state.data, c) })))
+const camps = computed(() => state.data.campanhas.map((c) => ({ ...c, res: resultadoCampanha(state.data, c, state.mes) })))
 const orig = (c) => state.data.campanhas.find((x) => x.id === c.id)
 const abertas = (c) => c.status === 'Ativa' || c.status === 'Planejada'
 
@@ -21,7 +21,8 @@ const totais = computed(() => {
     investimento: cs.reduce((a, c) => a + (Number(c.orcamento) || 0), 0),
     leads: cs.reduce((a, c) => a + (Number(c.leads) || 0), 0),
     contratos: cs.reduce((a, c) => a + c.res.contratos, 0),
-    receita: cs.reduce((a, c) => a + c.res.receita, 0),
+    receita: cs.reduce((a, c) => a + c.res.receitaMensal, 0),
+    receitaTotal: cs.reduce((a, c) => a + c.res.receitaTotal, 0),
   }
 })
 
@@ -32,7 +33,7 @@ const prioridades = computed(() =>
     .map((e) => ({
       ...e,
       falta: Math.max(0, meta.value * e.potencial - e.receitaOcupada),
-      campanhas: state.data.campanhas.filter((c) => abertas(c) && c.espacos.includes(e.nome)),
+      campanhas: state.data.campanhas.filter((c) => abertas(c) && c.espacos.includes(e.id)),
     }))
     .sort((a, b) => b.falta - a.falta),
 )
@@ -63,8 +64,8 @@ function salvar() {
   edit.value = null
 }
 function excluir(c) {
-  if (!confirm(`Excluir a campanha “${c.nome}”? As reservas ligadas a ela ficam sem campanha.`)) return
-  state.data.reservas.forEach((r) => r.campanha === c.id && (r.campanha = ''))
+  if (!confirm(`Excluir a campanha “${c.nome}”? Os contratos ligados a ela ficam sem campanha.`)) return
+  state.data.contratos.forEach((r) => r.campanha === c.id && (r.campanha = ''))
   state.data.campanhas = state.data.campanhas.filter((x) => x.id !== c.id)
   edit.value = null
 }
@@ -83,7 +84,7 @@ function funil(c) {
     <section class="grid cols-4">
       <StatTile label="Campanhas" :value="`${totais.ativas} ativas`" :hint="`${totais.planejadas} planejadas · ${state.data.campanhas.length} no total`" />
       <StatTile label="Leads registrados" :value="num(totais.leads)" :hint="`${totais.contratos} contratos atribuídos às campanhas`" />
-      <StatTile label="Receita atribuída" :value="brl(totais.receita)" hint="Soma das reservas ligadas a campanhas" />
+      <StatTile label="Receita mensal atribuída" :value="brl(totais.receita)" :hint="`${brl0(totais.receitaTotal)} no valor total dos contratos`" />
       <StatTile label="Investimento" :value="brl(totais.investimento)">
         <template v-if="totais.investimento && totais.contratos">CAC médio {{ brl(totais.investimento / totais.contratos) }}</template>
         <template v-else>Orçamento somado das campanhas</template>
@@ -116,7 +117,7 @@ function funil(c) {
                   </div>
                 </td>
                 <td class="num">
-                  <button class="btn sm ghost" type="button" @click="nova(p.nome)"><Icon name="plus" :size="14" /> Campanha</button>
+                  <button class="btn sm ghost" type="button" @click="nova(p.id)"><Icon name="plus" :size="14" /> Campanha</button>
                 </td>
               </tr>
             </tbody>
@@ -134,7 +135,7 @@ function funil(c) {
         <ul class="tips small">
           <li>Mostre cada espaço vazio em um post próprio: foto, para quem serve, preço e como reservar.</li>
           <li>Use o link da bio para WhatsApp e registre cada contato como lead na campanha.</li>
-          <li>Ao fechar um contrato, marque a campanha de origem na reserva: o resultado aparece aqui.</li>
+          <li>Ao fechar um contrato em Situação atual, marque a campanha de origem: o resultado aparece aqui.</li>
         </ul>
       </div>
     </section>
@@ -155,7 +156,7 @@ function funil(c) {
             <span class="chip" :class="tom[c.status]">{{ c.status }}</span>
           </div>
           <div class="tags">
-            <span v-for="e in c.espacos" :key="e" class="chip plain">{{ e }}</span>
+            <span v-for="id in c.espacos" :key="id" class="chip plain">{{ espacoPorId(id)?.nome || id }}</span>
           </div>
           <div class="funnel">
             <div v-for="s in funil(c)" :key="s.k" class="f-row">
@@ -165,7 +166,7 @@ function funil(c) {
             </div>
           </div>
           <dl class="kpis small">
-            <div><dt>Receita</dt><dd class="tnum">{{ brl0(c.res.receita) }}</dd></div>
+            <div><dt>Receita/mês</dt><dd class="tnum">{{ brl0(c.res.receitaMensal) }}</dd></div>
             <div><dt>Orçamento</dt><dd class="tnum">{{ brl0(c.orcamento) }}</dd></div>
             <div><dt>Conversão</dt><dd class="tnum">{{ c.leads ? pct(c.res.conversao) : '—' }}</dd></div>
             <div><dt>CAC</dt><dd class="tnum">{{ c.res.contratos && c.orcamento ? brl0(c.res.cac) : '—' }}</dd></div>
@@ -201,7 +202,7 @@ function funil(c) {
         <fieldset class="full espacos">
           <legend>Espaços-alvo</legend>
           <label v-for="e in state.data.espacos" :key="e.id" class="check">
-            <input v-model="edit.espacos" type="checkbox" :value="e.nome" /> {{ e.nome }}
+            <input v-model="edit.espacos" type="checkbox" :value="e.id" /> {{ e.nome }}
           </label>
         </fieldset>
         <label class="field full">Estratégia / observações<textarea v-model="edit.obs" rows="3" /></label>

@@ -9,9 +9,11 @@ const route = useRoute()
 onMounted(carregar)
 
 const nav = [
-  { to: '/', label: 'Painel', icon: 'painel' },
-  { to: '/reservas', label: 'Reservas', icon: 'reservas' },
+  { to: '/', label: 'Início', icon: 'home' },
+  { to: '/painel', label: 'Painel', icon: 'painel' },
+  { to: '/situacao', label: 'Situação atual', icon: 'reservas' },
   { to: '/espacos', label: 'Espaços', icon: 'espacos' },
+  { to: '/estatisticas', label: 'Estatísticas', icon: 'stats' },
   { to: '/marketing', label: 'Marketing', icon: 'marketing' },
   { to: '/financeiro', label: 'Financeiro', icon: 'financeiro' },
   { to: '/dados', label: 'Dados', icon: 'dados' },
@@ -50,7 +52,7 @@ const instagram = computed(() => state.data?.meta?.instagram)
     <aside class="side">
       <RouterLink to="/" class="brand">
         <span class="logo">S</span>
-        <span class="brand-txt"><strong>Santé</strong><small>Consultórios · Maceió</small></span>
+        <span class="brand-txt"><strong>Santé Admin</strong><small>Consultórios · Maceió</small></span>
       </RouterLink>
       <nav class="nav">
         <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="nav-item">
@@ -68,7 +70,7 @@ const instagram = computed(() => state.data?.meta?.instagram)
     </aside>
 
     <main class="main">
-      <header class="topbar">
+      <header v-if="!route.meta.home" class="topbar">
         <div>
           <h1>{{ route.meta.title }}</h1>
           <p v-if="route.meta.mes" class="muted sub">Referência: {{ mesLongo(state.mes) }}</p>
@@ -97,7 +99,8 @@ const instagram = computed(() => state.data?.meta?.instagram)
       <RouterView />
 
       <footer class="foot muted small">
-        Santé Consultórios · dados baseados no documento “Potencial Santé” e na planilha de controle.
+        Santé Admin · dados do documento “Potencial Santé”, da planilha de controle e do
+        <a :href="state.data.meta.site" target="_blank" rel="noopener">site da Santé</a>.
       </footer>
     </main>
   </div>
@@ -124,7 +127,7 @@ const instagram = computed(() => state.data?.meta?.instagram)
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .nav-item:hover { background: var(--surface-2); color: var(--text); }
-.nav-item.router-link-exact-active { background: var(--accent-soft); color: var(--accent-ink); }
+.nav-item.router-link-exact-active, .nav-item.router-link-active:not([href='#/']) { background: var(--accent-soft); color: var(--accent-ink); }
 .side-foot { margin-top: auto; display: grid; gap: 2px; border-top: 1px solid var(--border); padding-top: 12px; }
 .side-foot .nav-item span { overflow: hidden; text-overflow: ellipsis; }
 

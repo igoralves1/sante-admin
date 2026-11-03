@@ -14,9 +14,9 @@ async function importarPlanilha(ev) {
   try {
     const { importarXLSX } = await import('../lib/excel')
     const novo = await importarXLSX(f, state.data)
-    if (!confirm(`Importar ${novo.espacos.length} espaços e ${novo.reservas.length} reservas de “${f.name}”? Isso substitui espaços, reservas e custos atuais (campanhas são mantidas).`)) return
+    if (!confirm(`Importar ${novo.espacos.length} espaços e ${novo.contratos.length} contratos de “${f.name}”? Isso substitui espaços, contratos e custos atuais (campanhas são mantidas).`)) return
     substituirDados(novo)
-    msg.value = { ok: true, t: `Planilha importada: ${novo.espacos.length} espaços, ${novo.reservas.length} reservas.` }
+    msg.value = { ok: true, t: `Planilha importada: ${novo.espacos.length} espaços, ${novo.contratos.length} contratos.` }
   } catch (e) {
     msg.value = { ok: false, t: `Não foi possível ler a planilha: ${e.message}` }
   }
@@ -31,7 +31,7 @@ async function importarJSON(ev) {
   if (!f) return
   try {
     const d = JSON.parse(await f.text())
-    if (!Array.isArray(d.espacos) || !Array.isArray(d.reservas)) throw new Error('formato inesperado')
+    if (!Array.isArray(d.espacos) || !(Array.isArray(d.contratos) || Array.isArray(d.reservas))) throw new Error('formato inesperado')
     d.campanhas ||= []
     d.custos ||= { fixos: [], impostos: 0, comissoes: 0 }
     d.metas ||= { ocupacaoAlvo: 0.6 }
@@ -61,7 +61,7 @@ function descartar() {
         <div class="card-head">
           <div>
             <h2>Planilha Excel</h2>
-            <p>Mesmo layout da “Sistema_Controle_Sante.xlsx”: abas Cadastro, Reservas e Custos.</p>
+            <p>Mesmo layout da “Sistema_Controle_Sante.xlsx”: abas Cadastro, Contratos (ou Reservas, da planilha original), Despesas e Custos. Na aba Reservas antiga, cada linha vale só para o mês da data.</p>
           </div>
         </div>
         <div class="toolbar">
@@ -74,7 +74,7 @@ function descartar() {
         <div class="card-head">
           <div>
             <h2>Arquivo do site (sante.json)</h2>
-            <p>Contém tudo: espaços, reservas, custos, metas e campanhas.</p>
+            <p>Contém tudo: espaços, despesas, contratos, custos, metas e campanhas.</p>
           </div>
         </div>
         <div class="toolbar">
@@ -95,7 +95,7 @@ function descartar() {
         </li>
         <li>
           <strong>Editar salva no seu navegador.</strong>
-          Reservas, espaços, custos e campanhas que você altera aqui ficam guardados neste navegador e
+          Espaços, contratos, custos e campanhas que você altera aqui ficam guardados neste navegador e
           aparecem para você na hora. Um aviso amarelo no topo lembra que ainda não foram publicados.
         </li>
         <li>
@@ -115,12 +115,12 @@ function descartar() {
       <div class="table-wrap">
         <table>
           <tbody>
-            <tr><td class="k">1. Confira o cadastro</td><td>Revise capacidades e preços em Espaços. Os dados vieram da planilha original; valide as hipóteses.</td></tr>
-            <tr><td class="k">2. Revise a base inicial</td><td>As reservas marcadas como “Base inicial” em outubro/2026 são estimativas importadas. Confirme, edite ou exclua.</td></tr>
-            <tr><td class="k">3. Lance as reservas</td><td>Data, espaço, cliente, modalidade, quantidade, preço, status e campanha de origem. O total é calculado.</td></tr>
-            <tr><td class="k">4. Replique os mensais</td><td>No fim do mês, use “Replicar mensais” em Reservas para copiar os contratos fixos para o mês seguinte.</td></tr>
-            <tr><td class="k">5. Informe os custos</td><td>Em Financeiro, preencha os custos fixos e as alíquotas para ver o ponto de equilíbrio.</td></tr>
-            <tr><td class="k">6. Acompanhe o marketing</td><td>Cadastre campanhas para os espaços abaixo da meta, registre leads e visitas, e ligue cada nova reserva à campanha.</td></tr>
+            <tr><td class="k">1. Confira o cadastro</td><td>Revise capacidades, preços e despesas em Espaços; cadastre novos espaços em “Cadastrar novo espaço”.</td></tr>
+            <tr><td class="k">2. Revise a base inicial</td><td>Os contratos “Base inicial” (outubro/2026) são estimativas da planilha. Em Situação atual, informe cliente, término e valores reais.</td></tr>
+            <tr><td class="k">3. Lance os contratos</td><td>Espaço, cliente, quantidade por mês, preço, início, término, status e campanha. Duração e valor total são calculados.</td></tr>
+            <tr><td class="k">4. Renove a tempo</td><td>Contratos que terminam nos próximos 3 meses aparecem em destaque; use “Renovar” para registrar a proposta.</td></tr>
+            <tr><td class="k">5. Informe os custos</td><td>Em Financeiro, preencha os custos gerais e as alíquotas. As despesas de cada espaço entram no ponto de equilíbrio automaticamente.</td></tr>
+            <tr><td class="k">6. Acompanhe o marketing</td><td>Cadastre campanhas para os espaços abaixo da meta, registre leads e visitas, e ligue cada novo contrato à campanha.</td></tr>
           </tbody>
         </table>
       </div>

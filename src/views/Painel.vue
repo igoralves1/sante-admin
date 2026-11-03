@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import StatTile from '../components/StatTile.vue'
-import OccupancyMeters from '../components/OccupancyMeters.vue'
-import HBarChart from '../components/HBarChart.vue'
-import ColumnChart from '../components/ColumnChart.vue'
+import D3Occupancy from '../components/d3/D3Occupancy.vue'
+import D3HBar from '../components/d3/D3HBar.vue'
+import D3Columns from '../components/d3/D3Columns.vue'
+import D3Table from '../components/d3/D3Table.vue'
 import { state } from '../lib/store'
 import { resumoMes, financeiro, serieMensal, UNIDADE } from '../lib/calc'
 import { brl, brl0, brlCompact, num, pct, mesCurto } from '../lib/format'
@@ -30,25 +31,49 @@ const oportunidades = computed(() =>
 )
 
 const serie = computed(() =>
-  serieMensal(state.data, state.mes, 6).map((p) => ({
+  serieMensal(state.data, state.mes, 5, 6).map((p) => ({
     label: mesCurto(p.mes),
     value: p.receitaOcupada,
-    current: p.mes === state.mes,
+    futuro: p.offset > 0,
+    atual: p.offset === 0,
     rows: [
-      { label: 'Receita ocupada', value: brl(p.receitaOcupada) },
+      { label: p.offset > 0 ? 'Contratado (vigentes)' : 'Receita ocupada', value: brl(p.receitaOcupada) },
       { label: 'Confirmada + base', value: brl(p.receitaConfirmada) },
       { label: 'Ocupação (receita)', value: pct(p.taxa) },
     ],
   })),
 )
 const refs = computed(() => [
-  { value: fin.value.pontoEquilibrio, label: `Ponto de equilíbrio ${brlCompact(fin.value.pontoEquilibrio)}` },
+  { value: fin.value.pontoEquilibrio, label: `Equilíbrio ${brlCompact(fin.value.pontoEquilibrio)}` },
   { value: r.value.potencial * meta.value, label: `Meta ${pct(meta.value)} · ${brlCompact(r.value.potencial * meta.value)}` },
 ])
 
 const cheios = computed(() => r.value.espacos.filter((e) => e.taxa >= 1))
 const vazios = computed(() => r.value.espacos.filter((e) => e.ocupado === 0))
 const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.taxa < meta.value))
+
+const colunas = [
+  { key: 'nome', label: 'Espaço' },
+  { key: 'modalidade', label: 'Modalidade' },
+  { key: 'capacidade', label: 'Capacidade', num: true, format: num },
+  { key: 'ocupado', label: 'Ocupado', num: true, format: num },
+  { key: 'disponivel', label: 'Disponível', num: true, format: num },
+  { key: 'taxa', label: 'Taxa', num: true, format: pct, bar: true },
+  { key: 'potencial', label: 'Potencial', num: true, format: brl },
+  { key: 'receitaOcupada', label: 'Receita', num: true, format: brl },
+  { key: 'despesas', label: 'Despesas', num: true, format: brl },
+  { key: 'resultado', label: 'Resultado', num: true, format: brl },
+  { key: 'receitaDisponivel', label: 'Disponível R$', num: true, format: brl },
+]
+const rodape = computed(() => ({
+  nome: 'Total',
+  taxa: pct(r.value.taxaReceita),
+  potencial: r.value.potencial,
+  receitaOcupada: r.value.receitaOcupada,
+  despesas: r.value.despesasEspacos,
+  resultado: r.value.receitaOcupada - r.value.despesasEspacos,
+  receitaDisponivel: r.value.receitaDisponivel,
+}))
 </script>
 
 <template>
@@ -61,13 +86,13 @@ const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.
         Confirmada + base: {{ brl(r.receitaConfirmada) }}<template v-if="r.receitaProposta > 0"> · em proposta: {{ brl(r.receitaProposta) }}</template>
       </StatTile>
       <StatTile label="Receita disponível para vender" :value="brl(r.receitaDisponivel)">
-        {{ r.espacosVazios }} de {{ r.espacos.length }} espaços sem nenhuma reserva
+        {{ r.espacosVazios }} de {{ r.espacos.length }} espaços sem nenhum contrato
       </StatTile>
       <StatTile v-if="fin.fixos > 0" label="Distância do ponto de equilíbrio" :value="(gapPE >= 0 ? '+' : '') + brl(gapPE)" :tone="gapPE >= 0 ? 'good' : 'bad'">
         {{ gapPE >= 0 ? 'Acima' : 'Abaixo' }} de {{ brl0(fin.pontoEquilibrio) }} necessários
       </StatTile>
       <StatTile v-else label="Ponto de equilíbrio" value="—">
-        <RouterLink to="/financeiro">Informe os custos fixos</RouterLink> para calcular
+        <RouterLink to="/financeiro">Informe os custos</RouterLink> para calcular
       </StatTile>
     </section>
 
@@ -76,30 +101,22 @@ const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.
         <div class="card-head">
           <div>
             <h2>Ocupação por espaço</h2>
-            <p>Unidades vendidas sobre a capacidade mensal de cada espaço</p>
+            <p>Unidades contratadas sobre a capacidade mensal de cada espaço</p>
           </div>
         </div>
-        <OccupancyMeters :espacos="r.espacos" :meta="meta" />
+        <D3Occupancy :espacos="r.espacos" :meta="meta" />
       </div>
       <div class="card">
         <div class="card-head"><h2>Leitura rápida</h2></div>
         <ul class="facts">
-          <li>
-            <span class="chip good">Lotados</span>
-            <span>{{ cheios.length ? cheios.map((e) => e.nome).join(', ') : 'Nenhum espaço com 100%' }}</span>
-          </li>
-          <li>
-            <span class="chip warn">Abaixo da meta</span>
-            <span>{{ abaixoMeta.length ? abaixoMeta.map((e) => `${e.nome} (${pct(e.taxa)})`).join(', ') : 'Nenhum' }}</span>
-          </li>
-          <li>
-            <span class="chip bad">Sem reservas</span>
-            <span>{{ vazios.length ? vazios.map((e) => e.nome).join(', ') : 'Todos têm reservas' }}</span>
-          </li>
-          <li v-if="oportunidades[0]">
-            <span class="chip info">Maior oportunidade</span>
-            <span>{{ oportunidades[0].label }}: {{ brl(oportunidades[0].value) }} livres no mês</span>
-          </li>
+          <li><span class="chip good">Lotados</span>
+            <span>{{ cheios.length ? cheios.map((e) => e.nome).join(', ') : 'Nenhum espaço com 100%' }}</span></li>
+          <li><span class="chip warn">Abaixo da meta</span>
+            <span>{{ abaixoMeta.length ? abaixoMeta.map((e) => `${e.nome} (${pct(e.taxa)})`).join(', ') : 'Nenhum' }}</span></li>
+          <li><span class="chip bad">Sem contratos</span>
+            <span>{{ vazios.length ? vazios.map((e) => e.nome).join(', ') : 'Todos têm contratos' }}</span></li>
+          <li v-if="oportunidades[0]"><span class="chip info">Maior oportunidade</span>
+            <span>{{ oportunidades[0].label }}: {{ brl(oportunidades[0].value) }} livres no mês</span></li>
         </ul>
         <div class="note small">
           Horas, turnos e contratos mensais são unidades diferentes. Por isso a ocupação geral é
@@ -116,16 +133,16 @@ const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.
             <p>Receita disponível por espaço (capacidade livre × preço)</p>
           </div>
         </div>
-        <HBarChart :items="oportunidades" :format="brl0" />
+        <D3HBar :items="oportunidades" :format="brl0" aria-label="Receita disponível por espaço" />
       </div>
       <div class="card">
         <div class="card-head">
           <div>
-            <h2>Receita ocupada por mês</h2>
-            <p>Últimos 6 meses até o mês selecionado</p>
+            <h2>Receita por mês</h2>
+            <p>5 meses antes e 6 depois do mês de referência</p>
           </div>
         </div>
-        <ColumnChart :points="serie" :refs="refs" :axis-format="brlCompact" />
+        <D3Columns :points="serie" :refs="refs" :axis-format="brlCompact" />
       </div>
     </section>
 
@@ -133,36 +150,10 @@ const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.
       <div class="card-head">
         <div>
           <h2>Tabela do mês</h2>
-          <p>Mesmos números dos gráficos, como na aba Painel da planilha</p>
+          <p>Clique no cabeçalho para ordenar</p>
         </div>
       </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Espaço</th><th>Modalidade</th><th class="num">Capacidade</th><th class="num">Ocupado</th>
-              <th class="num">Disponível</th><th class="num">Taxa</th><th class="num">Preço</th>
-              <th class="num">Potencial</th><th class="num">Receita ocupada</th><th class="num">Receita disponível</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="e in r.espacos" :key="e.id">
-              <td>{{ e.nome }}</td><td>{{ e.modalidade }}</td>
-              <td class="num">{{ num(e.capacidade) }}</td><td class="num">{{ num(e.ocupado) }}</td>
-              <td class="num">{{ num(e.disponivel) }}</td><td class="num">{{ pct(e.taxa) }}</td>
-              <td class="num">{{ brl(e.preco) }}</td><td class="num">{{ brl(e.potencial) }}</td>
-              <td class="num">{{ brl(e.receitaOcupada) }}</td><td class="num">{{ brl(e.receitaDisponivel) }}</td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="5">Total</td><td class="num">{{ pct(r.taxaReceita) }}</td><td />
-              <td class="num">{{ brl(r.potencial) }}</td><td class="num">{{ brl(r.receitaOcupada) }}</td>
-              <td class="num">{{ brl(r.receitaDisponivel) }}</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+      <D3Table :columns="colunas" :rows="r.espacos" :footer="rodape" sort-key="receitaDisponivel" />
     </section>
   </div>
 </template>

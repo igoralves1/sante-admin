@@ -1,9 +1,13 @@
 {
   "meta": {
+    "versao": 2,
     "clinica": "Santé Consultórios",
-    "cidade": "Maceió",
+    "razaoSocial": "Clínica Santé LTDA",
+    "endereco": "Rua José Alves Morgado, 111 · Jatiúca · Maceió/AL",
+    "telefone": "(82) 3316-7100",
+    "whatsapp": "https://wa.me/558233167100",
+    "site": "https://santeconsultorios.com.br/",
     "instagram": "https://www.instagram.com/santeconsultoriosmaceio/",
-    "mesPadrao": "2026-10",
     "atualizadoEm": "2026-11-03"
   },
   "metas": {
@@ -16,7 +20,10 @@
       "modalidade": "Turno",
       "capacidade": 50.0,
       "preco": 120.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e2",
@@ -24,7 +31,10 @@
       "modalidade": "Hora",
       "capacidade": 173.2,
       "preco": 50.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e3",
@@ -32,7 +42,10 @@
       "modalidade": "Mensal",
       "capacidade": 1.0,
       "preco": 3000.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e4",
@@ -40,7 +53,10 @@
       "modalidade": "Mensal",
       "capacidade": 1.0,
       "preco": 3000.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e5",
@@ -48,7 +64,10 @@
       "modalidade": "Turno",
       "capacidade": 50.0,
       "preco": 200.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e6",
@@ -56,7 +75,10 @@
       "modalidade": "Turno",
       "capacidade": 50.0,
       "preco": 200.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e7",
@@ -64,7 +86,10 @@
       "modalidade": "Mensal",
       "capacidade": 1.0,
       "preco": 2000.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e8",
@@ -72,7 +97,10 @@
       "modalidade": "Hora",
       "capacidade": 173.2,
       "preco": 70.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e9",
@@ -80,7 +108,10 @@
       "modalidade": "Turno",
       "capacidade": 50.0,
       "preco": 170.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e10",
@@ -88,7 +119,10 @@
       "modalidade": "Turno",
       "capacidade": 50.0,
       "preco": 170.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Consultório",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e11",
@@ -96,7 +130,10 @@
       "modalidade": "Turno",
       "capacidade": 51.96,
       "preco": 330.0,
-      "obs": "Importado da planilha original; validar"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Piscina",
+      "descricao": "",
+      "despesas": []
     },
     {
       "id": "e12",
@@ -104,105 +141,10 @@
       "modalidade": "Mensal",
       "capacidade": 16.0,
       "preco": 1200.0,
-      "obs": "Importado da planilha original; validar"
-    }
-  ],
-  "reservas": [
-    {
-      "id": "r1",
-      "data": "2026-10-01",
-      "espaco": "Sala 1",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Turno",
-      "quantidade": 12.99,
-      "preco": 120.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r2",
-      "data": "2026-10-01",
-      "espaco": "Sala 3",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Mensal",
-      "quantidade": 1.0,
-      "preco": 3000.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r3",
-      "data": "2026-10-01",
-      "espaco": "Sala 4",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Mensal",
-      "quantidade": 1.0,
-      "preco": 3000.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r4",
-      "data": "2026-10-01",
-      "espaco": "Sala 5",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Turno",
-      "quantidade": 33.0,
-      "preco": 200.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r5",
-      "data": "2026-10-01",
-      "espaco": "Sala 7",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Mensal",
-      "quantidade": 1.0,
-      "preco": 2000.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r6",
-      "data": "2026-10-01",
-      "espaco": "Sala 8",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Hora",
-      "quantidade": 8.66,
-      "preco": 70.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r7",
-      "data": "2026-10-01",
-      "espaco": "Piscina",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Turno",
-      "quantidade": 20.0,
-      "preco": 330.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
-    },
-    {
-      "id": "r8",
-      "data": "2026-10-01",
-      "espaco": "Administrativo",
-      "cliente": "BASE INICIAL - revisar",
-      "modalidade": "Mensal",
-      "quantidade": 1.0,
-      "preco": 1200.0,
-      "status": "Base inicial",
-      "campanha": "",
-      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+      "obs": "Importado da planilha original; validar",
+      "tipo": "Administrativo",
+      "descricao": "",
+      "despesas": []
     }
   ],
   "custos": {
@@ -272,7 +214,7 @@
       "nome": "Coworking administrativo — 15 posições livres",
       "canal": "Instagram + LinkedIn",
       "espacos": [
-        "Administrativo"
+        "e12"
       ],
       "inicio": "2026-11-01",
       "fim": "2026-11-30",
@@ -287,7 +229,7 @@
       "nome": "Piscina: hidroterapia e fisioterapia aquática",
       "canal": "Instagram (Reels) + parcerias",
       "espacos": [
-        "Piscina"
+        "e11"
       ],
       "inicio": "2026-11-01",
       "fim": "2026-11-30",
@@ -302,9 +244,9 @@
       "nome": "Pacote de turnos para novos profissionais",
       "canal": "Instagram + grupos profissionais",
       "espacos": [
-        "Sala 6",
-        "Sala 9",
-        "Sala 10"
+        "e6",
+        "e9",
+        "e10"
       ],
       "inicio": "2026-11-01",
       "fim": "2026-12-15",
@@ -319,8 +261,8 @@
       "nome": "Hora avulsa — experimente a Santé",
       "canal": "Instagram + Google Meu Negócio",
       "espacos": [
-        "Sala 2",
-        "Sala 8"
+        "e2",
+        "e8"
       ],
       "inicio": "2026-11-01",
       "fim": "2026-11-30",
@@ -329,6 +271,112 @@
       "visitas": 0,
       "status": "Planejada",
       "obs": "Sugestão inicial: oferta de primeira hora com desconto para conhecer o espaço."
+    }
+  ],
+  "contratos": [
+    {
+      "id": "ct1",
+      "espacoId": "e1",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Turno",
+      "quantidade": 12.99,
+      "preco": 120.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct2",
+      "espacoId": "e3",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 3000.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct3",
+      "espacoId": "e4",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 3000.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct4",
+      "espacoId": "e5",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Turno",
+      "quantidade": 33.0,
+      "preco": 200.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct5",
+      "espacoId": "e7",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 2000.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct6",
+      "espacoId": "e8",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Hora",
+      "quantidade": 8.66,
+      "preco": 70.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct7",
+      "espacoId": "e11",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Turno",
+      "quantidade": 20.0,
+      "preco": 330.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
+    },
+    {
+      "id": "ct8",
+      "espacoId": "e12",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 1200.0,
+      "inicio": "2026-10-01",
+      "fim": "",
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; informe cliente, término e valores reais"
     }
   ]
 }

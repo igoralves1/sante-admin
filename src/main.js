@@ -1,21 +1,31 @@
 import { createApp } from 'vue'
 import { createRouter, createWebHashHistory } from 'vue-router'
 import App from './App.vue'
-import Painel from './views/Painel.vue'
+import Inicio from './views/Inicio.vue'
 import './style.css'
 
-// Hash history: o GitHub Pages não tem rewrite de rotas, então /#/reservas evita 404.
+// Hash history: o GitHub Pages não reescreve rotas, então /#/painel evita 404.
 const router = createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', component: Painel, meta: { title: 'Painel de ocupação', mes: true } },
-    { path: '/espacos', component: () => import('./views/Espacos.vue'), meta: { title: 'Espaços e capacidade' } },
-    { path: '/reservas', component: () => import('./views/Reservas.vue'), meta: { title: 'Reservas e contratos', mes: true } },
-    { path: '/financeiro', component: () => import('./views/Financeiro.vue'), meta: { title: 'Custos e ponto de equilíbrio', mes: true } },
+    { path: '/', component: Inicio, meta: { title: 'Santé Admin', home: true } },
+    { path: '/painel', component: () => import('./views/Painel.vue'), meta: { title: 'Painel de ocupação', mes: true } },
+    { path: '/situacao', component: () => import('./views/Situacao.vue'), meta: { title: 'Situação atual', mes: true } },
+    { path: '/espacos', component: () => import('./views/Espacos.vue'), meta: { title: 'Espaços' } },
+    { path: '/espacos/novo', component: () => import('./views/EspacoForm.vue'), meta: { title: 'Cadastrar novo espaço' } },
+    { path: '/espacos/:id', component: () => import('./views/EspacoForm.vue'), meta: { title: 'Editar espaço' } },
+    { path: '/estatisticas', component: () => import('./views/Estatisticas.vue'), meta: { title: 'Estatísticas e estimativas', mes: true } },
     { path: '/marketing', component: () => import('./views/Marketing.vue'), meta: { title: 'Estratégia de marketing', mes: true } },
+    { path: '/financeiro', component: () => import('./views/Financeiro.vue'), meta: { title: 'Custos e ponto de equilíbrio', mes: true } },
     { path: '/dados', component: () => import('./views/Dados.vue'), meta: { title: 'Dados e publicação' } },
+    { path: '/reservas', redirect: '/situacao' },
+    { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
   scrollBehavior: () => ({ top: 0 }),
+})
+
+router.afterEach((to) => {
+  document.title = to.meta.home ? 'Santé Admin' : `${to.meta.title} · Santé Admin`
 })
 
 createApp(App).use(router).mount('#app')

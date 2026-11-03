@@ -16,6 +16,7 @@
   --s-firm: #2a78d6;
   --s-prop: #86b6ef;
   --s-track: #e4ecf7;
+  --s-cost: #eb6834;
   --grid: #eceef2;
 
   --good: #1d7f46;
@@ -46,6 +47,7 @@
     --s-firm: #5598e7;
     --s-prop: #1c5cab;
     --s-track: #212a37;
+  --s-cost: #d95926;
     --grid: #232933;
     --good: #5cc98a;
     --good-soft: #15291e;
@@ -72,6 +74,7 @@
   --s-firm: #5598e7;
   --s-prop: #1c5cab;
   --s-track: #212a37;
+  --s-cost: #d95926;
   --grid: #232933;
   --good: #5cc98a;
   --good-soft: #15291e;
@@ -171,3 +174,32 @@ td input, td select { height: 32px; width: 100%; }
 .empty { text-align: center; color: var(--muted); padding: 32px 12px; }
 .note { background: var(--surface-2); border-radius: 10px; padding: 12px 14px; color: var(--text-2); font-size: 13px; }
 .note strong { color: var(--text); }
+
+/* ---------- gráficos D3 (estilos globais: os elementos são criados pelo D3) ---------- */
+.chart { position: relative; width: 100%; min-width: 0; }
+.chart svg { display: block; overflow: visible; font-family: inherit; }
+.chart .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; color: var(--text-2); margin-bottom: 10px; }
+.chart .legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.chart .legend i.trk { background: var(--s-track); box-shadow: inset 0 0 0 1px var(--border); }
+.chart .legend i.meta-key { width: 2px; height: 12px; border-radius: 0; background: var(--text-2); }
+.chart .legend i.line-key { width: 14px; height: 2px; border-radius: 1px; }
+.chart .grid { stroke: var(--grid); stroke-width: 1; }
+.chart .axis { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.chart .axis.cur { fill: var(--text); font-weight: 600; }
+.chart .name { fill: var(--text); font-size: 13px; font-weight: 500; }
+.chart .val { fill: var(--text); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chart .val.soft { font-weight: 500; fill: var(--text-2); }
+.chart .track { fill: var(--s-track); }
+.chart .firm { fill: var(--s-firm); }
+.chart .prop { fill: var(--s-prop); }
+.chart .meta { stroke: var(--text-2); stroke-width: 2; opacity: 0.7; }
+.chart .hover { fill: transparent; }
+.chart .row:hover .hover { fill: var(--surface-2); }
+.chart .ref line { stroke: var(--text-2); stroke-width: 1; opacity: 0.8; }
+.chart .ref text, .chart .halo { fill: var(--text-2); font-size: 11px; font-weight: 500; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+.chart .today { stroke: var(--bad); stroke-width: 1.5; }
+.chart .today-label { fill: var(--bad); font-size: 11px; font-weight: 600; }
+.chart .crosshair { stroke: var(--text-2); stroke-width: 1; opacity: 0.5; }
+.chart .dot { stroke: var(--surface); stroke-width: 2; }
+.chart .zero { stroke: var(--text-2); stroke-width: 1; }
