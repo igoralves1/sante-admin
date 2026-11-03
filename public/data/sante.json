@@ -1,0 +1,334 @@
+{
+  "meta": {
+    "clinica": "Santé Consultórios",
+    "cidade": "Maceió",
+    "instagram": "https://www.instagram.com/santeconsultoriosmaceio/",
+    "mesPadrao": "2026-10",
+    "atualizadoEm": "2026-11-03"
+  },
+  "metas": {
+    "ocupacaoAlvo": 0.6
+  },
+  "espacos": [
+    {
+      "id": "e1",
+      "nome": "Sala 1",
+      "modalidade": "Turno",
+      "capacidade": 50.0,
+      "preco": 120.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e2",
+      "nome": "Sala 2",
+      "modalidade": "Hora",
+      "capacidade": 173.2,
+      "preco": 50.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e3",
+      "nome": "Sala 3",
+      "modalidade": "Mensal",
+      "capacidade": 1.0,
+      "preco": 3000.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e4",
+      "nome": "Sala 4",
+      "modalidade": "Mensal",
+      "capacidade": 1.0,
+      "preco": 3000.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e5",
+      "nome": "Sala 5",
+      "modalidade": "Turno",
+      "capacidade": 50.0,
+      "preco": 200.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e6",
+      "nome": "Sala 6",
+      "modalidade": "Turno",
+      "capacidade": 50.0,
+      "preco": 200.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e7",
+      "nome": "Sala 7",
+      "modalidade": "Mensal",
+      "capacidade": 1.0,
+      "preco": 2000.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e8",
+      "nome": "Sala 8",
+      "modalidade": "Hora",
+      "capacidade": 173.2,
+      "preco": 70.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e9",
+      "nome": "Sala 9",
+      "modalidade": "Turno",
+      "capacidade": 50.0,
+      "preco": 170.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e10",
+      "nome": "Sala 10",
+      "modalidade": "Turno",
+      "capacidade": 50.0,
+      "preco": 170.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e11",
+      "nome": "Piscina",
+      "modalidade": "Turno",
+      "capacidade": 51.96,
+      "preco": 330.0,
+      "obs": "Importado da planilha original; validar"
+    },
+    {
+      "id": "e12",
+      "nome": "Administrativo",
+      "modalidade": "Mensal",
+      "capacidade": 16.0,
+      "preco": 1200.0,
+      "obs": "Importado da planilha original; validar"
+    }
+  ],
+  "reservas": [
+    {
+      "id": "r1",
+      "data": "2026-10-01",
+      "espaco": "Sala 1",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Turno",
+      "quantidade": 12.99,
+      "preco": 120.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r2",
+      "data": "2026-10-01",
+      "espaco": "Sala 3",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 3000.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r3",
+      "data": "2026-10-01",
+      "espaco": "Sala 4",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 3000.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r4",
+      "data": "2026-10-01",
+      "espaco": "Sala 5",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Turno",
+      "quantidade": 33.0,
+      "preco": 200.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r5",
+      "data": "2026-10-01",
+      "espaco": "Sala 7",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 2000.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r6",
+      "data": "2026-10-01",
+      "espaco": "Sala 8",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Hora",
+      "quantidade": 8.66,
+      "preco": 70.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r7",
+      "data": "2026-10-01",
+      "espaco": "Piscina",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Turno",
+      "quantidade": 20.0,
+      "preco": 330.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    },
+    {
+      "id": "r8",
+      "data": "2026-10-01",
+      "espaco": "Administrativo",
+      "cliente": "BASE INICIAL - revisar",
+      "modalidade": "Mensal",
+      "quantidade": 1.0,
+      "preco": 1200.0,
+      "status": "Base inicial",
+      "campanha": "",
+      "obs": "Estimativa importada; confirmar, ajustar ou excluir"
+    }
+  ],
+  "custos": {
+    "fixos": [
+      {
+        "id": "c1",
+        "descricao": "Aluguel do imóvel",
+        "valor": 0
+      },
+      {
+        "id": "c2",
+        "descricao": "Condomínio/IPTU",
+        "valor": 0
+      },
+      {
+        "id": "c3",
+        "descricao": "Energia elétrica",
+        "valor": 0
+      },
+      {
+        "id": "c4",
+        "descricao": "Água",
+        "valor": 0
+      },
+      {
+        "id": "c5",
+        "descricao": "Internet/telefonia",
+        "valor": 0
+      },
+      {
+        "id": "c6",
+        "descricao": "Recepção/administrativo",
+        "valor": 0
+      },
+      {
+        "id": "c7",
+        "descricao": "Limpeza e manutenção",
+        "valor": 0
+      },
+      {
+        "id": "c8",
+        "descricao": "Contabilidade/sistemas",
+        "valor": 0
+      },
+      {
+        "id": "c9",
+        "descricao": "Marketing",
+        "valor": 0
+      },
+      {
+        "id": "c10",
+        "descricao": "Aquecimento/manutenção da piscina",
+        "valor": 0
+      },
+      {
+        "id": "c11",
+        "descricao": "Outros custos fixos",
+        "valor": 0
+      }
+    ],
+    "impostos": 0,
+    "comissoes": 0
+  },
+  "campanhas": [
+    {
+      "id": "k1",
+      "nome": "Coworking administrativo — 15 posições livres",
+      "canal": "Instagram + LinkedIn",
+      "espacos": [
+        "Administrativo"
+      ],
+      "inicio": "2026-11-01",
+      "fim": "2026-11-30",
+      "orcamento": 0,
+      "leads": 0,
+      "visitas": 0,
+      "status": "Planejada",
+      "obs": "Sugestão inicial: posts mostrando a estrutura, preço fixo mensal e endereço. Ajuste à estratégia real."
+    },
+    {
+      "id": "k2",
+      "nome": "Piscina: hidroterapia e fisioterapia aquática",
+      "canal": "Instagram (Reels) + parcerias",
+      "espacos": [
+        "Piscina"
+      ],
+      "inicio": "2026-11-01",
+      "fim": "2026-11-30",
+      "orcamento": 0,
+      "leads": 0,
+      "visitas": 0,
+      "status": "Planejada",
+      "obs": "Sugestão inicial: abordar fisioterapeutas e educadores físicos da região."
+    },
+    {
+      "id": "k3",
+      "nome": "Pacote de turnos para novos profissionais",
+      "canal": "Instagram + grupos profissionais",
+      "espacos": [
+        "Sala 6",
+        "Sala 9",
+        "Sala 10"
+      ],
+      "inicio": "2026-11-01",
+      "fim": "2026-12-15",
+      "orcamento": 0,
+      "leads": 0,
+      "visitas": 0,
+      "status": "Planejada",
+      "obs": "Sugestão inicial: psicólogos, nutricionistas e fonoaudiólogos que estão começando."
+    },
+    {
+      "id": "k4",
+      "nome": "Hora avulsa — experimente a Santé",
+      "canal": "Instagram + Google Meu Negócio",
+      "espacos": [
+        "Sala 2",
+        "Sala 8"
+      ],
+      "inicio": "2026-11-01",
+      "fim": "2026-11-30",
+      "orcamento": 0,
+      "leads": 0,
+      "visitas": 0,
+      "status": "Planejada",
+      "obs": "Sugestão inicial: oferta de primeira hora com desconto para conhecer o espaço."
+    }
+  ]
+}
