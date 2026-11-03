@@ -15,6 +15,7 @@ const nav = [
   { to: '/espacos', label: 'Espaços', icon: 'espacos' },
   { to: '/estatisticas', label: 'Estatísticas', icon: 'stats' },
   { to: '/marketing', label: 'Marketing', icon: 'marketing' },
+  { to: '/concorrentes', label: 'Concorrentes', icon: 'users' },
   { to: '/financeiro', label: 'Financeiro', icon: 'financeiro' },
   { to: '/dados', label: 'Dados', icon: 'dados' },
 ]

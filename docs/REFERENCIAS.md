@@ -34,3 +34,44 @@ vêm dos documentos internos (abaixo). As informações públicas servem de cont
 
 - `Potencial Santé.pdf`: potencial, ocupação e disponibilidade por espaço (4,33 semanas/mês).
 - `Sistema_Controle_Sante.xlsx`: cadastro, reservas, custos e ponto de equilíbrio.
+
+# Concorrentes (coleta de 03/11/2026)
+
+A análise completa, com gráficos e ações sugeridas, está na página **Concorrentes** do site.
+Os dados ficam em [`src/data/concorrentes.json`](../src/data/concorrentes.json).
+
+## Como foi feito
+
+| Fonte | O que foi coletado |
+|---|---|
+| [Similarweb](https://www.similarweb.com/) | Tráfego dos domínios. Sem dados para santeconsultorios.com.br, clintimesaude.com.br e amplaconsultorios.com.br; “menos de 20 mil visitas” (jul–set/2026) para medicineservice.com.br e transmutarconsultorios.com.br |
+| Google Maps | Nota, número de avaliações, categoria e posição em 4 buscas: “aluguel de consultório Maceió”, “aluguel de sala consultório Maceió”, “coworking saúde Maceió” e “consultório por hora Maceió” |
+| Perfis públicos do Instagram | Seguidores, seguindo e número de posts (meta descrição pública do perfil) |
+| [Biblioteca de Anúncios da Meta](https://www.facebook.com/ads/library/) | Anúncios ativos no Brasil. Só a Innate Saúde Integrada anunciava (desde 21/10/2026) |
+| Lighthouse 12.6 (celular) | Desempenho, acessibilidade, boas práticas e SEO dos sites |
+| [Registro.br RDAP](https://rdap.registro.br/) | Data de registro e vencimento dos domínios .com.br |
+| Sitemaps e HTML dos sites | Número de páginas, rastreadores (GA4, Tag Manager), schema |
+| YouTube e TikTok | Busca por contas: nenhuma encontrada para a Santé nem para os concorrentes |
+| [Sublocando](https://sublocando.com.br/espacos) | Preços de referência por hora no Brasil (R$ 25–40) |
+
+Ahrefs e Semrush exigem validação humana ou login para mostrar números, por isso não entraram.
+
+## Concorrentes diretos
+
+| Concorrente | Local | Site / Instagram |
+|---|---|---|
+| NutriClin Saúde Integrada | Harmony Trade Center, sala 222, Jatiúca | [agenda online](https://agendanutriclin.gendo.app/) · [@nutriclinsaudeintegrada](https://www.instagram.com/nutriclinsaudeintegrada/) |
+| Transmutar Consultórios | Harmony Trade Center, salas 526 e 614 | [transmutarconsultorios.com.br](https://transmutarconsultorios.com.br/) · [@transmutar.harmony](https://www.instagram.com/transmutar.harmony/) |
+| Elleva Saúde & Bem-Estar | Harmony Trade Center, sala 827 | [site](https://ellevaconsultoriosharmony.localo.site/) · [@elleva.harmony](https://www.instagram.com/elleva.harmony/) |
+| ClinTime Saúde Integrada | Harmony Medical Farol, sala 208 | [clintimesaude.com.br](https://www.clintimesaude.com.br/) · [@clintimesaude](https://www.instagram.com/clintimesaude/) |
+| Innate Saúde Integrada | Norcon Empresarial, sala 314, Mangabeiras | [@innatesaudeintegrada](https://www.instagram.com/innatesaudeintegrada/) |
+| Luz Saúde Consultórios | JTR Empresarial, Ed. Itália, sala 404, Jatiúca | [@luzsaudeconsultorios](https://www.instagram.com/luzsaudeconsultorios/) |
+| MEDCENTRO Coworking | R. João Severiano, 42, Centro | [medcentrocoworking.com.br](https://medcentrocoworking.com.br/) |
+| Medicine Service Coworking | Harmony Trade Center | [medicineservice.com.br](https://medicineservice.com.br/) · [@medicineservice.com.br](https://www.instagram.com/medicineservice.com.br/) |
+| Ampla Consultórios | Harmony Trade Center, salas 317/318 | [amplaconsultorios.com.br](https://amplaconsultorios.com.br/) · [Facebook](https://www.facebook.com/amplaconsultorios/) |
+| Minha Clínica Coworking | Av. Gov. Afrânio Lages, 188, Farol | Google Maps |
+| Luzis Coworking Saúde | R. José Cabral Acioli, 402 | Google Maps |
+
+Indiretos: Clínica Avha Paixão / Lottus ([aluguel de sala](https://clinicalottus.com/aluguel-de-sala/)), [Rather Coworking](https://www.instagram.com/rathercoworking/) e N3 Coworking (Parque Shopping).
+
+Descartados por não estarem em Maceió: MK Evolution Health (Balneário Camboriú), Vinci Medical Offices (São José dos Campos), Med&Co (Sete Lagoas).

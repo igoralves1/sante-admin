@@ -27,7 +27,8 @@ const { el, tip } = useChart((root, W, tip) => {
   g.append('rect').attr('class', 'hover').attr('x', -6).attr('width', W + 12).attr('height', rh - 2).attr('rx', 8)
   g.append('text').attr('class', 'name').attr('y', (d) => (d.sub ? 15 : 22)).text((d) => d.label)
   g.filter((d) => d.sub).append('text').attr('class', 'axis').attr('y', 29).text((d) => d.sub)
-  g.append('path').attr('class', 'firm').attr('d', (d) => barH(x(0), Math.max(x(0) + 2, x(d.value)), 11, 14))
+  // `dim: true` desenha a barra em azul claro (contexto); o padrão é azul forte
+  g.append('path').attr('class', (d) => (d.dim ? 'prop' : 'firm')).attr('d', (d) => barH(x(0), Math.max(x(0) + 2, x(d.value)), 11, 14))
   g.append('text').attr('class', 'val').attr('x', (d) => Math.max(x(0) + 2, x(d.value)) + 8).attr('y', 18)
     .attr('dominant-baseline', 'middle').text((d) => props.format(d.value))
   g.append('rect').attr('width', W).attr('height', rh).attr('fill', 'transparent')

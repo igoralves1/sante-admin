@@ -20,6 +20,7 @@ e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 | **Espaços** | Lista dos espaços; **Cadastrar novo espaço** e edição com modalidade, capacidade, preço, descrição e **despesas associadas** |
 | **Estatísticas** | Média, mediana e desvio da ocupação, ticket médio, concentração, projeção de 12 meses, linha do tempo dos contratos, potencial × ocupação, curva de equilíbrio e simulador de cenários |
 | **Marketing** | Espaços abaixo da meta, campanhas com funil (leads → visitas → contratos), receita atribuída, CAC e ROI |
+| **Concorrentes** | Mapa dos concorrentes em Maceió: preços, Instagram, Google Maps, sites (Lighthouse), Similarweb, análise SWOT e ações sugeridas |
 | **Financeiro** | Custos gerais, impostos, comissões e ponto de equilíbrio (inclui as despesas dos espaços) |
 | **Dados** | Importar/exportar Excel e `sante.json`; instruções de publicação |
 
