@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, h } from 'vue'
 import { mean } from 'd3'
 import StatTile from '../components/StatTile.vue'
 import D3Scatter from '../components/d3/D3Scatter.vue'
@@ -24,9 +24,61 @@ const maisPosts = [...rivais].filter((p) => p.ig).sort((a, b) => b.ig.posts - a.
 // ---------- mapa de concorrentes ----------
 const AMEACA = { alta: { t: 'Ameaça alta', c: 'bad' }, media: { t: 'Ameaça média', c: 'warn' }, baixa: { t: 'Ameaça baixa', c: 'plain' } }
 const ordemAmeaca = { alta: 0, media: 1, baixa: 2 }
-const cards = computed(() =>
-  [...rivais].sort((a, b) => (a.tipo === b.tipo ? 0 : a.tipo === 'direto' ? -1 : 1) || ordemAmeaca[a.ameaca] - ordemAmeaca[b.ameaca]),
-)
+// a Santé vem primeiro, como referência
+const cards = computed(() => [
+  sante,
+  ...[...rivais].sort((a, b) => (a.tipo === b.tipo ? 0 : a.tipo === 'direto' ? -1 : 1) || ordemAmeaca[a.ameaca] - ordemAmeaca[b.ameaca]),
+])
+
+// ---------- comparação com a Santé ----------
+// w = a Santé ganha, t = empate (valores próximos), l = a Santé perde
+const RES = { w: { s: '+', t: 'A Santé ganha' }, t: { s: '=', t: 'Empate' }, l: { s: '−', t: 'A Santé perde' } }
+const porFaixa = (ratio, lo, hi) => (ratio < lo ? 'w' : ratio > hi ? 'l' : 't')
+const aval = (n) => `${n} ${n === 1 ? 'avaliação' : 'avaliações'}`
+
+function comparar(p) {
+  if (p.proprio) return {}
+  const c = {}
+  if (p.modalidadesN != null) {
+    const d = sante.modalidadesN - p.modalidadesN
+    c.modal = { r: d >= 2 ? 'w' : d <= -2 ? 'l' : 't', why: `${p.modalidadesN} modalidades contra ${sante.modalidadesN} da Santé (empate até 1 de diferença)` }
+  }
+  c.preco = p.precoHoraMin == null
+    ? { r: 'w', why: 'não publica preço; a Santé mostra a tabela no site' }
+    : { r: porFaixa(sante.precoHoraMin / p.precoHoraMin, 0.85, 1.15), why: `menor preço por hora R$ ${p.precoHoraMin} contra R$ ${sante.precoHoraMin} da Santé no pacote (empate até 15%)` }
+  if (p.horasSemana != null) {
+    c.horario = { r: porFaixa(p.horasSemana / sante.horasSemana, 0.8, 1.2), why: `cerca de ${p.horasSemana} h abertas por semana contra ${sante.horasSemana} h da Santé (empate até 20%)` }
+  }
+  if (p.google) {
+    const d = p.google.nota - sante.google.nota
+    const r = d <= -0.3 ? 'w' : d >= 0.3 ? (p.google.avaliacoes >= 10 ? 'l' : 't') : 't'
+    const extra = d >= 0.3 && p.google.avaliacoes < 10 ? '; nota alta, mas com menos de 10 avaliações' : ''
+    c.google = { r, why: `nota ${nf1(p.google.nota)} com ${aval(p.google.avaliacoes)} contra ${nf1(sante.google.nota)} com ${sante.google.avaliacoes} da Santé${extra}` }
+  }
+  if (p.ig) {
+    c.seg = { r: porFaixa(p.ig.seguidores / sante.ig.seguidores, 0.8, 1.25), why: `${num(p.ig.seguidores)} seguidores contra ${num(sante.ig.seguidores)} da Santé (empate até 20%)` }
+    c.posts = { r: porFaixa(p.ig.posts / sante.ig.posts, 0.67, 1.5), why: `${num(p.ig.posts)} posts contra ${num(sante.ig.posts)} da Santé (empate até 1,5×)` }
+  } else {
+    c.ig = { r: 'w', why: 'sem Instagram encontrado' }
+  }
+  return c
+}
+const comps = Object.fromEntries(players.map((p) => [p.id, comparar(p)]))
+const placar = (id) => {
+  const rs = Object.values(comps[id]).map((x) => x.r)
+  return { w: rs.filter((r) => r === 'w').length, t: rs.filter((r) => r === 't').length, l: rs.filter((r) => r === 'l').length }
+}
+
+// valor com marcador (+ = −) e cor; sem comparação, só o texto
+const Cmp = (props, { slots }) => {
+  const r = props.r
+  if (!r) return h('span', slots.default?.())
+  return h('span', { class: ['cmp', r.r], title: `${RES[r.r].t}: ${r.why}` }, [
+    h('span', { class: 'mk', 'aria-label': RES[r.r].t }, RES[r.r].s),
+    h('span', slots.default?.()),
+  ])
+}
+Cmp.props = ['r']
 
 // ---------- gráficos ----------
 const igRows = (p) => [
@@ -196,21 +248,46 @@ const fontes = [
 
     <section>
       <h2 class="sec-title">Quem são</h2>
+      <p class="cmp-legend small">
+        Cada valor dos concorrentes é comparado com o da Santé:
+        <span class="cmp w"><span class="mk">+</span><span>a Santé ganha</span></span>
+        <span class="cmp t"><span class="mk">=</span><span>empate (valores próximos)</span></span>
+        <span class="cmp l"><span class="mk">−</span><span>a Santé perde</span></span>
+        <br>
+        <span class="muted">
+          Empate quando a diferença é pequena: modalidades até 1, preço por hora até 15%, horas abertas até 20%,
+          nota até 0,2, seguidores até 20%, posts até 1,5×. Nota maior com menos de 10 avaliações também conta
+          como empate. Preço não publicado conta a favor da Santé. Passe o mouse sobre um valor para ver a conta.
+        </span>
+      </p>
       <div class="grid cols-3">
-        <article v-for="p in cards" :key="p.id" class="card comp">
+        <article v-for="p in cards" :key="p.id" class="card comp" :class="{ ref: p.proprio }">
           <header>
             <strong>{{ p.nome }}</strong>
-            <span v-if="p.tipo === 'direto'" class="chip" :class="AMEACA[p.ameaca].c">{{ AMEACA[p.ameaca].t }}</span>
+            <span v-if="p.proprio" class="chip info">Referência</span>
+            <span v-else-if="p.tipo === 'direto'" class="chip" :class="AMEACA[p.ameaca].c">{{ AMEACA[p.ameaca].t }}</span>
             <span v-else class="chip plain">Indireto</span>
           </header>
           <p class="loc"><Icon name="map" :size="14" /> {{ p.local }}</p>
           <dl>
-            <div><dt>Modalidades</dt><dd>{{ p.modalidades }}</dd></div>
-            <div><dt>Preço</dt><dd>{{ p.preco }}</dd></div>
-            <div><dt>Horário</dt><dd>{{ p.horario }}</dd></div>
-            <div><dt>Google</dt><dd>{{ p.google ? `${nf1(p.google.nota)} (${p.google.avaliacoes} avaliações)` : '—' }}</dd></div>
-            <div><dt>Instagram</dt><dd>{{ p.ig ? `${num(p.ig.seguidores)} seguidores · ${num(p.ig.posts)} posts` : 'Não encontrado' }}</dd></div>
+            <div><dt>Modalidades</dt><dd><Cmp :r="comps[p.id].modal">{{ p.modalidades }}</Cmp></dd></div>
+            <div><dt>Preço</dt><dd><Cmp :r="comps[p.id].preco">{{ p.preco }}</Cmp></dd></div>
+            <div><dt>Horário</dt><dd><Cmp :r="comps[p.id].horario">{{ p.horario }}</Cmp></dd></div>
+            <div><dt>Google</dt><dd><Cmp :r="comps[p.id].google">{{ p.google ? `${nf1(p.google.nota)} (${aval(p.google.avaliacoes)})` : '—' }}</Cmp></dd></div>
+            <div>
+              <dt>Instagram</dt>
+              <dd v-if="p.ig" class="ig">
+                <Cmp :r="comps[p.id].seg">{{ num(p.ig.seguidores) }} seguidores</Cmp>
+                <Cmp :r="comps[p.id].posts">{{ num(p.ig.posts) }} posts</Cmp>
+              </dd>
+              <dd v-else><Cmp :r="comps[p.id].ig">Não encontrado</Cmp></dd>
+            </div>
           </dl>
+          <p v-if="!p.proprio" class="placar small">
+            Contra a Santé: <strong class="w">{{ placar(p.id).w }} ganha</strong> ·
+            <strong class="t">{{ placar(p.id).t }} empata</strong> ·
+            <strong class="l">{{ placar(p.id).l }} perde</strong>
+          </p>
           <p class="dif">{{ p.diferenciais }}</p>
           <footer>
             <a v-if="p.site" :href="p.site" target="_blank" rel="noopener"><Icon name="link" :size="14" /> Site</a>
@@ -403,6 +480,17 @@ const fontes = [
 .comp dl div { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 8px; }
 .comp dt { color: var(--muted); }
 .comp dd { margin: 0; }
+.comp.ref { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.comp .ig { display: grid; gap: 2px; }
+.cmp { display: inline-flex; align-items: baseline; gap: 6px; }
+.cmp .mk { flex: none; width: 16px; height: 16px; border-radius: 5px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 700; line-height: 1; transform: translateY(2px); }
+.cmp.w { color: var(--good); } .cmp.w .mk { background: var(--good-soft); }
+.cmp.t { color: var(--warn); } .cmp.t .mk { background: var(--warn-soft); }
+.cmp.l { color: var(--bad); } .cmp.l .mk { background: var(--bad-soft); }
+.cmp-legend { margin: -4px 0 12px; color: var(--text-2); line-height: 1.8; }
+.cmp-legend .cmp { margin: 0 10px 0 4px; font-weight: 500; }
+.placar { margin: 0; color: var(--text-2); }
+.placar .w { color: var(--good); } .placar .t { color: var(--warn); } .placar .l { color: var(--bad); }
 .comp .dif { margin: 0; font-size: 13px; color: var(--text-2); line-height: 1.5; }
 .comp footer { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; }
 .comp footer a { display: inline-flex; align-items: center; gap: 5px; }

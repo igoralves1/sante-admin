@@ -17,9 +17,20 @@
       "ameaca": null,
       "site": "https://santeconsultorios.com.br/",
       "instagram": "santeconsultoriosmaceio",
-      "ig": { "seguidores": 7214, "seguindo": 154, "posts": 24 },
-      "google": { "nota": 4.4, "avaliacoes": 37, "categoria": "Médico / Consultório médico" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 7214,
+        "seguindo": 154,
+        "posts": 24
+      },
+      "google": {
+        "nota": 4.4,
+        "avaliacoes": 37,
+        "categoria": "Médico / Consultório médico"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 4,
+      "precoHoraMin": 30,
+      "horasSemana": 54
     },
     {
       "id": "nutriclin",
@@ -35,9 +46,20 @@
       "ameaca": "alta",
       "site": "https://agendanutriclin.gendo.app/",
       "instagram": "nutriclinsaudeintegrada",
-      "ig": { "seguidores": 3287, "seguindo": 46, "posts": 29 },
-      "google": { "nota": 5.0, "avaliacoes": 14, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 3287,
+        "seguindo": 46,
+        "posts": 29
+      },
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 14,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 2,
+      "precoHoraMin": 30,
+      "horasSemana": 168
     },
     {
       "id": "transmutar",
@@ -53,9 +75,20 @@
       "ameaca": "alta",
       "site": "https://transmutarconsultorios.com.br/",
       "instagram": "transmutar.harmony",
-      "ig": { "seguidores": 3553, "seguindo": 5817, "posts": 367 },
-      "google": { "nota": 4.8, "avaliacoes": 15, "categoria": "Clínica de saúde mental" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 3553,
+        "seguindo": 5817,
+        "posts": 367
+      },
+      "google": {
+        "nota": 4.8,
+        "avaliacoes": 15,
+        "categoria": "Clínica de saúde mental"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 3,
+      "precoHoraMin": null,
+      "horasSemana": 50
     },
     {
       "id": "elleva",
@@ -71,9 +104,20 @@
       "ameaca": "alta",
       "site": "https://ellevaconsultoriosharmony.localo.site/",
       "instagram": "elleva.harmony",
-      "ig": { "seguidores": 906, "seguindo": 1530, "posts": 28 },
-      "google": { "nota": 4.9, "avaliacoes": 32, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 906,
+        "seguindo": 1530,
+        "posts": 28
+      },
+      "google": {
+        "nota": 4.9,
+        "avaliacoes": 32,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 2,
+      "precoHoraMin": null,
+      "horasSemana": 96
     },
     {
       "id": "clintime",
@@ -89,9 +133,20 @@
       "ameaca": "media",
       "site": "https://www.clintimesaude.com.br/",
       "instagram": "clintimesaude",
-      "ig": { "seguidores": 1172, "seguindo": 24, "posts": 49 },
-      "google": { "nota": 5.0, "avaliacoes": 4, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 1172,
+        "seguindo": 24,
+        "posts": 49
+      },
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 4,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 4,
+      "precoHoraMin": null,
+      "horasSemana": 55
     },
     {
       "id": "innate",
@@ -107,9 +162,20 @@
       "ameaca": "media",
       "site": "https://innatesaudeintegrada.com.br/",
       "instagram": "innatesaudeintegrada",
-      "ig": { "seguidores": 3232, "seguindo": 4277, "posts": 313 },
-      "google": { "nota": 5.0, "avaliacoes": 1, "categoria": "Espaço de coworking" },
-      "anunciosMeta": true
+      "ig": {
+        "seguidores": 3232,
+        "seguindo": 4277,
+        "posts": 313
+      },
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 1,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": true,
+      "modalidadesN": 1,
+      "precoHoraMin": null,
+      "horasSemana": 70
     },
     {
       "id": "luz",
@@ -125,9 +191,20 @@
       "ameaca": "media",
       "site": null,
       "instagram": "luzsaudeconsultorios",
-      "ig": { "seguidores": 707, "seguindo": 1384, "posts": 360 },
-      "google": { "nota": 5.0, "avaliacoes": 10, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 707,
+        "seguindo": 1384,
+        "posts": 360
+      },
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 10,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 1,
+      "precoHoraMin": null,
+      "horasSemana": 60
     },
     {
       "id": "medcentro",
@@ -144,8 +221,15 @@
       "site": "https://medcentrocoworking.com.br/",
       "instagram": null,
       "ig": null,
-      "google": { "nota": 5.0, "avaliacoes": 67, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 67,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 3,
+      "precoHoraMin": null,
+      "horasSemana": 45
     },
     {
       "id": "medicine",
@@ -161,9 +245,20 @@
       "ameaca": "baixa",
       "site": "https://medicineservice.com.br/",
       "instagram": "medicineservice.com.br",
-      "ig": { "seguidores": 122, "seguindo": 0, "posts": 11 },
-      "google": { "nota": 5.0, "avaliacoes": 1, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 122,
+        "seguindo": 0,
+        "posts": 11
+      },
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 1,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 1,
+      "precoHoraMin": 30,
+      "horasSemana": 70
     },
     {
       "id": "ampla",
@@ -180,8 +275,15 @@
       "site": "https://amplaconsultorios.com.br/",
       "instagram": null,
       "ig": null,
-      "google": { "nota": 3.0, "avaliacoes": 2, "categoria": "Consultório médico" },
-      "anunciosMeta": false
+      "google": {
+        "nota": 3.0,
+        "avaliacoes": 2,
+        "categoria": "Consultório médico"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 4,
+      "precoHoraMin": null,
+      "horasSemana": 40
     },
     {
       "id": "minhaclinica",
@@ -198,8 +300,15 @@
       "site": null,
       "instagram": null,
       "ig": null,
-      "google": { "nota": 3.5, "avaliacoes": 28, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "google": {
+        "nota": 3.5,
+        "avaliacoes": 28,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": null,
+      "precoHoraMin": null,
+      "horasSemana": 45
     },
     {
       "id": "luzis",
@@ -216,8 +325,15 @@
       "site": null,
       "instagram": null,
       "ig": null,
-      "google": { "nota": 5.0, "avaliacoes": 8, "categoria": "Policlínica" },
-      "anunciosMeta": false
+      "google": {
+        "nota": 5.0,
+        "avaliacoes": 8,
+        "categoria": "Policlínica"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": null,
+      "precoHoraMin": null,
+      "horasSemana": 55
     },
     {
       "id": "lottus",
@@ -235,7 +351,10 @@
       "instagram": null,
       "ig": null,
       "google": null,
-      "anunciosMeta": false
+      "anunciosMeta": false,
+      "modalidadesN": 2,
+      "precoHoraMin": null,
+      "horasSemana": null
     },
     {
       "id": "rather",
@@ -251,9 +370,20 @@
       "ameaca": "baixa",
       "site": "http://www.rather.com.br/",
       "instagram": "rathercoworking",
-      "ig": { "seguidores": 2731, "seguindo": 932, "posts": 225 },
-      "google": { "nota": 4.8, "avaliacoes": 183, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "ig": {
+        "seguidores": 2731,
+        "seguindo": 932,
+        "posts": 225
+      },
+      "google": {
+        "nota": 4.8,
+        "avaliacoes": 183,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 3,
+      "precoHoraMin": null,
+      "horasSemana": null
     },
     {
       "id": "n3",
@@ -270,52 +400,186 @@
       "site": null,
       "instagram": null,
       "ig": null,
-      "google": { "nota": 4.9, "avaliacoes": 148, "categoria": "Espaço de coworking" },
-      "anunciosMeta": false
+      "google": {
+        "nota": 4.9,
+        "avaliacoes": 148,
+        "categoria": "Espaço de coworking"
+      },
+      "anunciosMeta": false,
+      "modalidadesN": 3,
+      "precoHoraMin": null,
+      "horasSemana": 70
     }
   ],
   "precoHora": [
-    { "id": "sante", "label": "Santé · pacote 8 turnos", "valor": 30, "sub": "R$ 960 ÷ 32 h" },
-    { "id": "medicine", "label": "Medicine Service", "valor": 30, "sub": "R$ 30/h, mín. 4 turnos/mês" },
-    { "id": "nutriclin", "label": "NutriClin · turno 5h", "valor": 30, "sub": "a partir de R$ 150 ÷ 5 h" },
-    { "id": "sante", "label": "Santé · turno 4h", "valor": 37.5, "sub": "R$ 150 ÷ 4 h" },
-    { "id": "nutriclin", "label": "NutriClin · 55 min", "valor": 38.18, "sub": "a partir de R$ 35 por 55 min" },
-    { "id": "sante", "label": "Santé · hora avulsa", "valor": 50, "sub": "preço de vitrine no site e no Google" }
+    {
+      "id": "sante",
+      "label": "Santé · pacote 8 turnos",
+      "valor": 30,
+      "sub": "R$ 960 ÷ 32 h"
+    },
+    {
+      "id": "medicine",
+      "label": "Medicine Service",
+      "valor": 30,
+      "sub": "R$ 30/h, mín. 4 turnos/mês"
+    },
+    {
+      "id": "nutriclin",
+      "label": "NutriClin · turno 5h",
+      "valor": 30,
+      "sub": "a partir de R$ 150 ÷ 5 h"
+    },
+    {
+      "id": "sante",
+      "label": "Santé · turno 4h",
+      "valor": 37.5,
+      "sub": "R$ 150 ÷ 4 h"
+    },
+    {
+      "id": "nutriclin",
+      "label": "NutriClin · 55 min",
+      "valor": 38.18,
+      "sub": "a partir de R$ 35 por 55 min"
+    },
+    {
+      "id": "sante",
+      "label": "Santé · hora avulsa",
+      "valor": 50,
+      "sub": "preço de vitrine no site e no Google"
+    }
   ],
   "mapas": [
     {
       "busca": "aluguel de consultório Maceió",
       "sante": null,
-      "topo": ["Elleva", "Luzis", "NutriClin", "Clínique", "Transmutar", "Ampla"]
+      "topo": [
+        "Elleva",
+        "Luzis",
+        "NutriClin",
+        "Clínique",
+        "Transmutar",
+        "Ampla"
+      ]
     },
     {
       "busca": "aluguel de sala consultório Maceió",
       "sante": null,
-      "topo": ["Elleva", "NutriClin", "Shopping (centro comercial)", "Ampla", "imobiliárias", "Transmutar"]
+      "topo": [
+        "Elleva",
+        "NutriClin",
+        "Shopping (centro comercial)",
+        "Ampla",
+        "imobiliárias",
+        "Transmutar"
+      ]
     },
     {
       "busca": "coworking saúde Maceió",
       "sante": null,
-      "topo": ["Luzis", "Elleva", "ClinTime", "MEDCENTRO", "Luz Saúde", "NutriClin"]
+      "topo": [
+        "Luzis",
+        "Elleva",
+        "ClinTime",
+        "MEDCENTRO",
+        "Luz Saúde",
+        "NutriClin"
+      ]
     },
     {
       "busca": "consultório por hora Maceió",
       "sante": 1,
-      "topo": ["Santé", "IFONO", "Elleva", "Clínica Guri", "Ampla"]
+      "topo": [
+        "Santé",
+        "IFONO",
+        "Elleva",
+        "Clínica Guri",
+        "Ampla"
+      ]
     }
   ],
   "sites": [
-    { "id": "sante", "site": "santeconsultorios.com.br", "desempenho": 73, "acessibilidade": 95, "boasPraticas": 79, "seo": 100, "lcp": 11.6, "paginas": 23, "dominio": "2025-07-31", "obs": "LCP lento: fotos JPG grandes (recepção, estacionamento) sem WebP nem tamanhos responsivos. Ponto forte: 18 páginas por especialidade, schema LocalBusiness e Google Analytics." },
-    { "id": "medicine", "site": "medicineservice.com.br", "desempenho": 71, "acessibilidade": 98, "boasPraticas": 100, "seo": 100, "lcp": 5.0, "paginas": 6, "dominio": "2023-02-10", "obs": "WordPress com Google Tag Manager; servidor lento na primeira resposta." },
-    { "id": "elleva", "site": "ellevaconsultoriosharmony.localo.site", "desempenho": 88, "acessibilidade": 95, "boasPraticas": 96, "seo": 100, "lcp": 3.3, "paginas": 1, "dominio": null, "obs": "Página simples gerada a partir do Perfil da Empresa no Google (Localo)." },
-    { "id": "lottus", "site": "clinicalottus.com/aluguel-de-sala", "desempenho": 59, "acessibilidade": 90, "boasPraticas": 75, "seo": 100, "lcp": 12.3, "paginas": 10, "dominio": "2024-10-04", "obs": "WordPress + Elementor; aluguel de sala é uma página secundária." },
-    { "id": "ampla", "site": "amplaconsultorios.com.br", "desempenho": 58, "acessibilidade": 65, "boasPraticas": 61, "seo": 92, "lcp": 11.7, "paginas": 5, "dominio": "2024-11-28", "obs": "Sem HTTPS, sem meta viewport (não se adapta ao celular), erros no console. Domínio vence em 28/11/2026." }
+    {
+      "id": "sante",
+      "site": "santeconsultorios.com.br",
+      "desempenho": 73,
+      "acessibilidade": 95,
+      "boasPraticas": 79,
+      "seo": 100,
+      "lcp": 11.6,
+      "paginas": 23,
+      "dominio": "2025-07-31",
+      "obs": "LCP lento: fotos JPG grandes (recepção, estacionamento) sem WebP nem tamanhos responsivos. Ponto forte: 18 páginas por especialidade, schema LocalBusiness e Google Analytics."
+    },
+    {
+      "id": "medicine",
+      "site": "medicineservice.com.br",
+      "desempenho": 71,
+      "acessibilidade": 98,
+      "boasPraticas": 100,
+      "seo": 100,
+      "lcp": 5.0,
+      "paginas": 6,
+      "dominio": "2023-02-10",
+      "obs": "WordPress com Google Tag Manager; servidor lento na primeira resposta."
+    },
+    {
+      "id": "elleva",
+      "site": "ellevaconsultoriosharmony.localo.site",
+      "desempenho": 88,
+      "acessibilidade": 95,
+      "boasPraticas": 96,
+      "seo": 100,
+      "lcp": 3.3,
+      "paginas": 1,
+      "dominio": null,
+      "obs": "Página simples gerada a partir do Perfil da Empresa no Google (Localo)."
+    },
+    {
+      "id": "lottus",
+      "site": "clinicalottus.com/aluguel-de-sala",
+      "desempenho": 59,
+      "acessibilidade": 90,
+      "boasPraticas": 75,
+      "seo": 100,
+      "lcp": 12.3,
+      "paginas": 10,
+      "dominio": "2024-10-04",
+      "obs": "WordPress + Elementor; aluguel de sala é uma página secundária."
+    },
+    {
+      "id": "ampla",
+      "site": "amplaconsultorios.com.br",
+      "desempenho": 58,
+      "acessibilidade": 65,
+      "boasPraticas": 61,
+      "seo": 92,
+      "lcp": 11.7,
+      "paginas": 5,
+      "dominio": "2024-11-28",
+      "obs": "Sem HTTPS, sem meta viewport (não se adapta ao celular), erros no console. Domínio vence em 28/11/2026."
+    }
   ],
   "similarweb": [
-    { "site": "santeconsultorios.com.br", "resultado": "Sem dados (o Similarweb não acompanha o domínio)" },
-    { "site": "clintimesaude.com.br", "resultado": "Sem dados" },
-    { "site": "amplaconsultorios.com.br", "resultado": "Sem dados" },
-    { "site": "medicineservice.com.br", "resultado": "Menos de 20 mil visitas em jul–set/2026, sem detalhamento; 1 palavra-chave (“harmony medical center”)" },
-    { "site": "transmutarconsultorios.com.br", "resultado": "Menos de 20 mil visitas em jul–set/2026, sem detalhamento" }
+    {
+      "site": "santeconsultorios.com.br",
+      "resultado": "Sem dados (o Similarweb não acompanha o domínio)"
+    },
+    {
+      "site": "clintimesaude.com.br",
+      "resultado": "Sem dados"
+    },
+    {
+      "site": "amplaconsultorios.com.br",
+      "resultado": "Sem dados"
+    },
+    {
+      "site": "medicineservice.com.br",
+      "resultado": "Menos de 20 mil visitas em jul–set/2026, sem detalhamento; 1 palavra-chave (“harmony medical center”)"
+    },
+    {
+      "site": "transmutarconsultorios.com.br",
+      "resultado": "Menos de 20 mil visitas em jul–set/2026, sem detalhamento"
+    }
   ]
 }
