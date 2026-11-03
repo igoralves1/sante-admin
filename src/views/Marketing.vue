@@ -6,6 +6,7 @@ import StatTile from '../components/StatTile.vue'
 import { state, espacoPorId } from '../lib/store'
 import { STATUS_CAMPANHA, resumoMes, resultadoCampanha } from '../lib/calc'
 import { brl, brl0, clone, dataBR, num, pct, uid } from '../lib/format'
+import { CENARIOS, simular, adicionarAoPlano } from '../lib/estrategia'
 
 const r = computed(() => resumoMes(state.data, state.mes))
 const meta = computed(() => state.data.metas?.ocupacaoAlvo || 0)
@@ -40,6 +41,14 @@ const prioridades = computed(() =>
 const semCampanha = computed(() => prioridades.value.filter((p) => !p.campanhas.length).length)
 
 const tom = { Ativa: 'good', Planejada: 'info', Pausada: 'warn', 'Concluída': 'plain' }
+
+// ---------- estratégia Primeiro Consultório ----------
+const estr = simular(CENARIOS.recomendado)
+const avisoPlano = ref('')
+function addPlano() {
+  const n = adicionarAoPlano(state.data, CENARIOS.recomendado)
+  avisoPlano.value = n ? `${n} campanhas planejadas foram adicionadas à lista abaixo.` : 'As campanhas do plano já estão na lista abaixo.'
+}
 
 // ---------- formulário ----------
 const edit = ref(null)
@@ -89,6 +98,37 @@ function funil(c) {
         <template v-if="totais.investimento && totais.contratos">CAC médio {{ brl(totais.investimento / totais.contratos) }}</template>
         <template v-else>Orçamento somado das campanhas</template>
       </StatTile>
+    </section>
+
+    <section class="card estr">
+      <div class="estr-main">
+        <span class="chip info"><Icon name="target" :size="13" /> Estratégia</span>
+        <h2>Primeiro Consultório: recém-formados da saúde</h2>
+        <p class="muted">
+          Psicólogos, nutricionistas, fisioterapeutas, médicos e terapeutas formados há até 3 anos ainda não têm
+          consultório. Os profissionais estabelecidos já têm. A estratégia atrai quem está começando com uma escada
+          de preços, horário noturno, ajuda para conseguir pacientes e conteúdo de carreira no Instagram, no TikTok e no Google.
+        </p>
+        <ul class="estr-list small">
+          <li><strong>Público:</strong> cerca de 1,2 a 2 mil formados por ano em Maceió, em 5 personas</li>
+          <li><strong>Oferta:</strong> visita e 1ª hora grátis, Pacote Start de 10 h por R$ 350, turno fixo com desconto</li>
+          <li><strong>Canais:</strong> 16 redes e canais avaliados, com prioridade, custo e indicador</li>
+        </ul>
+        <div class="toolbar">
+          <RouterLink to="/marketing/estrategia" class="btn primary">Ver estratégia completa</RouterLink>
+          <button class="btn" type="button" @click="addPlano"><Icon name="plus" :size="15" /> Criar as campanhas do plano</button>
+        </div>
+        <p v-if="avisoPlano" class="small muted">{{ avisoPlano }}</p>
+      </div>
+      <dl class="estr-kpis">
+        <div><dt>Orçamento recomendado</dt><dd class="tnum">{{ brl0(estr.invest) }}/mês</dd></div>
+        <div><dt>Novos clientes por mês</dt><dd class="tnum">≈ {{ Math.round(estr.novos) }}</dd></div>
+        <div><dt>Ativos no 6º mês</dt><dd class="tnum">{{ Math.round(estr.fim.ativos) }}</dd></div>
+        <div><dt>Receita mensal no 6º mês</dt><dd class="tnum">{{ brl0(estr.fim.receita) }}</dd></div>
+        <div><dt>CAC · LTV ÷ CAC</dt><dd class="tnum">{{ brl0(estr.cac) }} · {{ estr.ltvCac.toLocaleString('pt-BR', { maximumFractionDigits: 1 }) }}×</dd></div>
+        <div><dt>Se paga em</dt><dd class="tnum">{{ estr.equilibrio }}º mês</dd></div>
+        <p class="small muted">Caminho feliz, 6 meses. Ajuste as premissas no simulador.</p>
+      </dl>
     </section>
 
     <section class="grid cols-3">
@@ -219,6 +259,19 @@ function funil(c) {
 
 <style scoped>
 .fw { font-weight: 500; }
+.estr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); gap: 20px; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+@media (max-width: 900px) { .estr { grid-template-columns: minmax(0, 1fr); } }
+.estr-main { display: grid; gap: 10px; align-content: start; }
+.estr-main h2 { font-size: 17px; }
+.estr-main p { margin: 0; line-height: 1.55; max-width: 760px; }
+.estr-main .chip { justify-self: start; }
+.estr-list { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: var(--text-2); }
+.estr-list strong { color: var(--text); }
+.estr-kpis { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-content: start; }
+.estr-kpis div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.estr-kpis dt { font-size: 12px; color: var(--muted); }
+.estr-kpis dd { margin: 0; font-weight: 600; font-size: 16px; color: var(--good); }
+.estr-kpis p { grid-column: 1 / -1; margin: 0; }
 .tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 12px; }
 .section-head h2 { font-size: 17px; }

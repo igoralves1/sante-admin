@@ -56,7 +56,7 @@ const instagram = computed(() => state.data?.meta?.instagram)
         <span class="brand-txt"><strong>Santé Admin</strong><small>Consultórios · Maceió</small></span>
       </RouterLink>
       <nav class="nav">
-        <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="nav-item">
+        <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="nav-item" :class="{ 'router-link-active': route.meta.secao === n.to }">
           <Icon :name="n.icon" /> <span>{{ n.label }}</span>
         </RouterLink>
       </nav>

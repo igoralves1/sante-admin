@@ -16,6 +16,7 @@ const router = createRouter({
     { path: '/espacos/:id', component: () => import('./views/EspacoForm.vue'), meta: { title: 'Editar espaço' } },
     { path: '/estatisticas', component: () => import('./views/Estatisticas.vue'), meta: { title: 'Estatísticas e estimativas', mes: true } },
     { path: '/marketing', component: () => import('./views/Marketing.vue'), meta: { title: 'Estratégia de marketing', mes: true } },
+    { path: '/marketing/estrategia', component: () => import('./views/Estrategia.vue'), meta: { title: 'Estratégia: recém-formados', secao: '/marketing' } },
     { path: '/concorrentes', component: () => import('./views/Concorrentes.vue'), meta: { title: 'Concorrentes' } },
     { path: '/financeiro', component: () => import('./views/Financeiro.vue'), meta: { title: 'Custos e ponto de equilíbrio', mes: true } },
     { path: '/dados', component: () => import('./views/Dados.vue'), meta: { title: 'Dados e publicação' } },

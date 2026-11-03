@@ -9,7 +9,7 @@ const secoes = [
   { to: '/situacao', icon: 'reservas', t: 'Situação atual', d: 'Contratos de cada espaço: duração, valor total, despesas e resultado. Criar, editar e encerrar.' },
   { to: '/espacos/novo', icon: 'espacos', t: 'Cadastrar espaço', d: 'Novas salas, piscina ou áreas: modalidade, capacidade, preço e despesas.' },
   { to: '/estatisticas', icon: 'stats', t: 'Estatísticas e estimativas', d: 'Projeção de 12 meses, linha do tempo dos contratos, cenários e ponto de equilíbrio.' },
-  { to: '/marketing', icon: 'marketing', t: 'Marketing', d: 'Campanhas ligadas aos espaços com baixa ocupação, funil de leads e retorno.' },
+  { to: '/marketing', icon: 'marketing', t: 'Marketing', d: 'Campanhas, funil de leads e retorno. Estratégia Primeiro Consultório para recém-formados, com orçamento, métricas e simulador.' },
   { to: '/concorrentes', icon: 'users', t: 'Concorrentes', d: 'Quem mais aluga consultórios em Maceió: preços, Instagram, Google Maps, sites, análise e ações sugeridas.' },
   { to: '/financeiro', icon: 'financeiro', t: 'Financeiro', d: 'Custos gerais, impostos, comissões e receita necessária para empatar.' },
 ]

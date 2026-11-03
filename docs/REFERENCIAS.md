@@ -75,3 +75,17 @@ Ahrefs e Semrush exigem validação humana ou login para mostrar números, por i
 Indiretos: Clínica Avha Paixão / Lottus ([aluguel de sala](https://clinicalottus.com/aluguel-de-sala/)), [Rather Coworking](https://www.instagram.com/rathercoworking/) e N3 Coworking (Parque Shopping).
 
 Descartados por não estarem em Maceió: MK Evolution Health (Balneário Camboriú), Vinci Medical Offices (São José dos Campos), Med&Co (Sete Lagoas).
+
+## Estratégia Primeiro Consultório (03/11/2026)
+
+Página `#/marketing/estrategia`. Números de mercado são ordens de grandeza: não há total publicado de formados por ano em Maceió, então as faixas partem das vagas das faculdades e precisam ser confirmadas no [e-MEC](https://emec.mec.gov.br/) e nos conselhos (CRP-15, CRM-AL, CREFITO-1, CRN-6).
+
+| Dado | Fonte |
+|---|---|
+| 79% de mulheres na psicologia, metade com até 39 anos | [CFP · CensoPsi 2022](https://site.cfp.org.br/censopsi-2022-cfp-divulga-os-resultados-da-maior-pesquisa-sobre-o-exercicio-profissional-da-psicologia-brasileira/) |
+| Mulheres são maioria entre médicos (50,9%) | [Demografia Médica no Brasil 2025](https://www.medway.com.br/conteudos/demografia-medica-no-brasil-2025-veja-os-principais-dados-do-novo-levantamento/) |
+| UFAL: 100 vagas de Medicina em Maceió (Sisu 2020) | [Blog do Vestibular](https://www.blogdovestibular.com/?p=29791) |
+| CESMAC: 100 vagas anuais de Medicina autorizadas (2014) | [Tribuna do Sertão](https://www.tribunadosertao.com.br/geral/2014/03/21/152518-cesmac-anuncia-para-maio-primeiro-vestibular-do-curso-de-medicina) |
+| CPM e CPC médios da Meta no Brasil | [SuperAds](https://www.superads.ai/facebook-ads-costs/cost-per-lead/brazil) |
+
+Premissas do caminho feliz (editáveis no simulador, código em `src/lib/estrategia.js`): CPL R$ 22, 60% de leads qualificados, 25% visitam, 40% fecham, R$ 380/mês nos 3 primeiros meses, 30% sobem para turno fixo (R$ 740/mês), churn de 10% ao mês, margem de 75%.
