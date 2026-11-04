@@ -1,6 +1,7 @@
 <script setup>
 // Matriz de horários (colunas × linhas) desenhada com D3.
-// Cada célula vem de `celula(col, row)`: { t: 'livre' | 'off' | 'conf' | 'prop' | 'heat', ref, v, txt, tip }.
+// Cada célula vem de `celula(col, row)`: { t: 'livre' | 'off' | 'conf' | 'prop' | 'heat', ref, v, num, tip }.
+// Quadrados agendados mostram o número do profissional; a legenda com os nomes fica fora do gráfico.
 // Arrastar sobre células livres seleciona um retângulo (como criar um evento no Google Agenda)
 // e emite `selecionar`; clicar numa célula ocupada emite `abrir` com o `ref` dela.
 import { pointer } from 'd3'
@@ -69,20 +70,12 @@ const { el, tip } = useChart((root, W0, tip) => {
       .attr('x', (d) => lw + d.ci * cw + cw / 2).attr('y', (d) => top + d.ri * ch + ch / 2)
       .attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').text((d) => pct(d.st.v || 0))
   }
-  // nome dentro de sequências horizontais do mesmo contrato (matriz mensal)
-  est.forEach((linha, ri) => {
-    linha.forEach((st, ci) => {
-      if (!st.txt || (ci > 0 && linha[ci - 1].ref === st.ref)) return
-      let n = 1
-      while (ci + n < nC && linha[ci + n].ref === st.ref) n++
-      const w = n * cw - 10
-      if (w < 30) return
-      const max = Math.floor(w / 6.6)
-      const t = st.txt.length > max ? `${st.txt.slice(0, Math.max(1, max - 1))}…` : st.txt
-      g.append('text').attr('class', `sg-t ${st.t}`).attr('x', lw + ci * cw + 7).attr('y', top + ri * ch + ch / 2)
-        .attr('dominant-baseline', 'middle').text(t)
-    })
-  })
+  // número do profissional dentro de cada quadrado agendado
+  if (cw >= 14) {
+    g.selectAll('text.sg-n').data(cells.filter((d) => d.st.num != null)).join('text').attr('class', (d) => `sg-n ${d.st.t}`)
+      .attr('x', (d) => lw + d.ci * cw + cw / 2).attr('y', (d) => top + d.ri * ch + ch / 2)
+      .attr('text-anchor', 'middle').attr('dominant-baseline', 'central').text((d) => d.st.num)
+  }
 
   const selG = svg.append('g')
   const rectSel = (s, cls) => selG.append('rect').attr('class', cls)
@@ -186,8 +179,8 @@ const { el, tip } = useChart((root, W0, tip) => {
 .sgw :deep(.sg-c.heat) { fill: var(--s-firm); }
 .sgw :deep(.sg-c.hl) { stroke: var(--text); }
 .sgw :deep(.sg-sel) { fill: var(--s-firm); fill-opacity: 0.6; stroke: var(--accent); stroke-width: 2; pointer-events: none; }
-.sgw :deep(.sg-t) { font-size: 11px; font-weight: 500; fill: #fff; pointer-events: none; }
-.sgw :deep(.sg-t.prop) { fill: var(--text); }
+.sgw :deep(.sg-n) { font-size: 12px; font-weight: 600; fill: #fff; pointer-events: none; font-variant-numeric: tabular-nums; }
+.sgw :deep(.sg-n.prop) { fill: var(--text); }
 .sgw :deep(.sg-v) { font-size: 11px; fill: var(--text); pointer-events: none; font-variant-numeric: tabular-nums; }
 .sgw :deep(.sg-v.inv) { fill: #fff; }
 </style>

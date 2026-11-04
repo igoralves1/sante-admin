@@ -88,8 +88,8 @@ function celula(col, row) {
   const cm = !a && contratoMensalMes.value
   if (cm) {
     return {
-      t: firme(cm) ? 'conf' : 'prop', ref: `ct:${cm.id}`, txt: cm.cliente,
-      tip: { title: cm.cliente || 'Sem nome', rows: [
+      t: firme(cm) ? 'conf' : 'prop', ref: `ct:${cm.id}`, num: numDe(cm.cliente),
+      tip: { title: `${numDe(cm.cliente)}. ${cm.cliente || 'Sem nome'}`, rows: [
         { label: 'Contrato mensal', value: 'todos os turnos' },
         { label: 'Valor mensal', value: brl(valorMensal(cm)) },
         { label: 'Status', value: cm.status },
@@ -98,8 +98,8 @@ function celula(col, row) {
   }
   if (a) {
     return {
-      t: a.status === 'Confirmada' ? 'conf' : 'prop', ref: a.id,
-      tip: { title: a.cliente || 'Sem nome', rows: [
+      t: a.status === 'Confirmada' ? 'conf' : 'prop', ref: a.id, num: numDe(a.cliente),
+      tip: { title: `${numDe(a.cliente)}. ${a.cliente || 'Sem nome'}`, rows: [
         { label: dataBR(a.data), value: a.slots.map(nomeSlot).join(', ') },
         { label: 'Valor', value: brl(a.valor) },
         { label: 'Status', value: a.status },
@@ -108,6 +108,38 @@ function celula(col, row) {
   }
   return { t: 'livre', tip: { title: titulo, rows: [{ label: 'Livre', value: `${h.ini}–${h.fim}` }, { label: 'Clique ou arraste para reservar', value: '' }] } }
 }
+// ---------- legenda: um número por profissional ----------
+// Os quadrados mostram só o número; o nome fica na legenda (vários profissionais no mesmo dia continuam legíveis).
+const chaveProf = (nome) => (nome || 'Sem nome').trim().toLowerCase()
+const turnosAbertosMes = computed(() => dias.value.reduce((s, d) => s + agenda.value.horarios.filter((h) => h.dias.includes(d.dow)).length, 0))
+const legenda = computed(() => {
+  const m = new Map()
+  const add = (nome, extra) => {
+    const k = chaveProf(nome)
+    if (!m.has(k)) m.set(k, { n: m.size + 1, nome: nome || 'Sem nome', turnos: 0, valor: 0, conf: false, prop: false, contrato: '' })
+    const e = m.get(k)
+    e.turnos += extra.turnos || 0
+    e.valor += extra.valor || 0
+    if (extra.conf) e.conf = true
+    else e.prop = true
+    if (extra.contrato) e.contrato = extra.contrato
+  }
+  if (porVagas.value) {
+    ;[...contratosVivos.value].filter((c) => lugares.value.has(c.id)).sort((a, b) => a.inicio.localeCompare(b.inicio))
+      .forEach((c) => add(c.cliente, { valor: valorMensal(c), conf: firme(c), contrato: `${dataBR(c.inicio)} a ${c.fim ? dataBR(c.fim) : 'sem término'} · ${num(c.quantidade)} vaga(s)` }))
+    return [...m.values()]
+  }
+  const cm = contratoMensalMes.value
+  if (cm) add(cm.cliente, { turnos: turnosAbertosMes.value, valor: valorMensal(cm), conf: firme(cm), contrato: 'contrato mensal, todos os turnos' })
+  const ordem = Object.fromEntries(agenda.value.horarios.map((h, i) => [chave(h), i]))
+  ags.value.filter((a) => ativoAg(a) && a.data.startsWith(state.mes))
+    .sort((a, b) => a.data.localeCompare(b.data) || (ordem[a.slots[0]] ?? 0) - (ordem[b.slots[0]] ?? 0))
+    .forEach((a) => add(a.cliente, { turnos: a.slots.length, valor: Number(a.valor) || 0, conf: a.status === 'Confirmada' }))
+  return [...m.values()]
+})
+const numPorChave = computed(() => Object.fromEntries(legenda.value.map((l) => [chaveProf(l.nome), l.n])))
+const numDe = (nome) => numPorChave.value[chaveProf(nome)]
+
 // contrato mensal vigente: a sala inteira fica com um profissional o mês todo
 const contratoMensalMes = computed(() => (r.value?.contratos || []).find((c) => c.modalidade === 'Mensal') || null)
 // contratos por quantidade (horas/turnos no mês) não têm dia nem horário
@@ -140,8 +172,8 @@ function celulaM(col, row) {
   const c = mapaM.value[`${row.k}|${col.k}`]
   if (c) {
     return {
-      t: firme(c) ? 'conf' : 'prop', ref: c.id, txt: c.cliente,
-      tip: { title: c.cliente || 'Sem nome', rows: [
+      t: firme(c) ? 'conf' : 'prop', ref: c.id, num: numDe(c.cliente),
+      tip: { title: `${numDe(c.cliente)}. ${c.cliente || 'Sem nome'}`, rows: [
         { label: 'Vigência', value: `${dataBR(c.inicio)} a ${c.fim ? dataBR(c.fim) : 'sem término'}` },
         { label: 'Valor mensal', value: brl(valorMensal(c)) },
         { label: 'Status', value: c.status },
@@ -615,6 +647,16 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
         v-else :cols="mCols" :rows="mRows" :celula="celulaM" :selecao="sel" :deps="mapaM" :min-col="44"
         :row-h="vagas > 6 ? 26 : 36" aria-label="Agenda de contratos mensais" @selecionar="aoSelecionar" @abrir="abrir"
       />
+      <ol v-if="legenda.length" class="leg-prof" aria-label="Legenda dos profissionais">
+        <li v-for="l in legenda" :key="l.n">
+          <span class="num" :class="l.conf ? 'conf' : 'prop'">{{ l.n }}</span>
+          <span class="txt"><span class="nome">{{ l.nome }}</span>
+          <span class="muted small">
+            {{ l.contrato || `${l.turnos} ${l.turnos === 1 ? 'turno' : 'turnos'}` }} · {{ brl(l.valor) }}{{ porVagas ? '/mês' : '' }}{{ l.prop && !l.conf ? ' · proposta' : '' }}
+          </span></span>
+        </li>
+      </ol>
+      <p v-else class="small muted leg-vazia">Nenhum turno agendado neste mês.</p>
       <p v-if="!porVagas && semHorario.length" class="note small sem-h">
         <strong>Contratos sem horário definido neste mês:</strong>
         <span v-for="c in semHorario" :key="c.id"> {{ c.cliente || 'Sem nome' }} · {{ num(c.quantidade) }} {{ unidade }} · {{ brl(valorMensal(c)) }};</span>
@@ -898,6 +940,14 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .key span { display: inline-flex; align-items: center; gap: 6px; }
 .key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .k-livre { background: var(--s-track); }
+.leg-prof { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 6px 16px; }
+.leg-prof li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; min-width: 0; }
+.leg-prof .txt { min-width: 0; line-height: 1.45; }
+.leg-prof .num { flex: none; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 6px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.leg-prof .num.conf { background: var(--s-firm); color: #fff; }
+.leg-prof .num.prop { background: var(--s-prop); color: var(--text); }
+.leg-prof .nome { font-weight: 500; margin-right: 4px; }
+.leg-vazia { margin: 10px 0 0; }
 .k-off { border: 1px dashed var(--border); }
 .sem-h { margin-top: 12px; }
 .lista { margin-top: 14px; }
