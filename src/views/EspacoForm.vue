@@ -130,7 +130,7 @@ function excluir() {
         </div>
         <div v-if="!novo" class="card small muted">
           {{ contratos }} contrato(s) neste espaço.
-          <RouterLink to="/situacao">Ver na situação atual</RouterLink>
+          <RouterLink to="/situacao">Ver na carteira de contratos</RouterLink>
         </div>
       </div>
 

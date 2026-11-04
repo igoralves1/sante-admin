@@ -22,7 +22,7 @@ const potencial = computed(() => linhas.value.reduce((a, e) => a + e.potencial, 
 const despesas = computed(() => linhas.value.reduce((a, e) => a + e.despesasMes, 0))
 
 function remover(e) {
-  if (e.total) return alert(`${e.nome} tem ${e.total} contrato(s). Exclua ou mova os contratos em Situação atual antes de remover o espaço.`)
+  if (e.total) return alert(`${e.nome} tem ${e.total} contrato(s). Exclua ou mova os contratos em Carteira de contratos antes de remover o espaço.`)
   if (!confirm(`Remover ${e.nome}?`)) return
   state.data.espacos = state.data.espacos.filter((x) => x.id !== e.id)
   state.data.campanhas.forEach((c) => (c.espacos = c.espacos.filter((id) => id !== e.id)))

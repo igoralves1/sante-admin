@@ -9,16 +9,17 @@ const route = useRoute()
 onMounted(carregar)
 
 const nav = [
-  { to: '/', label: 'Início', icon: 'home' },
-  { to: '/painel', label: 'Painel', icon: 'painel' },
-  { to: '/situacao', label: 'Situação atual', icon: 'reservas' },
-  { to: '/espacos', label: 'Espaços', icon: 'espacos' },
-  { to: '/profissionais', label: 'Profissionais', icon: 'user' },
-  { to: '/estatisticas', label: 'Estatísticas', icon: 'stats' },
-  { to: '/marketing', label: 'Marketing', icon: 'marketing' },
-  { to: '/concorrentes', label: 'Concorrentes', icon: 'users' },
-  { to: '/financeiro', label: 'Financeiro', icon: 'financeiro' },
-  { to: '/dados', label: 'Dados', icon: 'dados' },
+  // nomes do domínio da contabilidade gerencial
+  { to: '/', label: 'Visão geral', icon: 'home' },
+  { to: '/painel', label: 'Painel gerencial', icon: 'painel' },
+  { to: '/situacao', label: 'Carteira de contratos', icon: 'reservas' },
+  { to: '/espacos', label: 'Centros de custo', icon: 'espacos' },
+  { to: '/profissionais', label: 'Locatários', icon: 'user' },
+  { to: '/estatisticas', label: 'Projeções e cenários', icon: 'stats' },
+  { to: '/marketing', label: 'Comercial', icon: 'marketing' },
+  { to: '/concorrentes', label: 'Análise de mercado', icon: 'users' },
+  { to: '/financeiro', label: 'Custos e equilíbrio', icon: 'financeiro' },
+  { to: '/dados', label: 'Base de dados', icon: 'dados' },
 ]
 
 // tema: auto -> claro -> escuro

@@ -134,7 +134,7 @@ export const metricas = [
   { g: 'Captação', n: 'CPL (custo por lead)', f: 'gasto em mídia ÷ leads pagos', meta: '≤ R$ 22', alerta: '> R$ 35', onde: 'Gerenciador + planilha', freq: 'Semanal' },
   { g: 'Captação', n: 'Leads qualificados', f: 'profissional de saúde formado há até 3 anos ÷ leads', meta: '≥ 60%', alerta: '< 40%', onde: 'Pergunta no roteiro do WhatsApp', freq: 'Semanal' },
   { g: 'Conversão', n: 'Lead qualificado → visita', f: 'visitas ÷ leads qualificados', meta: '≥ 25%', alerta: '< 15%', onde: 'Planilha de leads', freq: 'Quinzenal' },
-  { g: 'Conversão', n: 'Visita → contrato', f: 'contratos ÷ visitas', meta: '≥ 40%', alerta: '< 25%', onde: 'Situação atual (campanha do contrato)', freq: 'Quinzenal' },
+  { g: 'Conversão', n: 'Visita → contrato', f: 'contratos ÷ visitas', meta: '≥ 40%', alerta: '< 25%', onde: 'Carteira de contratos (campanha do contrato)', freq: 'Quinzenal' },
   { g: 'Conversão', n: 'Tempo de resposta no WhatsApp', f: 'média do 1º retorno em horário comercial', meta: '≤ 5 min', alerta: '> 30 min', onde: 'WhatsApp Business', freq: 'Semanal' },
   { g: 'Conversão', n: 'CAC (custo por cliente)', f: 'investimento total ÷ novos clientes', meta: '≤ R$ 450', alerta: '> R$ 700', onde: 'Esta página e Marketing', freq: 'Mensal' },
   { g: 'Valor', n: 'Ticket médio nos 3 primeiros meses', f: 'receita dos novos ÷ novos ativos', meta: '≥ R$ 380', alerta: '< R$ 250', onde: 'Situação atual', freq: 'Mensal' },
@@ -147,7 +147,7 @@ export const metricas = [
   { g: 'Retenção', n: 'NPS dos profissionais', f: '% promotores − % detratores', meta: '≥ 60', alerta: '< 30', onde: 'Formulário trimestral', freq: 'Trimestral' },
   { g: 'Retenção', n: 'Indicações por cliente', f: 'indicações recebidas ÷ clientes ativos', meta: '≥ 0,3 por semestre', alerta: '< 0,1', onde: 'Código #IND no WhatsApp', freq: 'Mensal' },
   { g: 'Ocupação', n: 'Ocupação das salas por hora e turno', f: 'horas vendidas ÷ capacidade', meta: '≥ 60% (meta da Santé)', alerta: 'Queda por 2 meses seguidos', onde: 'Painel', freq: 'Mensal' },
-  { g: 'Marca', n: 'Presença no Google Maps', f: 'buscas-alvo em que a Santé aparece', meta: '4 de 4 em 90 dias', alerta: 'Menos de 2', onde: 'Página Concorrentes', freq: 'Mensal' },
+  { g: 'Marca', n: 'Presença no Google Maps', f: 'buscas-alvo em que a Santé aparece', meta: '4 de 4 em 90 dias', alerta: 'Menos de 2', onde: 'Análise de mercado', freq: 'Mensal' },
   { g: 'Marca', n: 'Avaliações novas no Google', f: 'avaliações de profissionais por mês', meta: '≥ 5', alerta: '0', onde: 'Perfil da Empresa', freq: 'Mensal' },
 ]
 
@@ -156,7 +156,7 @@ export const medicao = [
   'Links com UTM no site e na bio. Ligar Google Analytics 4, Search Console e o Pixel da Meta com API de Conversões.',
   'Pergunta fixa no roteiro: “Você é formado há quanto tempo e em quê?” Assim se mede o lead qualificado.',
   'Planilha de leads com data, canal, profissão, etapa (lead, visita, contrato, perdido) e motivo da perda.',
-  'Ao fechar um contrato em Situação atual, escolher a campanha de origem. O retorno aparece no Marketing.',
+  'Ao fechar um contrato em Carteira de contratos, escolher a campanha de origem. O retorno aparece em Comercial.',
   'Reunião de 30 minutos toda segunda: CPL, leads, visitas e contratos da semana. Pausar o anúncio que passar do alerta duas semanas seguidas.',
 ]
 

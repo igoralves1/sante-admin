@@ -5,14 +5,14 @@ import { state } from '../lib/store'
 const meta = state.data.meta
 
 const secoes = [
-  { to: '/painel', icon: 'painel', t: 'Painel', d: 'Ocupação do mês por espaço, receita, dinheiro parado e evolução mensal.' },
-  { to: '/situacao', icon: 'reservas', t: 'Situação atual', d: 'Contratos de cada espaço: duração, valor total, despesas e resultado. Criar, editar e encerrar.' },
-  { to: '/espacos/novo', icon: 'espacos', t: 'Cadastrar espaço', d: 'Novas salas, piscina ou áreas: modalidade, capacidade, preço e despesas.' },
-  { to: '/profissionais', icon: 'user', t: 'Profissionais', d: 'Cadastro de quem aluga: profissão, registro, contato e redes sociais. Usado na agenda de cada sala.' },
-  { to: '/estatisticas', icon: 'stats', t: 'Estatísticas e estimativas', d: 'Projeção de 12 meses, linha do tempo dos contratos, cenários e ponto de equilíbrio.' },
-  { to: '/marketing', icon: 'marketing', t: 'Marketing', d: 'Campanhas, funil de leads e retorno. Estratégia Primeiro Consultório para recém-formados, com orçamento, métricas e simulador.' },
-  { to: '/concorrentes', icon: 'users', t: 'Concorrentes', d: 'Quem mais aluga consultórios em Maceió: preços, Instagram, Google Maps, sites, análise e ações sugeridas.' },
-  { to: '/financeiro', icon: 'financeiro', t: 'Financeiro', d: 'Custos gerais, impostos, comissões e receita necessária para empatar.' },
+  { to: '/painel', icon: 'painel', t: 'Painel gerencial', d: 'Ocupação do mês por espaço, receita, dinheiro parado e evolução mensal.' },
+  { to: '/situacao', icon: 'reservas', t: 'Carteira de contratos', d: 'Contratos de cada espaço: duração, valor total, despesas e resultado. Criar, editar e encerrar.' },
+  { to: '/espacos/novo', icon: 'espacos', t: 'Novo centro de custo', d: 'Novas salas, piscina ou áreas: modalidade, capacidade, preço e despesas.' },
+  { to: '/profissionais', icon: 'user', t: 'Locatários', d: 'Cadastro dos profissionais que alugam: profissão, registro, contato e redes sociais. Usado na agenda de cada sala.' },
+  { to: '/estatisticas', icon: 'stats', t: 'Projeções e cenários', d: 'Projeção de 12 meses, linha do tempo dos contratos, cenários e ponto de equilíbrio.' },
+  { to: '/marketing', icon: 'marketing', t: 'Comercial', d: 'Campanhas, funil de leads e retorno. Estratégia Primeiro Consultório para recém-formados, com orçamento, métricas e simulador.' },
+  { to: '/concorrentes', icon: 'users', t: 'Análise de mercado', d: 'Quem mais aluga consultórios em Maceió: preços, Instagram, Google Maps, sites, análise e ações sugeridas.' },
+  { to: '/financeiro', icon: 'financeiro', t: 'Custos e equilíbrio', d: 'Custos gerais, impostos, comissões e receita necessária para empatar.' },
 ]
 
 const fontes = [
@@ -36,8 +36,8 @@ const fontes = [
         rende e custa, e o que o marketing está fazendo para preencher o que sobra.
       </p>
       <div class="toolbar">
-        <RouterLink to="/painel" class="btn primary">Abrir o painel</RouterLink>
-        <RouterLink to="/situacao" class="btn">Ver situação atual</RouterLink>
+        <RouterLink to="/painel" class="btn primary">Abrir o painel gerencial</RouterLink>
+        <RouterLink to="/situacao" class="btn">Ver carteira de contratos</RouterLink>
       </div>
     </section>
 

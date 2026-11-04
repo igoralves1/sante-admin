@@ -175,7 +175,7 @@ function funil(c) {
         <ul class="tips small">
           <li>Mostre cada espaço vazio em um post próprio: foto, para quem serve, preço e como reservar.</li>
           <li>Use o link da bio para WhatsApp e registre cada contato como lead na campanha.</li>
-          <li>Ao fechar um contrato em Situação atual, marque a campanha de origem: o resultado aparece aqui.</li>
+          <li>Ao fechar um contrato em Carteira de contratos, marque a campanha de origem: o resultado aparece aqui.</li>
         </ul>
       </div>
     </section>

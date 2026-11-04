@@ -115,8 +115,8 @@ function descartar() {
       <div class="table-wrap">
         <table>
           <tbody>
-            <tr><td class="k">1. Confira o cadastro</td><td>Revise capacidades, preços e despesas em Espaços; cadastre novos espaços em “Cadastrar novo espaço”.</td></tr>
-            <tr><td class="k">2. Revise a base inicial</td><td>Os contratos “Base inicial” (outubro/2026) são estimativas da planilha. Em Situação atual, informe cliente, término e valores reais.</td></tr>
+            <tr><td class="k">1. Confira o cadastro</td><td>Revise capacidades, preços e despesas em Centros de custo; cadastre novos em “Novo centro de custo”.</td></tr>
+            <tr><td class="k">2. Revise a base inicial</td><td>Os contratos “Base inicial” (outubro/2026) são estimativas da planilha. Em Carteira de contratos, informe cliente, término e valores reais.</td></tr>
             <tr><td class="k">3. Lance os contratos</td><td>Espaço, cliente, quantidade por mês, preço, início, término, status e campanha. Duração e valor total são calculados.</td></tr>
             <tr><td class="k">4. Renove a tempo</td><td>Contratos que terminam nos próximos 3 meses aparecem em destaque; use “Renovar” para registrar a proposta.</td></tr>
             <tr><td class="k">5. Informe os custos</td><td>Em Financeiro, preencha os custos gerais e as alíquotas. As despesas de cada espaço entram no ponto de equilíbrio automaticamente.</td></tr>

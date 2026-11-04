@@ -683,12 +683,12 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
         <strong>Contratos sem horário definido neste mês:</strong>
         <span v-for="c in semHorario" :key="c.id"> {{ c.cliente || 'Sem nome' }} · {{ num(c.quantidade) }} {{ unidade }} · {{ brl(valorMensal(c)) }};</span>
         Eles contam na ocupação, mas não aparecem na matriz. Ao passar esses horários para a agenda, encerre ou ajuste o contrato em
-        <RouterLink to="/situacao">Situação atual</RouterLink> para não contar duas vezes.
+        <RouterLink to="/situacao">Carteira de contratos</RouterLink> para não contar duas vezes.
       </p>
       <p v-if="unidadeDiferente.length" class="note small sem-h warnote">
         <strong>Contratos em outra unidade:</strong>
         <span v-for="c in unidadeDiferente" :key="c.id"> {{ c.cliente || 'Sem nome' }} · {{ num(c.quantidade) }} {{ UNIDADE[c.modalidade] }}/mês;</span>
-        a sala agora cobra por turno, então essas quantidades passam a contar como turnos. Ajuste em <RouterLink to="/situacao">Situação atual</RouterLink>.
+        a sala agora cobra por turno, então essas quantidades passam a contar como turnos. Ajuste em <RouterLink to="/situacao">Carteira de contratos</RouterLink>.
       </p>
       <p v-if="porVagas && foraDasVagas.length" class="note small sem-h">
         {{ foraDasVagas.length }} contrato(s) pedem mais vagas do que o espaço tem no período. Revise a capacidade ou as quantidades.
@@ -892,7 +892,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
         <div class="cap">
           <span class="small muted">Capacidade em {{ mesTitulo }}, contada nesta agenda</span>
           <strong class="tnum">{{ num(turnosMes) }} turnos{{ esp.modalidade === 'Hora' ? ` · ${num(r.capacidade)} horas` : '' }}</strong>
-          <span v-if="usaAgenda(esp)" class="small muted">Muda a cada mês conforme os dias úteis e sábados. É a capacidade usada no Painel e nas Estatísticas.</span>
+          <span v-if="usaAgenda(esp)" class="small muted">Muda a cada mês conforme os dias úteis e sábados. É a capacidade usada no Painel gerencial e em Projeções e cenários.</span>
           <span v-else class="small muted">Esta sala está em contrato mensal: a capacidade cadastrada ({{ num(esp.capacidade) }} {{ unidade }}) vale até você informar o valor por turno.</span>
         </div>
       </div>

@@ -129,7 +129,7 @@ function excluir(p) {
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Profissionais</h2>
+          <h2>Cadastro de locatários</h2>
           <p>Quem aluga ou pode alugar os espaços. Os nomes aparecem na lista da agenda de cada sala.</p>
         </div>
         <div class="toolbar">

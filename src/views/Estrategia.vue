@@ -80,8 +80,8 @@ const aviso = ref('')
 function adicionar() {
   const n = adicionarAoPlano(state.data, CENARIOS[cen.value], { ...p })
   aviso.value = n
-    ? `${n} campanhas do cenário ${CENARIOS[cen.value].nome} foram criadas como planejadas no Marketing.`
-    : 'As campanhas deste plano já estão na lista do Marketing.'
+    ? `${n} campanhas do cenário ${CENARIOS[cen.value].nome} foram criadas como planejadas em Comercial.`
+    : 'As campanhas deste plano já estão na lista de Comercial.'
 }
 
 // ---------- tabelas ----------
@@ -395,8 +395,8 @@ const grupos = [...new Set(metricas.map((m) => m.g))]
         </table>
       </div>
       <div class="add">
-        <button class="btn primary" type="button" @click="adicionar"><Icon name="plus" :size="16" /> Criar as campanhas do cenário {{ CENARIOS[cen].nome }} no Marketing</button>
-        <span v-if="aviso" class="small muted">{{ aviso }} <RouterLink to="/marketing">Abrir o Marketing</RouterLink></span>
+        <button class="btn primary" type="button" @click="adicionar"><Icon name="plus" :size="16" /> Criar as campanhas do cenário {{ CENARIOS[cen].nome }} em Comercial</button>
+        <span v-if="aviso" class="small muted">{{ aviso }} <RouterLink to="/marketing">Abrir Comercial</RouterLink></span>
       </div>
     </section>
 
@@ -441,7 +441,7 @@ const grupos = [...new Set(metricas.map((m) => m.g))]
       <h2>Fontes</h2>
       <ul class="refs">
         <li v-for="f in fontes" :key="f.u"><a :href="f.u" target="_blank" rel="noopener">{{ f.t }}</a><span class="muted small">{{ f.d }}</span></li>
-        <li><RouterLink to="/concorrentes">Página Concorrentes</RouterLink><span class="muted small">horários, preços e canais dos concorrentes usados nas lacunas</span></li>
+        <li><RouterLink to="/concorrentes">Análise de mercado</RouterLink><span class="muted small">horários, preços e canais dos concorrentes usados nas lacunas</span></li>
       </ul>
     </section>
   </div>

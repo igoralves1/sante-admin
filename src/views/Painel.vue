@@ -68,7 +68,7 @@ function tomResultado(e) {
 }
 // Nomes da contabilidade de custos; o popup de cada coluna resume o cálculo
 const colunas = [
-  { key: 'nome', label: 'Espaço', link: (e) => `#/espacos/${e.id}`, hint: 'Sala ou área cadastrada em Espaços. É o centro de custo de cada linha. Clique no nome para abrir a página do espaço: agenda, histórico e movimentação.' },
+  { key: 'nome', label: 'Espaço', link: (e) => `#/espacos/${e.id}`, hint: 'Sala ou área cadastrada em Centros de custo. É o centro de custo de cada linha. Clique no nome para abrir a página do espaço: agenda, histórico e movimentação.' },
   { key: 'modalidade', label: 'Modalidade', hint: 'Forma de locação: por hora, por turno ou contrato mensal. Define a unidade das colunas de capacidade.' },
   { key: 'capacidade', label: 'Capacidade\ninstalada', num: true, format: num, hint: 'Quantas unidades o espaço pode locar neste mês. Salas e piscina: turnos (ou horas) abertos na agenda de cada uma, contando os dias úteis e sábados do mês. Contrato mensal e administrativo: valor cadastrado.' },
   { key: 'ocupado', label: 'Capacidade\nutilizada', num: true, format: num, hint: 'Soma das quantidades dos contratos vigentes no mês (confirmados, base inicial e propostas). Contratos cancelados ficam de fora.' },
