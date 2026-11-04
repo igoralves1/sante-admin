@@ -59,24 +59,25 @@ const mesTitulo = computed(() => {
   return `${MES_ABREV[m - 1]}-${y}`
 })
 
-// Resultado: verde = ganho de sala mensal, amarelo = outro ganho, vermelho = zero ou negativo
+// Margem de contribuição: verde = sala mensal, amarelo = hora ou turno, vermelho = zero ou negativa
 function tomResultado(e) {
-  if (e.resultado <= 0) return { c: 'bad', t: 'Sem ganho neste mês' }
-  if (e.modalidade === 'Mensal') return { c: 'good', t: 'Ganho de contrato mensal' }
-  return { c: 'warn', t: `Ganho por ${e.modalidade === 'Hora' ? 'hora' : 'turno'}` }
+  if (e.resultado <= 0) return { c: 'bad', t: 'Margem de contribuição zero ou negativa' }
+  if (e.modalidade === 'Mensal') return { c: 'good', t: 'Margem de contrato mensal' }
+  return { c: 'warn', t: `Margem de locação por ${e.modalidade === 'Hora' ? 'hora' : 'turno'}` }
 }
+// Nomes da contabilidade de custos; o popup de cada coluna resume o cálculo
 const colunas = [
-  { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
-  { key: 'modalidade', label: 'Modalidade', hint: 'Como o espaço é alugado: por hora, por turno ou por contrato mensal. Define a unidade das colunas de capacidade, ocupado e disponível.' },
-  { key: 'capacidade', label: 'Capacidade', num: true, format: num, hint: 'Quantas unidades o espaço pode vender no mês: horas, turnos ou contratos. Valor cadastrado em Espaços.' },
-  { key: 'ocupado', label: 'Ocupado', num: true, format: num, hint: 'Soma das quantidades dos contratos vigentes no mês (confirmados, base inicial e propostas). Contratos cancelados ficam de fora.' },
-  { key: 'disponivel', label: 'Disponível', num: true, format: num, hint: 'Capacidade − Ocupado. Nunca fica abaixo de zero.' },
-  { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true, hint: 'Ocupado ÷ Capacidade.\nNa linha Total, a taxa é ponderada pela receita: Receita total ÷ Potencial total, porque horas, turnos e contratos não se somam.' },
-  { key: 'potencial', label: 'Potencial', num: true, format: brl, hint: 'Capacidade × Preço da unidade. É a receita do mês com o espaço 100% ocupado.' },
-  { key: 'receitaOcupada', label: 'Receita', num: true, format: brl, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês.' },
-  { key: 'despesas', label: 'Despesas', num: true, format: brl, hint: 'Soma das despesas mensais cadastradas no próprio espaço. Custos gerais da clínica ficam no Financeiro.' },
-  { key: 'resultado', label: 'Resultado', num: true, format: brl, tone: tomResultado, hint: 'Receita − Despesas do espaço.\nVerde: ganho de sala mensal. Amarelo: ganho por hora ou turno. Vermelho: zero ou negativo.' },
-  { key: 'receitaDisponivel', label: 'Disponível R$', num: true, format: brl, hint: 'Disponível × Preço da unidade. É a receita que ainda pode ser vendida neste mês.' },
+  { key: 'nome', label: 'Espaço', hint: 'Sala ou área cadastrada em Espaços. É o centro de custo de cada linha.' },
+  { key: 'modalidade', label: 'Modalidade', hint: 'Forma de locação: por hora, por turno ou contrato mensal. Define a unidade das colunas de capacidade.' },
+  { key: 'capacidade', label: 'Capacidade\ninstalada', num: true, format: num, hint: 'Quantas unidades o espaço pode locar no mês: horas, turnos ou contratos. Valor cadastrado em Espaços.' },
+  { key: 'ocupado', label: 'Capacidade\nutilizada', num: true, format: num, hint: 'Soma das quantidades dos contratos vigentes no mês (confirmados, base inicial e propostas). Contratos cancelados ficam de fora.' },
+  { key: 'disponivel', label: 'Capacidade\nociosa', num: true, format: num, hint: 'Capacidade instalada − Capacidade utilizada. Nunca fica abaixo de zero.' },
+  { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true, hint: 'Capacidade utilizada ÷ Capacidade instalada.\nNa linha Total, a taxa é ponderada pela receita: Receita bruta ÷ Receita potencial, porque horas, turnos e contratos não se somam.' },
+  { key: 'potencial', label: 'Receita\npotencial', num: true, format: brl0, hint: 'Capacidade instalada × Preço da unidade. É o faturamento do mês com o espaço 100% ocupado.' },
+  { key: 'receitaOcupada', label: 'Receita bruta\n(faturamento)', num: true, format: brl0, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês, antes de impostos e custos.' },
+  { key: 'despesas', label: 'Custos\ndiretos', num: true, format: brl0, hint: 'Custos mensais lançados no próprio espaço (ex.: aquecimento da piscina). Custos fixos gerais, impostos e comissões ficam no Financeiro.' },
+  { key: 'resultado', label: 'Margem de\ncontribuição', num: true, format: brl0, tone: tomResultado, hint: 'Receita bruta − Custos diretos do espaço. É quanto o espaço contribui para pagar os custos fixos gerais e gerar lucro.\nVerde: contrato mensal. Amarelo: locação por hora ou turno. Vermelho: zero ou negativa.' },
+  { key: 'receitaDisponivel', label: 'Receita\nociosa', num: true, format: brl0, hint: 'Capacidade ociosa × Preço da unidade. Faturamento que ainda pode ser vendido neste mês.' },
 ]
 const rodape = computed(() => ({
   nome: 'Total',
@@ -166,12 +167,12 @@ const rodape = computed(() => ({
           <p>Clique no cabeçalho para ordenar</p>
         </div>
       </div>
-      <D3Table :columns="colunas" :rows="r.espacos" :footer="rodape" sort-key="receitaDisponivel" />
+      <D3Table :columns="colunas" :rows="r.espacos" :footer="rodape" sort-key="receitaDisponivel" compact />
       <p class="tone-legend small">
-        Resultado:
-        <span class="tone good">verde</span> ganho de sala mensal ·
-        <span class="tone warn">amarelo</span> ganho por hora ou turno ·
-        <span class="tone bad">vermelho</span> sem ganho
+        Margem de contribuição:
+        <span class="tone good">verde</span> contrato mensal ·
+        <span class="tone warn">amarelo</span> locação por hora ou turno ·
+        <span class="tone bad">vermelho</span> zero ou negativa
       </p>
     </section>
   </div>

@@ -10,6 +10,7 @@ const props = defineProps({
   rows: Array,
   footer: Object, // linha de totais opcional (mesmas chaves)
   sortKey: String,
+  compact: Boolean, // menos espaço entre colunas, para tabelas largas
 })
 const el = ref(null)
 const sort = ref({ key: props.sortKey || props.columns[0].key, dir: -1 })
@@ -38,7 +39,7 @@ onBeforeUnmount(() => window.removeEventListener('scroll', seguir, true))
 function render() {
   const root = select(el.value)
   root.selectAll('*').remove()
-  const table = root.append('table')
+  const table = root.append('table').classed('compact', props.compact)
   const s = sort.value
   const tr = table.append('thead').append('tr')
   tr.selectAll('th').data(props.columns).join('th')
@@ -124,6 +125,12 @@ th.num .th-in { justify-content: flex-end; }
 .th-arrow { opacity: 0.45; font-size: 11px; line-height: 1.3; }
 .th-arrow.on { opacity: 1; color: var(--accent-ink); }
 th.sortable:hover .th-arrow, th.sortable:focus-visible .th-arrow { opacity: 1; }
+table.compact th, table.compact td { padding-left: 6px; padding-right: 6px; }
+table.compact td { font-size: 13px; }
+table.compact th { font-size: 11px; }
+table.compact .cellbar { gap: 6px; }
+table.compact .cellbar-track { width: 32px; }
+table.compact .tone { padding: 1px 6px; }
 .tone { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
 .tone.good { color: var(--good); background: var(--good-soft); }
 .tone.warn { color: var(--warn); background: var(--warn-soft); }
