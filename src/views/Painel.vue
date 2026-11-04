@@ -52,17 +52,23 @@ const cheios = computed(() => r.value.espacos.filter((e) => e.taxa >= 1))
 const vazios = computed(() => r.value.espacos.filter((e) => e.ocupado === 0))
 const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.taxa < meta.value))
 
+// Resultado: verde = ganho de sala mensal, amarelo = outro ganho, vermelho = zero ou negativo
+function tomResultado(e) {
+  if (e.resultado <= 0) return { c: 'bad', t: 'Sem ganho neste mês' }
+  if (e.modalidade === 'Mensal') return { c: 'good', t: 'Ganho de contrato mensal' }
+  return { c: 'warn', t: `Ganho por ${e.modalidade === 'Hora' ? 'hora' : 'turno'}` }
+}
 const colunas = [
   { key: 'nome', label: 'Espaço' },
   { key: 'modalidade', label: 'Modalidade' },
   { key: 'capacidade', label: 'Capacidade', num: true, format: num },
   { key: 'ocupado', label: 'Ocupado', num: true, format: num },
   { key: 'disponivel', label: 'Disponível', num: true, format: num },
-  { key: 'taxa', label: 'Taxa', num: true, format: pct, bar: true },
+  { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true },
   { key: 'potencial', label: 'Potencial', num: true, format: brl },
   { key: 'receitaOcupada', label: 'Receita', num: true, format: brl },
   { key: 'despesas', label: 'Despesas', num: true, format: brl },
-  { key: 'resultado', label: 'Resultado', num: true, format: brl },
+  { key: 'resultado', label: 'Resultado', num: true, format: brl, tone: tomResultado },
   { key: 'receitaDisponivel', label: 'Disponível R$', num: true, format: brl },
 ]
 const rodape = computed(() => ({
@@ -154,6 +160,12 @@ const rodape = computed(() => ({
         </div>
       </div>
       <D3Table :columns="colunas" :rows="r.espacos" :footer="rodape" sort-key="receitaDisponivel" />
+      <p class="tone-legend small">
+        Resultado:
+        <span class="tone good">verde</span> ganho de sala mensal ·
+        <span class="tone warn">amarelo</span> ganho por hora ou turno ·
+        <span class="tone bad">vermelho</span> sem ganho
+      </p>
     </section>
   </div>
 </template>
@@ -161,4 +173,6 @@ const rodape = computed(() => ({
 <style scoped>
 .facts { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 14px; }
 .facts li { display: grid; gap: 4px; justify-items: start; color: var(--text-2); }
+.tone-legend { margin: 12px 0 0; color: var(--text-2); line-height: 2; }
+.tone-legend .tone { font-weight: 500; }
 </style>
