@@ -70,7 +70,7 @@ function tomResultado(e) {
 const colunas = [
   { key: 'nome', label: 'Espaço', link: (e) => `#/espacos/${e.id}`, hint: 'Sala ou área cadastrada em Espaços. É o centro de custo de cada linha. Clique no nome para abrir a página do espaço: agenda, histórico e movimentação.' },
   { key: 'modalidade', label: 'Modalidade', hint: 'Forma de locação: por hora, por turno ou contrato mensal. Define a unidade das colunas de capacidade.' },
-  { key: 'capacidade', label: 'Capacidade\ninstalada', num: true, format: num, hint: 'Quantas unidades o espaço pode locar no mês: horas, turnos ou contratos. Valor cadastrado em Espaços.' },
+  { key: 'capacidade', label: 'Capacidade\ninstalada', num: true, format: num, hint: 'Quantas unidades o espaço pode locar neste mês. Salas e piscina: turnos (ou horas) abertos na agenda de cada uma, contando os dias úteis e sábados do mês. Contrato mensal e administrativo: valor cadastrado.' },
   { key: 'ocupado', label: 'Capacidade\nutilizada', num: true, format: num, hint: 'Soma das quantidades dos contratos vigentes no mês (confirmados, base inicial e propostas). Contratos cancelados ficam de fora.' },
   { key: 'disponivel', label: 'Capacidade\nociosa', num: true, format: num, hint: 'Capacidade instalada − Capacidade utilizada. Nunca fica abaixo de zero.' },
   { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true, hint: 'Capacidade utilizada ÷ Capacidade instalada.\nNa linha Total, a taxa é ponderada pela receita: Receita bruta ÷ Receita potencial, porque horas, turnos e contratos não se somam.' },

@@ -13,7 +13,7 @@ import D3Table from '../components/d3/D3Table.vue'
 import { state } from '../lib/store'
 import { STATUS, UNIDADE, despesasEspaco, fimDoMes, firme, idxMes, resumoMes, valorMensal } from '../lib/calc'
 import {
-  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, aplicarValorTurno, ativoAg, capacidadeAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
+  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, aplicarValorTurno, ativoAg, capacidadeMes, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
   posicoesMensais, somaDias, unidadesAg,
 } from '../lib/agenda'
 import { addMes, brl, brl0, brlCompact, dataBR, mesAtual, mesCurto, num, pct, uid } from '../lib/format'
@@ -408,8 +408,8 @@ function garantirAgenda() {
   if (!esp.value.agenda?.horarios) esp.value.agenda = agendaPadrao()
   return esp.value.agenda
 }
-const capAgenda = computed(() => capacidadeAgenda(agenda.value, esp.value?.modalidade))
-watch(() => capAgenda.value.mes, (m) => esp.value?.precoTurno && (esp.value.capacidade = m))
+// turnos abertos na agenda no mês de referência (contagem real dos dias do mês)
+const turnosMes = computed(() => (esp.value ? capacidadeMes({ ...esp.value, tipo: 'Consultório', modalidade: 'Turno' }, state.mes) : 0))
 function mudarHora(h, campo, valor) {
   garantirAgenda()
   const antiga = chave(h)
@@ -473,7 +473,7 @@ const colunas = computed(() => serie.value.map(({ m, x }) => ({
     { label: 'Taxa de ocupação', value: pct(x.taxa) },
   ],
 })))
-const refsCol = computed(() => [{ value: esp.value.capacidade * esp.value.preco, label: 'Receita potencial' }])
+const refsCol = computed(() => [{ value: r.value.potencial, label: `Receita potencial (${mesTitulo.value})` }])
 const linhasTaxa = computed(() => ({
   labels: serie.value.map(({ m }) => mesCurto(m)),
   series: [
@@ -588,7 +588,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
           <span class="chip info">{{ esp.tipo }}</span>
           <span class="chip plain">Por {{ unidadeUm }}</span>
           <span class="chip plain">{{ brl(esp.preco) }}/{{ unidadeUm }}</span>
-          <span class="chip plain">Capacidade {{ num(esp.capacidade) }} {{ unidade }}/mês</span>
+          <span class="chip plain" :title="usaAgenda(esp) ? 'Contada na agenda: turnos abertos em cada dia do mês' : 'Capacidade cadastrada'">Capacidade {{ num(r.capacidade) }} {{ unidade }} em {{ mesTitulo }}</span>
           <span v-if="!porVagas && minimo > 1" class="chip warn">Mínimo {{ minimo }} {{ unidade }} por reserva</span>
         </div>
         <p v-if="esp.descricao" class="muted">{{ esp.descricao }}</p>
@@ -597,10 +597,10 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
             <input :value="esp.precoTurno ?? ''" type="number" min="0" step="0.01" placeholder="ex.: 150" @change="definirValorTurno($event.target.value)" />
           </label>
           <p v-if="esp.precoTurno" class="small">
-            Receita potencial: <strong class="tnum">{{ num(capAgenda.mes) }} turnos × {{ brl(esp.precoTurno) }} = {{ brl(capAgenda.mes * esp.precoTurno) }}/mês</strong>
-            <span class="muted"> ({{ num(capAgenda.semana) }} turnos por semana)</span>
+            Receita potencial em {{ mesTitulo }}: <strong class="tnum">{{ num(turnosMes) }} turnos × {{ brl(esp.precoTurno) }} = {{ brl(turnosMes * esp.precoTurno) }}</strong>
+            <span class="muted"> (turnos abertos na agenda deste mês)</span>
           </p>
-          <p v-else class="small muted">Preencha para aplicar o valor a todos os {{ num(capAgenda.mes) }} turnos do mês como receita potencial. Hoje a sala usa {{ brl(esp.preco) }}/{{ unidadeUm }}.</p>
+          <p v-else class="small muted">Preencha para aplicar o valor a todos os {{ num(turnosMes) }} turnos de {{ mesTitulo }} como receita potencial. Hoje a sala usa {{ brl(esp.preco) }}/{{ unidadeUm }}.</p>
         </div>
       </div>
       <div class="head-act">
@@ -853,10 +853,10 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
       <div class="regras">
         <label class="field">Mínimo de {{ unidade }} por reserva no mesmo dia<input v-model.number="minimoEdit" type="number" min="1" step="1" /></label>
         <div class="cap">
-          <span class="small muted">Capacidade que esta agenda oferece</span>
-          <strong class="tnum">{{ num(capAgenda.semana) }} {{ unidade }}/semana · {{ num(capAgenda.mes) }}/mês</strong>
-          <span class="small muted">Cadastrada: {{ num(esp.capacidade) }}/mês</span>
-          <button v-if="Math.abs(capAgenda.mes - esp.capacidade) > 0.5" class="btn sm" type="button" @click="esp.capacidade = capAgenda.mes">Usar {{ num(capAgenda.mes) }} como capacidade</button>
+          <span class="small muted">Capacidade em {{ mesTitulo }}, contada nesta agenda</span>
+          <strong class="tnum">{{ num(turnosMes) }} turnos{{ esp.modalidade === 'Hora' ? ` · ${num(r.capacidade)} horas` : '' }}</strong>
+          <span v-if="usaAgenda(esp)" class="small muted">Muda a cada mês conforme os dias úteis e sábados. É a capacidade usada no Painel e nas Estatísticas.</span>
+          <span v-else class="small muted">Esta sala está em contrato mensal: a capacidade cadastrada ({{ num(esp.capacidade) }} {{ unidade }}) vale até você informar o valor por turno.</span>
         </div>
       </div>
     </section>

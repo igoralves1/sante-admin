@@ -5,7 +5,7 @@ import Icon from '../components/Icon.vue'
 import { state } from '../lib/store'
 import { MODALIDADES, SEMANAS_MES, TIPOS, UNIDADE } from '../lib/calc'
 import { brl, clone, num, uid } from '../lib/format'
-import { agendaPadrao } from '../lib/agenda'
+import { agendaPadrao, capacidadeMes, usaAgenda } from '../lib/agenda'
 
 const route = useRoute()
 const router = useRouter()
@@ -33,7 +33,11 @@ const dicaSemana = computed(() => ({
   Mensal: 'Para mensal, informe o número de contratos/posições',
 })[draft.value?.modalidade])
 
-const potencial = computed(() => (Number(draft.value?.capacidade) || 0) * (Number(draft.value?.preco) || 0))
+// salas e piscina por hora/turno: capacidade contada na agenda do mês de referência
+const pelaAgenda = computed(() => usaAgenda(draft.value))
+const capMes = computed(() => (draft.value ? capacidadeMes(draft.value, state.mes) : 0))
+const mesRef = computed(() => { const [y, m] = state.mes.split('-'); return `${['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][Number(m) - 1]}-${y}` })
+const potencial = computed(() => capMes.value * (Number(draft.value?.preco) || 0))
 const totalDespesas = computed(() => (draft.value?.despesas || []).reduce((a, d) => a + (Number(d.valor) || 0), 0))
 const contratos = computed(() => (novo ? 0 : state.data.contratos.filter((c) => c.espacoId === draft.value.id).length))
 
@@ -50,7 +54,7 @@ function salvar() {
   e.nome = e.nome.trim()
   if (!e.nome) return (erro.value = 'Dê um nome ao espaço.')
   if (state.data.espacos.some((x) => x.id !== e.id && x.nome.toLowerCase() === e.nome.toLowerCase())) return (erro.value = 'Já existe um espaço com esse nome.')
-  if (!(Number(e.capacidade) > 0)) return (erro.value = 'A capacidade mensal precisa ser maior que zero.')
+  if (!usaAgenda(e) && !(Number(e.capacidade) > 0)) return (erro.value = 'A capacidade mensal precisa ser maior que zero.')
   e.capacidade = Number(e.capacidade)
   e.preco = Number(e.preco) || 0
   e.despesas = e.despesas.filter((d) => d.descricao.trim() || Number(d.valor)).map((d) => ({ ...d, valor: Number(d.valor) || 0 }))
@@ -92,10 +96,15 @@ function excluir() {
           <label class="field">Preço unitário (R$ por {{ { Hora: 'hora', Turno: 'turno', Mensal: 'mês' }[draft.modalidade] }})
             <input v-model.number="draft.preco" type="number" min="0" step="0.01" />
           </label>
-          <label class="field">Capacidade mensal ({{ UNIDADE[draft.modalidade] }})
+          <div v-if="pelaAgenda" class="field">
+            <span>Capacidade em {{ mesRef }} ({{ UNIDADE[draft.modalidade] }})</span>
+            <input :value="num(capMes)" readonly aria-readonly="true" />
+            <span class="muted small">Contada na agenda do espaço: turnos abertos em cada dia do mês. Mude os turnos na página do espaço.</span>
+          </div>
+          <label v-else class="field">Capacidade mensal ({{ UNIDADE[draft.modalidade] }})
             <input v-model.number="draft.capacidade" type="number" min="0" step="0.01" required />
           </label>
-          <div v-if="draft.modalidade !== 'Mensal'" class="field">
+          <div v-if="draft.modalidade !== 'Mensal' && !pelaAgenda" class="field">
             <span>{{ dicaSemana }}</span>
             <span class="semana">
               <input v-model.number="porSemana" type="number" min="0" step="0.5" aria-label="Unidades por semana" />
@@ -113,7 +122,7 @@ function excluir() {
         <div class="card">
           <div class="muted small">Receita potencial por mês</div>
           <div class="big tnum">{{ brl(potencial) }}</div>
-          <div class="muted small">{{ num(draft.capacidade) }} {{ UNIDADE[draft.modalidade] }} × {{ brl(draft.preco) }}</div>
+          <div class="muted small">{{ num(capMes) }} {{ UNIDADE[draft.modalidade] }} × {{ brl(draft.preco) }}{{ pelaAgenda ? ` em ${mesRef}` : '' }}</div>
           <hr />
           <div class="muted small">Despesas associadas por mês</div>
           <div class="big tnum">{{ brl(totalDespesas) }}</div>

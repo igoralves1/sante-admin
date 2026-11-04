@@ -105,11 +105,23 @@ export function posicoesMensais(contratos, vagas, meses, idxMes) {
   return lugar
 }
 
-// Valor pedido por turno: a sala passa a cobrar por turno e todos os turnos da
-// agenda viram a capacidade (receita potencial = turnos do mês × valor).
+// Valor pedido por turno: a sala passa a cobrar por turno; a capacidade vem da agenda
+// (receita potencial = turnos abertos no mês × valor, veja capacidadeMes).
 export function aplicarValorTurno(espaco, valor) {
   espaco.precoTurno = valor
   espaco.modalidade = 'Turno'
   espaco.preco = valor
-  espaco.capacidade = capacidadeAgenda(espaco.agenda || agendaPadrao(), 'Turno').mes
+}
+
+// Salas e piscina que alugam por hora ou turno têm a capacidade tirada da agenda.
+// Contrato mensal e administrativo (vagas) seguem com a capacidade cadastrada.
+export const usaAgenda = (e) => !!e && e.tipo !== 'Administrativo' && e.modalidade !== 'Mensal'
+
+// Capacidade do mês: turnos abertos na agenda em cada dia do mês (ou as horas desses
+// turnos, se a sala cobra por hora). Ex.: nov/2026 = 21 dias úteis × 3 + 4 sábados × 2 = 71 turnos.
+export function capacidadeMes(e, mes) {
+  if (!usaAgenda(e)) return Number(e?.capacidade) || 0
+  const hs = (e.agenda?.horarios ? e.agenda : agendaPadrao()).horarios
+  return diasDoMes(mes).reduce((s, d) => s + hs.filter((h) => h.dias.includes(d.dow))
+    .reduce((t, h) => t + (e.modalidade === 'Hora' ? horasDe(chave(h)) : 1), 0), 0)
 }

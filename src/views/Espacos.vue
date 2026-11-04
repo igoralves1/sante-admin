@@ -4,13 +4,15 @@ import Icon from '../components/Icon.vue'
 import StatTile from '../components/StatTile.vue'
 import { state } from '../lib/store'
 import { UNIDADE, ativoEm, despesasEspaco } from '../lib/calc'
+import { capacidadeMes, usaAgenda } from '../lib/agenda'
 import { brl, mesAtual, num } from '../lib/format'
 
 const hoje = mesAtual()
 const linhas = computed(() =>
   state.data.espacos.map((e) => ({
     ...e,
-    potencial: e.capacidade * e.preco,
+    capMes: capacidadeMes(e, state.mes),
+    potencial: capacidadeMes(e, state.mes) * e.preco,
     despesasMes: despesasEspaco(e),
     vigentes: state.data.contratos.filter((c) => c.espacoId === e.id && ativoEm(c, hoje)).length,
     total: state.data.contratos.filter((c) => c.espacoId === e.id).length,
@@ -67,7 +69,7 @@ const metaPct = computed({
                 <div v-if="e.descricao" class="muted small desc">{{ e.descricao }}</div></td>
               <td>{{ e.tipo }}</td>
               <td>{{ e.modalidade }}</td>
-              <td class="num">{{ num(e.capacidade) }} {{ UNIDADE[e.modalidade] }}</td>
+              <td class="num">{{ num(e.capMes) }} {{ UNIDADE[e.modalidade] }}<span v-if="usaAgenda(e)" class="muted small"> · agenda</span></td>
               <td class="num">{{ brl(e.preco) }}</td>
               <td class="num">{{ brl(e.potencial) }}</td>
               <td class="num">{{ e.despesasMes ? brl(e.despesasMes) : '—' }}</td>
@@ -86,8 +88,10 @@ const metaPct = computed({
     </section>
 
     <section class="note">
-      <strong>Como a capacidade é calculada:</strong> 4,33 semanas por mês. Salas por hora: 173,2 horas;
-      salas por turno: 50 turnos; piscina: 51,96 turnos; administrativo: 16 posições mensais.
+      <strong>Como a capacidade é calculada:</strong> salas e piscina contam os turnos abertos na agenda de cada uma
+      no mês de referência (08–12, 14–18 e 19–22 nos dias úteis; 08–12 e 14–18 no sábado). Em novembro de 2026 são
+      71 turnos. Salas por hora usam as horas desses turnos. Salas em contrato mensal e o administrativo (16 posições)
+      usam a capacidade cadastrada.
     </section>
   </div>
 </template>

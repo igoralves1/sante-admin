@@ -1,7 +1,7 @@
 // Regras de negócio. As fórmulas de ocupação e ponto de equilíbrio seguem a planilha
 // Sistema_Controle_Sante.xlsx; contratos passam a ter início e fim (vigência).
 import { addMes, mesAtual } from './format'
-import { ativoAg, capacidadeAgenda, migrarAgenda, unidadesAg } from './agenda'
+import { ativoAg, capacidadeMes, migrarAgenda, unidadesAg } from './agenda'
 
 export const MODALIDADES = ['Hora', 'Turno', 'Mensal']
 export const UNIDADE = { Hora: 'horas', Turno: 'turnos', Mensal: 'contratos' }
@@ -56,7 +56,8 @@ export function resumoMes(data, mes) {
     const cs = ativos.filter((c) => c.espacoId === e.id)
     const as = ags.filter((a) => a.espacoId === e.id)
     const asConf = as.filter((a) => a.status === 'Confirmada')
-    const cap = n(e.capacidade)
+    // salas e piscina: turnos (ou horas) abertos na agenda deste mês; mensal/administrativo: cadastro
+    const cap = capacidadeMes(e, mes)
     const preco = n(e.preco)
     const ocupado = soma(cs, (c) => n(c.quantidade)) + soma(as, (a) => unidadesAg(e, a))
     const confirmado = soma(cs.filter(firme), (c) => n(c.quantidade)) + soma(asConf, (a) => unidadesAg(e, a))
@@ -65,6 +66,7 @@ export function resumoMes(data, mes) {
     const despesas = despesasEspaco(e)
     return {
       ...e,
+      capacidade: cap,
       contratos: cs,
       agendamentos: as,
       ocupado,
@@ -204,8 +206,6 @@ export function normalizar(d) {
     agenda: migrarAgenda(e.agenda),
     precoTurno: e.precoTurno ?? null,
   }))
-  // sala que cobra por turno: capacidade = turnos que a agenda oferece no mês
-  d.espacos.forEach((e) => e.precoTurno && (e.capacidade = capacidadeAgenda(e.agenda, 'Turno').mes))
   const porNome = Object.fromEntries(d.espacos.map((e) => [e.nome, e.id]))
   if (!d.contratos && d.reservas) {
     // planilha original: cada linha vale para o mês da data

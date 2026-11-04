@@ -4,6 +4,7 @@ import Icon from '../components/Icon.vue'
 import Modal from '../components/Modal.vue'
 import StatTile from '../components/StatTile.vue'
 import { state, espacoPorId } from '../lib/store'
+import { capacidadeMes } from '../lib/agenda'
 import {
   MODALIDADES, STATUS, UNIDADE, ativoEm, duracaoMeses, fimApos, receitaEmRisco,
   resumoMes, valorMensal, valorTotal, vigencia,
@@ -90,7 +91,7 @@ const prev = computed(() => {
   let livre = null
   if (e && c.inicio) {
     const outros = state.data.contratos.filter((x) => x.id !== c.id && x.espacoId === e.id && ativoEm(x, c.inicio.slice(0, 7)))
-    livre = e.capacidade - outros.reduce((a, x) => a + (Number(x.quantidade) || 0), 0)
+    livre = capacidadeMes(e, c.inicio.slice(0, 7)) - outros.reduce((a, x) => a + (Number(x.quantidade) || 0), 0)
   }
   return { mensal: valorMensal(c), duracao: d, total: d ? valorTotal(c) : null, livre, unidade: UNIDADE[c.modalidade] }
 })
@@ -163,7 +164,7 @@ const dur = (c) => {
       <div class="space-head">
         <div>
           <h2><RouterLink :to="`/espacos/${g.e.id}`">{{ g.e.nome }}</RouterLink></h2>
-          <p class="muted small">{{ g.e.tipo }} · {{ g.e.modalidade }} · capacidade {{ num(g.e.capacidade) }} {{ UNIDADE[g.e.modalidade] }}/mês · {{ brl(g.e.preco) }} por unidade</p>
+          <p class="muted small">{{ g.e.tipo }} · {{ g.e.modalidade }} · capacidade {{ num(g.e.capacidade) }} {{ UNIDADE[g.e.modalidade] }} no mês · {{ brl(g.e.preco) }} por unidade</p>
         </div>
         <dl class="space-kpis small">
           <div><dt>Ocupação</dt><dd class="tnum">{{ pct(g.e.taxa) }}</dd></div>
