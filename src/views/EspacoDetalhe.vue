@@ -35,6 +35,12 @@ const hoje = (() => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 })()
 const MES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+// mês de referência no título, ex.: "Nov-2026"
+const mesTitulo = computed(() => {
+  const [y, m] = state.mes.split('-').map(Number)
+  const t = MES_ABREV[m - 1]
+  return `${t[0].toUpperCase()}${t.slice(1)}-${y}`
+})
 
 // grade de vagas × meses só para o administrativo (coworking); salas e piscina usam a agenda de turnos
 const porVagas = computed(() => esp.value?.tipo === 'Administrativo')
@@ -576,7 +582,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>{{ porVagas ? `Agenda de contratos · ${ano}` : 'Agenda do mês' }}</h2>
+          <h2>{{ porVagas ? `Agenda de contratos · ${ano}` : `Agenda do mês (${mesTitulo})` }}</h2>
           <p v-if="porVagas">Cada linha é uma vaga, cada coluna um mês. Arraste sobre os meses livres para criar um contrato; clique num contrato para editar.</p>
           <p v-else>Clique num turno livre para reservar, ou arraste para marcar vários dias e turnos de uma vez, como no Google Agenda. Clique num turno ocupado para editar ou excluir.</p>
         </div>
