@@ -57,11 +57,11 @@ const cen = computed(() => cenario(state.data, state.mes, alvo.value))
 const curva = computed(() => curvaEquilibrio(state.data, state.mes))
 const cenColunas = [
   { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
-  { key: 'taxa', label: 'Hoje', num: true, format: pct, bar: true, hint: 'Taxa de ocupação atual: Ocupado ÷ Capacidade no mês de referência.' },
-  { key: 'taxaCenario', label: 'Cenário', num: true, format: pct, bar: true, hint: 'A maior entre a ocupação de hoje e a meta escolhida no controle acima. Espaços já acima da meta não mudam.' },
-  { key: 'unidades', label: 'A vender', num: true, format: (v) => (v ? num(v) : '—'), hint: 'Taxa do cenário × Capacidade − Ocupado. Quanto falta vender para chegar ao cenário.' },
-  { key: 'unidadeTxt', label: 'Unidade', hint: 'Unidade da coluna A vender, conforme a modalidade: horas, turnos ou contratos.' },
-  { key: 'adicional', label: 'Receita adicional', num: true, format: brl, hint: 'Receita no cenário − Receita de hoje. A receita no cenário é Taxa do cenário × Potencial, nunca menor que a receita de hoje.' },
+  { key: 'taxa', label: 'Taxa de\nOcupação atual', num: true, format: pct, bar: true, hint: 'Capacidade utilizada ÷ Capacidade instalada no mês de referência.' },
+  { key: 'taxaCenario', label: 'Taxa de\nOcupação no cenário', num: true, format: pct, bar: true, hint: 'A maior entre a taxa de ocupação atual e a meta escolhida no controle acima. Espaços já acima da meta não mudam.' },
+  { key: 'unidades', label: 'Capacidade\na vender', num: true, format: (v) => (v ? num(v) : '—'), hint: 'Taxa de ocupação no cenário × Capacidade instalada − Capacidade utilizada. Quanto falta locar para chegar ao cenário.' },
+  { key: 'unidadeTxt', label: 'Unidade', hint: 'Unidade da coluna Capacidade a vender, conforme a modalidade: horas, turnos ou contratos.' },
+  { key: 'adicional', label: 'Receita bruta\nadicional', num: true, format: brl, hint: 'Receita bruta no cenário − Receita bruta atual. A receita no cenário é Taxa de ocupação no cenário × Receita potencial, nunca menor que a atual.' },
 ]
 const cenLinhas = computed(() =>
   cen.value.espacos.map((e) => ({
@@ -75,13 +75,13 @@ const cenLinhas = computed(() =>
 // ---------- tabela por espaço ----------
 const espColunas = [
   { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
-  { key: 'taxa', label: 'Ocupação', num: true, format: pct, bar: true, hint: 'Ocupado ÷ Capacidade no mês de referência.' },
-  { key: 'receitaOcupada', label: 'Receita/mês', num: true, format: brl, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês.' },
-  { key: 'despesas', label: 'Despesas/mês', num: true, format: brl, hint: 'Soma das despesas mensais cadastradas no espaço.' },
-  { key: 'margem', label: 'Margem', num: true, format: (v) => (v === null ? '—' : pct(v)), hint: '(Receita − Despesas) ÷ Receita. Fica em branco quando o espaço não tem receita.' },
-  { key: 'participacao', label: '% da receita', num: true, format: pct, bar: true, hint: 'Receita do espaço ÷ Receita total da clínica no mês.' },
-  { key: 'nVig', label: 'Contratos', num: true, format: num, hint: 'Número de contratos vigentes no mês, exceto os cancelados.' },
-  { key: 'vence', label: 'Próximo término', num: true, format: (v) => (v === null ? '—' : v === 0 ? 'este mês' : `em ${v} ${v === 1 ? 'mês' : 'meses'}`), hint: 'Meses até o primeiro contrato do espaço terminar, contando do mês de referência. Contratos sem data de fim não entram.' },
+  { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true, hint: 'Capacidade utilizada ÷ Capacidade instalada no mês de referência.' },
+  { key: 'receitaOcupada', label: 'Receita bruta\n(faturamento)', num: true, format: brl, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês, antes de impostos e custos.' },
+  { key: 'despesas', label: 'Custos\ndiretos', num: true, format: brl, hint: 'Custos mensais lançados no próprio espaço. Custos fixos gerais, impostos e comissões ficam no Financeiro.' },
+  { key: 'margem', label: 'Índice de margem\nde contribuição', num: true, format: (v) => (v === null ? '—' : pct(v)), hint: '(Receita bruta − Custos diretos) ÷ Receita bruta. Mostra quanto de cada R$ 1 faturado sobra para os custos fixos gerais. Fica em branco quando o espaço não tem receita.' },
+  { key: 'participacao', label: 'Participação\nna receita', num: true, format: pct, bar: true, hint: 'Receita bruta do espaço ÷ Receita bruta total da clínica no mês.' },
+  { key: 'nVig', label: 'Contratos\nvigentes', num: true, format: num, hint: 'Número de contratos vigentes no mês, exceto os cancelados.' },
+  { key: 'vence', label: 'Próximo\nvencimento', num: true, format: (v) => (v === null ? '—' : v === 0 ? 'este mês' : `em ${v} ${v === 1 ? 'mês' : 'meses'}`), hint: 'Meses até o primeiro contrato do espaço vencer, contando do mês de referência. Contratos sem data de fim não entram.' },
 ]
 const espLinhas = computed(() => {
   const total = r.value.receitaOcupada
@@ -170,9 +170,9 @@ const espLinhas = computed(() => {
           <input v-model.number="alvoPct" type="range" min="0" max="100" step="5" />
         </label>
         <div class="grid cols-3 sim-tiles">
-          <StatTile label="Receita mensal estimada" :value="brl(cen.receita)" :hint="`Hoje: ${brl(r.receitaOcupada)}`" />
-          <StatTile label="Receita adicional" :value="'+' + brl(cen.adicional)" tone="good" :hint="`${brl0(cen.adicional * 12)} em 12 meses`" />
-          <StatTile label="Resultado mensal estimado" :value="brl(cen.resultado)" :tone="cen.resultado >= 0 ? 'good' : 'bad'" :hint="`Hoje: ${brl(cen.resultadoAtual)}`" />
+          <StatTile label="Receita bruta estimada" :value="brl(cen.receita)" :hint="`Hoje: ${brl(r.receitaOcupada)}`" />
+          <StatTile label="Receita bruta adicional" :value="'+' + brl(cen.adicional)" tone="good" :hint="`${brl0(cen.adicional * 12)} em 12 meses`" />
+          <StatTile label="Resultado operacional estimado" :value="brl(cen.resultado)" :tone="cen.resultado >= 0 ? 'good' : 'bad'" :hint="`Hoje: ${brl(cen.resultadoAtual)}`" />
         </div>
       </div>
       <D3Table :columns="cenColunas" :rows="cenLinhas" sort-key="adicional" />
