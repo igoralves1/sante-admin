@@ -35,11 +35,19 @@ const hoje = (() => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 })()
 const MES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
-// mês de referência no título, ex.: "Nov-2026"
-const mesTitulo = computed(() => {
-  const [y, m] = state.mes.split('-').map(Number)
+// mês no formato do título, ex.: "Nov-2026"
+const rotuloMes = (mes) => {
+  const [y, m] = mes.split('-').map(Number)
   const t = MES_ABREV[m - 1]
   return `${t[0].toUpperCase()}${t.slice(1)}-${y}`
+}
+const mesTitulo = computed(() => rotuloMes(state.mes))
+// meses para agendar: 6 para trás e 12 à frente do mês corrente (mais o escolhido, se estiver fora)
+const mesesAgenda = computed(() => {
+  const atual = mesAtual()
+  const lista = Array.from({ length: 19 }, (_, i) => addMes(atual, i - 6))
+  if (!lista.includes(state.mes)) lista.push(state.mes)
+  return lista.sort().map((m) => ({ m, t: `${rotuloMes(m)}${m === atual ? ' (atual)' : ''}` }))
 })
 
 // grade de vagas × meses só para o administrativo (coworking); salas e piscina usam a agenda de turnos
@@ -586,7 +594,12 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
           <p v-if="porVagas">Cada linha é uma vaga, cada coluna um mês. Arraste sobre os meses livres para criar um contrato; clique num contrato para editar.</p>
           <p v-else>Clique num turno livre para reservar, ou arraste para marcar vários dias e turnos de uma vez, como no Google Agenda. Clique num turno ocupado para editar ou excluir.</p>
         </div>
-        <button class="btn primary sm" type="button" @click="novoManual"><Icon name="plus" :size="14" /> {{ porVagas ? 'Novo contrato' : 'Novo agendamento' }}</button>
+        <div class="toolbar">
+          <select v-if="!porVagas" v-model="state.mes" class="sel-mes" aria-label="Mês da agenda">
+            <option v-for="o in mesesAgenda" :key="o.m" :value="o.m">{{ o.t }}</option>
+          </select>
+          <button class="btn primary sm" type="button" @click="novoManual"><Icon name="plus" :size="14" /> {{ porVagas ? 'Novo contrato' : 'Novo agendamento' }}</button>
+        </div>
       </div>
       <div class="legend small key">
         <span><i class="k-livre" />Livre</span>
@@ -880,6 +893,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .head-act { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .head-act select { height: 30px; }
+.sel-mes { height: 30px; }
 .key { display: flex; flex-wrap: wrap; gap: 16px; margin: -6px 0 8px; color: var(--text-2); }
 .key span { display: inline-flex; align-items: center; gap: 6px; }
 .key i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
