@@ -1,6 +1,7 @@
 <script setup>
 // Matriz de horários (colunas × linhas) desenhada com D3.
-// Cada célula vem de `celula(col, row)`: { t: 'livre' | 'off' | 'conf' | 'prop' | 'heat', ref, v, num, tip }.
+// Cada célula vem de `celula(col, row)`: { t: 'livre' | 'off' | 'conf' | 'prop' | 'bloq' | 'heat', ref, v, num, tip }.
+// 'bloq' = turno marcado como não disponível (hachurado).
 // Quadrados agendados mostram o número do profissional; a legenda com os nomes fica fora do gráfico.
 // Arrastar sobre células livres seleciona um retângulo (como criar um evento no Google Agenda)
 // e emite `selecionar`; clicar numa célula ocupada emite `abrir` com o `ref` dela.
@@ -39,6 +40,12 @@ const { el, tip } = useChart((root, W0, tip) => {
 
   const svg = root.append('svg').attr('width', W).attr('height', H).attr('role', 'grid').attr('aria-label', props.ariaLabel)
     .attr('class', 'sg')
+  // hachura dos turnos não disponíveis
+  const hid = `nd-${Math.random().toString(36).slice(2, 8)}`
+  const pat = svg.append('defs').append('pattern').attr('id', hid).attr('width', 6).attr('height', 6)
+    .attr('patternUnits', 'userSpaceOnUse').attr('patternTransform', 'rotate(45)')
+  pat.append('rect').attr('width', 6).attr('height', 6).attr('class', 'sg-nd-bg')
+  pat.append('line').attr('x1', 0).attr('y1', 0).attr('x2', 0).attr('y2', 6).attr('class', 'sg-nd-ln')
 
   // cabeçalho das colunas: número/nome em cima, dia da semana embaixo
   const hc = svg.append('g')
@@ -64,6 +71,7 @@ const { el, tip } = useChart((root, W0, tip) => {
     .attr('x', (d) => lw + d.ci * cw + gap / 2).attr('y', (d) => top + d.ri * ch + gap / 2)
     .attr('width', Math.max(1, cw - gap)).attr('height', ch - gap).attr('rx', Math.min(4, cw / 4))
     .style('opacity', (d) => (d.st.t === 'heat' ? 0.12 + 0.88 * Math.min(1, d.st.v || 0) : null))
+    .style('fill', (d) => (d.st.t === 'bloq' ? `url(#${hid})` : null))
   // valores do mapa de calor
   if (cw >= 34) {
     g.selectAll('text.sg-v').data(cells.filter((d) => d.st.t === 'heat')).join('text').attr('class', (d) => `sg-v ${d.st.v > 0.55 ? 'inv' : ''}`)
@@ -94,7 +102,7 @@ const { el, tip } = useChart((root, W0, tip) => {
     const ri = Math.floor((py - top) / ch)
     return ci >= 0 && ci < nC && ri >= 0 && ri < nR ? { ci, ri } : null
   }
-  const ocupada = (st) => st.t === 'conf' || st.t === 'prop'
+  const ocupada = (st) => st.t === 'conf' || st.t === 'prop' || st.t === 'bloq'
   const destacar = (ref) => rects.classed('hl', (d) => !!ref && d.st.ref === ref)
 
   let drag = null
@@ -177,6 +185,9 @@ const { el, tip } = useChart((root, W0, tip) => {
 .sgw :deep(.sg-c.conf) { fill: var(--s-firm); cursor: pointer; }
 .sgw :deep(.sg-c.prop) { fill: var(--s-prop); cursor: pointer; }
 .sgw :deep(.sg-c.heat) { fill: var(--s-firm); }
+.sgw :deep(.sg-c.bloq) { cursor: pointer; stroke: var(--border); }
+.sgw :deep(.sg-nd-bg) { fill: var(--surface-2); }
+.sgw :deep(.sg-nd-ln) { stroke: var(--muted); stroke-width: 1.5; }
 .sgw :deep(.sg-c.hl) { stroke: var(--text); }
 .sgw :deep(.sg-sel) { fill: var(--s-firm); fill-opacity: 0.6; stroke: var(--accent); stroke-width: 2; pointer-events: none; }
 .sgw :deep(.sg-n) { font-size: 12px; font-weight: 600; fill: #fff; pointer-events: none; font-variant-numeric: tabular-nums; }

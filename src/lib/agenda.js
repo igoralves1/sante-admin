@@ -51,6 +51,10 @@ export function unidadesAg(espaco, ag) {
 }
 
 export const ativoAg = (a) => a.status !== 'Cancelada'
+// Turno marcado como "Não disponível" pela administração: não é locado, não gera receita
+// e sai da capacidade do mês.
+export const ehBloqueio = (a) => a?.tipo === 'bloqueio'
+export const ehLocacao = (a) => ativoAg(a) && !ehBloqueio(a)
 
 export function diasDoMes(mes) {
   const [y, m] = mes.split('-').map(Number)
@@ -119,9 +123,35 @@ export const usaAgenda = (e) => !!e && e.tipo !== 'Administrativo' && e.modalida
 
 // Capacidade do mês: turnos abertos na agenda em cada dia do mês (ou as horas desses
 // turnos, se a sala cobra por hora). Ex.: nov/2026 = 21 dias úteis × 3 + 4 sábados × 2 = 71 turnos.
-export function capacidadeMes(e, mes) {
+// Turnos marcados como "Não disponível" (agendamentos do tipo bloqueio) são descontados.
+export function capacidadeMes(e, mes, agendamentos = []) {
   if (!usaAgenda(e)) return Number(e?.capacidade) || 0
   const hs = (e.agenda?.horarios ? e.agenda : agendaPadrao()).horarios
-  return diasDoMes(mes).reduce((s, d) => s + hs.filter((h) => h.dias.includes(d.dow))
+  const abertos = diasDoMes(mes).reduce((s, d) => s + hs.filter((h) => h.dias.includes(d.dow))
     .reduce((t, h) => t + (e.modalidade === 'Hora' ? horasDe(chave(h)) : 1), 0), 0)
+  const bloqueados = (agendamentos || []).filter((a) => ehBloqueio(a) && ativoAg(a) && a.espacoId === e.id && a.data?.startsWith(mes))
+    .reduce((s, a) => s + unidadesAg(e, a), 0)
+  return Math.max(0, abertos - bloqueados)
+}
+
+// Datas que um novo agendamento ocupa, conforme a repetição escolhida:
+// 'nao' · 'semana' (toda semana até `ate`) · 'mes' / 'ano' (mesmo dia da semana no resto do mês / ano).
+// Datas antes de `desde` (hoje) ficam de fora, para não mexer no que já passou; os dias escolhidos sempre entram.
+export function expandirDatas(dias, repetir, ate, desde = '') {
+  const out = new Set(dias)
+  for (const d of dias) {
+    if (repetir === 'semana' && ate) {
+      for (let x = somaDias(d, 7); x <= ate; x = somaDias(x, 7)) out.add(x)
+    } else if (repetir === 'mes' || repetir === 'ano') {
+      const ini = repetir === 'mes' ? `${d.slice(0, 7)}-01` : `${d.slice(0, 4)}-01-01`
+      const fim = repetir === 'mes' ? `${d.slice(0, 7)}-31` : `${d.slice(0, 4)}-12-31`
+      const dow = dowDe(d)
+      let x = ini
+      while (dowDe(x) !== dow) x = somaDias(x, 1)
+      for (; x <= fim && x.slice(0, 4) === d.slice(0, 4); x = somaDias(x, 7)) {
+        if (x >= desde && (repetir === 'ano' || x.slice(0, 7) === d.slice(0, 7))) out.add(x)
+      }
+    }
+  }
+  return [...out].sort()
 }

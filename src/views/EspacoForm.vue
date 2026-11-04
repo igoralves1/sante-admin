@@ -35,7 +35,7 @@ const dicaSemana = computed(() => ({
 
 // salas e piscina por hora/turno: capacidade contada na agenda do mês de referência
 const pelaAgenda = computed(() => usaAgenda(draft.value))
-const capMes = computed(() => (draft.value ? capacidadeMes(draft.value, state.mes) : 0))
+const capMes = computed(() => (draft.value ? capacidadeMes(draft.value, state.mes, state.data.agendamentos) : 0))
 const mesRef = computed(() => { const [y, m] = state.mes.split('-'); return `${['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'][Number(m) - 1]}-${y}` })
 const potencial = computed(() => capMes.value * (Number(draft.value?.preco) || 0))
 const totalDespesas = computed(() => (draft.value?.despesas || []).reduce((a, d) => a + (Number(d.valor) || 0), 0))

@@ -11,8 +11,8 @@ const hoje = mesAtual()
 const linhas = computed(() =>
   state.data.espacos.map((e) => ({
     ...e,
-    capMes: capacidadeMes(e, state.mes),
-    potencial: capacidadeMes(e, state.mes) * e.preco,
+    capMes: capacidadeMes(e, state.mes, state.data.agendamentos),
+    potencial: capacidadeMes(e, state.mes, state.data.agendamentos) * e.preco,
     despesasMes: despesasEspaco(e),
     vigentes: state.data.contratos.filter((c) => c.espacoId === e.id && ativoEm(c, hoje)).length,
     total: state.data.contratos.filter((c) => c.espacoId === e.id).length,

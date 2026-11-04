@@ -13,7 +13,7 @@ import D3Table from '../components/d3/D3Table.vue'
 import { state } from '../lib/store'
 import { STATUS, UNIDADE, despesasEspaco, fimDoMes, firme, idxMes, resumoMes, valorMensal } from '../lib/calc'
 import {
-  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, aplicarValorTurno, ativoAg, capacidadeMes, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
+  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, aplicarValorTurno, ativoAg, capacidadeMes, ehBloqueio, ehLocacao, expandirDatas, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
   posicoesMensais, somaDias, unidadesAg,
 } from '../lib/agenda'
 import { addMes, brl, brl0, brlCompact, dataBR, mesAtual, mesCurto, num, pct, uid } from '../lib/format'
@@ -74,7 +74,7 @@ const gRows = computed(() => agenda.value.horarios.map((h) => ({ k: chave(h), l:
 const mapaMes = computed(() => {
   const m = {}
   for (const a of ags.value) {
-    if (!ativoAg(a) || !a.data.startsWith(state.mes)) continue
+    if (!ativoAg(a) || !a.data.startsWith(state.mes)) continue // inclui bloqueios: ocupam o turno
     m[a.data] ||= {}
     a.slots.forEach((k) => (m[a.data][k] = a))
   }
@@ -93,6 +93,16 @@ function celula(col, row) {
         { label: 'Contrato mensal', value: 'todos os turnos' },
         { label: 'Valor mensal', value: brl(valorMensal(cm)) },
         { label: 'Status', value: cm.status },
+      ] },
+    }
+  }
+  if (a && ehBloqueio(a)) {
+    return {
+      t: 'bloq', ref: a.id,
+      tip: { title: 'Não disponível', rows: [
+        { label: dataBR(a.data), value: a.slots.map(nomeSlot).join(', ') },
+        ...(a.obs ? [{ label: 'Motivo', value: a.obs }] : []),
+        { label: 'Clique para liberar ou editar', value: '' },
       ] },
     }
   }
@@ -132,7 +142,7 @@ const legenda = computed(() => {
   const cm = contratoMensalMes.value
   if (cm) add(cm.cliente, { turnos: turnosAbertosMes.value, valor: valorMensal(cm), conf: firme(cm), contrato: 'contrato mensal, todos os turnos' })
   const ordem = Object.fromEntries(agenda.value.horarios.map((h, i) => [chave(h), i]))
-  ags.value.filter((a) => ativoAg(a) && a.data.startsWith(state.mes))
+  ags.value.filter((a) => ehLocacao(a) && a.data.startsWith(state.mes))
     .sort((a, b) => a.data.localeCompare(b.data) || (ordem[a.slots[0]] ?? 0) - (ordem[b.slots[0]] ?? 0))
     .forEach((a) => add(a.cliente, { turnos: a.slots.length, valor: Number(a.valor) || 0, conf: a.status === 'Confirmada' }))
   return [...m.values()]
@@ -205,7 +215,7 @@ function aoSelecionar(s) {
     modo: 'novo', box: s.box,
     dias: gCols.value.slice(s.c0, s.c1 + 1).map((c) => c.k),
     slots: gRows.value.slice(s.r0, s.r1 + 1).map((x) => x.k),
-    ...novoProf(), valorDia: null, valorTurno: null, status: 'Confirmada', obs: '', repetir: false, ate: '', erro: '',
+    ...novoProf(), valorDia: null, valorTurno: null, status: 'Confirmada', obs: '', tipo: 'locacao', repetir: 'nao', ate: '', erro: '',
     travado: true, // turnos vêm da seleção na agenda; os outros ficam desabilitados
   }
 }
@@ -242,7 +252,7 @@ function novoManual(ev) {
     return
   }
   const dia = state.mes === hoje.slice(0, 7) ? hoje : `${state.mes}-01`
-  form.value = { modo: 'novo', manual: true, box, dias: [dia], slots: [], ...novoProf(), valorDia: null, valorTurno: null, status: 'Confirmada', obs: '', repetir: false, ate: '', erro: '' }
+  form.value = { modo: 'novo', manual: true, box, dias: [dia], slots: [], ...novoProf(), valorDia: null, valorTurno: null, status: 'Confirmada', obs: '', tipo: 'locacao', repetir: 'nao', ate: '', erro: '' }
 }
 function abrir({ ref: id, box }) {
   if (porVagas.value || String(id).startsWith('ct:')) {
@@ -260,7 +270,7 @@ function abrir({ ref: id, box }) {
   const pid = a.profissionalId || (state.data.profissionais || []).find((p) => p.nome === a.cliente)?.id
   form.value = {
     modo: 'editar', id, box, data: a.data, slots: [...a.slots], profId: pid || '__novo', novoNome: pid ? '' : a.cliente,
-    valor: a.valor, status: a.status, obs: a.obs || '', grupo: a.grupo || '', erro: '',
+    valor: a.valor, status: a.status, obs: a.obs || '', grupo: a.grupo || '', tipo: ehBloqueio(a) ? 'bloqueio' : 'locacao', erro: '',
   }
 }
 function abrirLinha(a, ev) {
@@ -269,23 +279,16 @@ function abrirLinha(a, ev) {
 }
 
 const unidadesSlots = (slots) => unidadesAg(esp.value, { slots })
+const DIAS_PLURAL = ['domingos', 'segundas', 'terças', 'quartas', 'quintas', 'sextas', 'sábados']
+const diaSemanaSel = computed(() => [...new Set((form.value?.dias || []).filter(Boolean).map(dowDe))].map((d) => DIAS_PLURAL[d]).join(', '))
 const sugerido = computed(() => (form.value?.slots ? unidadesSlots(form.value.slots) * (Number(esp.value?.preco) || 0) : 0))
 
 // dias que o novo agendamento vai ocupar, com repetição semanal e conflitos
 const plano = computed(() => {
   const f = form.value
   if (!f || f.modo !== 'novo') return null
-  let lista = [...f.dias]
-  if (f.repetir && f.ate) {
-    for (const d of f.dias) {
-      let x = somaDias(d, 7)
-      while (x <= f.ate) {
-        lista.push(x)
-        x = somaDias(x, 7)
-      }
-    }
-  }
-  lista = [...new Set(lista)].sort()
+  const bloqueio = f.tipo === 'bloqueio'
+  const lista = expandirDatas(f.dias, f.repetir, f.ate, hoje)
   const itens = []
   const pulados = []
   for (const d of lista) {
@@ -294,11 +297,12 @@ const plano = computed(() => {
     if (!ks.length) continue
     const occ = ocupacaoDia(todosAgs(), esp.value.id, d)
     const livres = ks.filter((k) => !occ[k])
-    if (livres.length < minimo.value) {
-      pulados.push({ d, motivo: livres.length ? `só ${livres.length} livre(s); mínimo ${minimo.value}` : 'horário ocupado' })
+    const min = bloqueio ? 1 : minimo.value
+    if (livres.length < min) {
+      pulados.push({ d, motivo: livres.length ? `só ${livres.length} livre(s); mínimo ${min}` : 'turno já ocupado' })
       continue
     }
-    itens.push({ data: d, slots: livres, valor: f.valorDia ?? unidadesSlots(livres) * (Number(esp.value.preco) || 0) })
+    itens.push({ data: d, slots: livres, valor: bloqueio ? 0 : f.valorDia ?? unidadesSlots(livres) * (Number(esp.value.preco) || 0) })
   }
   return { itens, pulados, total: itens.reduce((s, i) => s + Number(i.valor || 0), 0) }
 })
@@ -338,11 +342,21 @@ function alternar(lista, k) {
 function salvarNovo() {
   const f = form.value
   if (!f.slots.length) return (f.erro = 'Marque pelo menos um turno.')
+  if (f.repetir === 'semana' && !f.ate) return (f.erro = 'Informe até quando repetir.')
+  if (f.tipo === 'bloqueio') {
+    const p = plano.value
+    if (!p.itens.length) return (f.erro = 'Nenhum turno livre para marcar como não disponível.')
+    const grupo = p.itens.length > 1 ? uid('g') : ''
+    p.itens.forEach((i) => todosAgs().push({
+      id: uid('ag'), tipo: 'bloqueio', espacoId: esp.value.id, data: i.data, slots: [...i.slots].sort(), profissionalId: '', cliente: '',
+      valor: 0, status: 'Confirmada', obs: f.obs, grupo,
+    }))
+    return fechar()
+  }
   if (!esp.value.precoTurno && esp.value.modalidade === 'Mensal' && !(Number(f.valorTurno) > 0)) return (f.erro = 'Informe o valor pedido por turno desta sala.')
   const prof = resolverProf(f)
   if (typeof prof === 'string') return (f.erro = prof)
   if (Number(f.valorTurno) > 0) definirValorTurno(f.valorTurno)
-  if (f.repetir && !f.ate) return (f.erro = 'Informe até quando repetir.')
   const p = plano.value
   if (!p.itens.length) return (f.erro = 'Nenhum dia livre que respeite o mínimo por reserva.')
   const grupo = p.itens.length > 1 ? uid('g') : ''
@@ -354,6 +368,11 @@ function salvarNovo() {
 }
 function salvarEdicao() {
   const f = form.value
+  if (f.tipo === 'bloqueio') {
+    if (!f.slots.length) return (f.erro = 'Marque pelo menos um turno.')
+    Object.assign(todosAgs().find((x) => x.id === f.id), { slots: [...f.slots].sort(), obs: f.obs })
+    return fechar()
+  }
   const prof = resolverProf(f)
   if (typeof prof === 'string') return (f.erro = prof)
   if (f.slots.length < minimo.value) return (f.erro = `Mínimo de ${minimo.value} ${minimo.value > 1 ? 'horários' : 'horário'} por reserva.`)
@@ -363,7 +382,9 @@ function salvarEdicao() {
 }
 function excluir(serie = false) {
   const f = form.value
-  const msg = serie ? 'Excluir este agendamento e os seguintes da mesma série?' : 'Excluir este agendamento?'
+  const msg = f.tipo === 'bloqueio'
+    ? (serie ? 'Liberar este turno e os seguintes da mesma série para locação?' : 'Liberar este turno para locação?')
+    : (serie ? 'Excluir este agendamento e os seguintes da mesma série?' : 'Excluir este agendamento?')
   if (!confirm(msg)) return
   state.data.agendamentos = todosAgs().filter((a) => (serie && f.grupo ? !(a.grupo === f.grupo && a.data >= f.data) : a.id !== f.id))
   fechar()
@@ -409,7 +430,7 @@ function garantirAgenda() {
   return esp.value.agenda
 }
 // turnos abertos na agenda no mês de referência (contagem real dos dias do mês)
-const turnosMes = computed(() => (esp.value ? capacidadeMes({ ...esp.value, tipo: 'Consultório', modalidade: 'Turno' }, state.mes) : 0))
+const turnosMes = computed(() => (esp.value ? capacidadeMes({ ...esp.value, tipo: 'Consultório', modalidade: 'Turno' }, state.mes, state.data.agendamentos) : 0))
 function mudarHora(h, campo, valor) {
   garantirAgenda()
   const antiga = chave(h)
@@ -484,7 +505,7 @@ const linhasTaxa = computed(() => ({
 
 const anuais = computed(() => anos.value.map((y) => {
   const xs = mesesDe(y).map(linhaMes)
-  const agsAno = ags.value.filter((a) => ativoAg(a) && a.data.startsWith(y))
+  const agsAno = ags.value.filter((a) => ehLocacao(a) && a.data.startsWith(y))
   const receita = xs.reduce((s, x) => s + x.receitaOcupada, 0)
   const custos = xs.reduce((s, x) => s + x.despesas, 0)
   const profs = new Set([
@@ -520,7 +541,7 @@ const ocorrencias = computed(() => {
 })
 const usoCont = computed(() => {
   const m = {}
-  ags.value.filter((a) => ativoAg(a) && a.data.startsWith(anoHist.value)).forEach((a) => {
+  ags.value.filter((a) => ehLocacao(a) && a.data.startsWith(anoHist.value)).forEach((a) => {
     const d = dowDe(a.data)
     a.slots.forEach((k) => (m[`${d}|${k}`] = (m[`${d}|${k}`] || 0) + 1))
   })
@@ -538,7 +559,7 @@ function celulaUso(col, row) {
 const porProf = computed(() => {
   const m = {}
   const y = anoHist.value
-  ags.value.filter((a) => ativoAg(a) && a.data.startsWith(y)).forEach((a) => (m[a.cliente] = (m[a.cliente] || 0) + Number(a.valor || 0)))
+  ags.value.filter((a) => ehLocacao(a) && a.data.startsWith(y)).forEach((a) => (m[a.cliente] = (m[a.cliente] || 0) + Number(a.valor || 0)))
   contratosVivos.value.forEach((c) => {
     const n = mesesDe(y).filter((mm) => idxMes(c.inicio) <= idxMes(mm) && (!c.fim || idxMes(c.fim) >= idxMes(mm))).length
     if (n) m[c.cliente || 'Sem nome'] = (m[c.cliente || 'Sem nome'] || 0) + n * valorMensal(c)
@@ -558,14 +579,14 @@ const movimentos = computed(() => {
       qtd: `${num(c.quantidade)} ${UNIDADE[c.modalidade] || ''}/mês`, valor: valorMensal(c), valorTxt: `${brl(valorMensal(c))}/mês`, status: c.status,
     }))
   const as = ags.value.filter((a) => y === 'todos' || a.data.startsWith(y)).map((a) => ({
-    data: a.data, tipo: 'Agendamento', prof: a.cliente || '—', detalhe: a.slots.map(nomeSlot).join(', '),
+    data: a.data, tipo: ehBloqueio(a) ? 'Não disponível' : 'Agendamento', prof: ehBloqueio(a) ? (a.obs || '—') : a.cliente || '—', detalhe: a.slots.map(nomeSlot).join(', '),
     qtd: `${num(unidadesAg(esp.value, a))} ${unidadesAg(esp.value, a) === 1 ? unidadeUm.value : unidade.value}`, valor: Number(a.valor) || 0, valorTxt: brl(a.valor), status: a.status,
   }))
   return [...cs, ...as]
 })
 const movCols = [
   { key: 'data', label: 'Data', format: (v) => (v ? dataBR(v) : '—'), hint: 'Data do agendamento ou início do contrato.' },
-  { key: 'tipo', label: 'Tipo', hint: 'Contrato: locação recorrente por mês. Agendamento: reserva de horários num dia, feita na agenda.' },
+  { key: 'tipo', label: 'Tipo', hint: 'Contrato: locação recorrente por mês. Agendamento: reserva de turnos num dia, feita na agenda. Não disponível: turno bloqueado pela administração (motivo na coluna Profissional).' },
   { key: 'prof', label: 'Profissional', hint: 'Quem alugou o espaço.' },
   { key: 'detalhe', label: 'Horários ou\nvigência', hint: 'Horários do agendamento, ou início e fim do contrato.' },
   { key: 'qtd', label: 'Quantidade', hint: 'Unidades locadas: horas, turnos ou vagas por mês.' },
@@ -638,6 +659,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
         <span><i style="background: var(--s-firm)" />{{ porVagas ? 'Confirmado' : 'Confirmada' }}</span>
         <span><i style="background: var(--s-prop)" />Proposta</span>
         <span><i class="k-off" />Fechado</span>
+        <span v-if="!porVagas"><i class="k-nd" />Não disponível</span>
       </div>
       <D3SlotGrid
         v-if="!porVagas" :cols="gCols" :rows="gRows" :celula="celula" :selecao="sel" :deps="mapaMes"
@@ -673,7 +695,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
       </p>
 
       <details class="lista" :open="(porVagas ? contratosAno.length : agsMes.length) <= 8">
-        <summary>{{ porVagas ? `Contratos em ${ano} (${contratosAno.length})` : `Agendamentos do mês (${agsMes.length})` }}</summary>
+        <summary>{{ porVagas ? `Contratos em ${ano} (${contratosAno.length})` : `Agendamentos e bloqueios do mês (${agsMes.length})` }}</summary>
         <div class="table-wrap">
           <table v-if="!porVagas">
             <thead><tr><th>Data</th><th>Horários</th><th>Profissional</th><th class="num">Valor</th><th>Status</th><th /></tr></thead>
@@ -681,9 +703,9 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
               <tr v-for="a in agsMes" :key="a.id">
                 <td>{{ dataBR(a.data) }} <span class="muted small">{{ DIAS_SEMANA[dowDe(a.data)] }}</span></td>
                 <td>{{ a.slots.map(nomeSlot).join(', ') }}</td>
-                <td>{{ a.cliente }}</td>
-                <td class="num">{{ brl(a.valor) }}</td>
-                <td><span class="chip" :class="tomStatus[a.status]">{{ a.status }}</span></td>
+                <td>{{ ehBloqueio(a) ? (a.obs || '—') : a.cliente }}</td>
+                <td class="num">{{ ehBloqueio(a) ? '—' : brl(a.valor) }}</td>
+                <td><span v-if="ehBloqueio(a)" class="chip plain">Não disponível</span><span v-else class="chip" :class="tomStatus[a.status]">{{ a.status }}</span></td>
                 <td class="num"><button class="btn sm ghost" type="button" @click="abrirLinha(a, $event)"><Icon name="edit" :size="14" /> Editar</button></td>
               </tr>
             </tbody>
@@ -709,19 +731,24 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
     <!-- ===== formulário flutuante ===== -->
     <Popover
       v-if="form" :box="form.box"
-      :title="{ novo: 'Novo agendamento', editar: 'Editar agendamento', novoM: 'Novo contrato mensal', editarM: 'Editar contrato' }[form.modo]"
+      :title="form.modo === 'editar' && form.tipo === 'bloqueio' ? 'Turno não disponível' : { novo: 'Novo agendamento', editar: 'Editar agendamento', novoM: 'Novo contrato mensal', editarM: 'Editar contrato' }[form.modo]"
       @close="fechar"
     >
       <!-- agendamento novo -->
       <form v-if="form.modo === 'novo'" class="pf" @submit.prevent="salvarNovo">
-        <label class="field">Profissional
+        <div class="seg tipo" role="radiogroup" aria-label="Tipo">
+          <button type="button" role="radio" :aria-checked="form.tipo === 'locacao'" :class="{ on: form.tipo === 'locacao' }" @click="form.tipo = 'locacao'">Locação</button>
+          <button type="button" role="radio" :aria-checked="form.tipo === 'bloqueio'" :class="{ on: form.tipo === 'bloqueio', nd: form.tipo === 'bloqueio' }" @click="form.tipo = 'bloqueio'">Não disponível</button>
+        </div>
+        <p v-if="form.tipo === 'bloqueio'" class="small muted nd-txt">O turno sai da agenda: ninguém pode reservá-lo e ele deixa de contar na capacidade e na receita potencial do mês.</p>
+        <label v-if="form.tipo === 'locacao'" class="field">Profissional
           <select v-model="form.profId">
             <option value="" disabled>Escolha o profissional</option>
             <option v-for="p in profissionais" :key="p.id" :value="p.id">{{ p.nome }}{{ p.profissao ? ` · ${p.profissao}` : '' }}</option>
             <option value="__novo">+ Cadastrar novo profissional</option>
           </select>
         </label>
-        <label v-if="form.profId === '__novo'" class="field">Nome do novo profissional<input v-model="form.novoNome" placeholder="Nome completo" /></label>
+        <label v-if="form.tipo === 'locacao' && form.profId === '__novo'" class="field">Nome do novo profissional<input v-model="form.novoNome" placeholder="Nome completo" /></label>
         <label v-if="form.manual" class="field">Dia<input v-model="form.dias[0]" type="date" /></label>
         <p v-else class="small muted quando">
           <Icon name="clock" :size="14" />
@@ -736,19 +763,28 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
           </div>
           <small v-if="form.travado" class="muted">Para incluir outros turnos, arraste sobre eles na agenda.</small>
         </div>
-        <label v-if="!esp.precoTurno" class="field">Valor pedido por turno desta sala (R$)
+        <label v-if="form.tipo === 'locacao' && !esp.precoTurno" class="field">Valor pedido por turno desta sala (R$)
           <input v-model.number="form.valorTurno" type="number" min="0" step="0.01" :placeholder="esp.modalidade === 'Mensal' ? 'obrigatório' : 'opcional'" />
         </label>
-        <div class="row2">
-          <label class="field">{{ form.dias.length > 1 || form.repetir ? 'Valor por dia (R$)' : 'Valor (R$)' }}<input v-model.number="form.valorDia" type="number" min="0" step="0.01" :placeholder="num(form.valorTurno > 0 ? form.slots.length * form.valorTurno : sugerido)" /></label>
+        <div v-if="form.tipo === 'locacao'" class="row2">
+          <label class="field">{{ form.dias.length > 1 || form.repetir !== 'nao' ? 'Valor por dia (R$)' : 'Valor (R$)' }}<input v-model.number="form.valorDia" type="number" min="0" step="0.01" :placeholder="num(form.valorTurno > 0 ? form.slots.length * form.valorTurno : sugerido)" /></label>
           <label class="field">Status<select v-model="form.status"><option v-for="s in STATUS_AGENDA.slice(0, 2)" :key="s">{{ s }}</option></select></label>
         </div>
-        <label class="check"><input v-model="form.repetir" type="checkbox" /> Repetir toda semana</label>
-        <label v-if="form.repetir" class="field">Até<input v-model="form.ate" type="date" :min="form.dias[0]" /></label>
-        <label class="field">Observação<input v-model="form.obs" /></label>
+        <label class="field">Repetir
+          <select v-model="form.repetir">
+            <option value="nao">Não repetir</option>
+            <option value="semana">Toda semana até uma data</option>
+            <option value="mes">Todos os turnos equivalentes no mês ({{ diaSemanaSel }})</option>
+            <option value="ano">Todos os turnos equivalentes até o fim do ano ({{ diaSemanaSel }})</option>
+          </select>
+        </label>
+        <label v-if="form.repetir === 'semana'" class="field">Até<input v-model="form.ate" type="date" :min="form.dias[0]" /></label>
+        <label class="field">{{ form.tipo === 'bloqueio' ? 'Motivo' : 'Observação' }}<input v-model="form.obs" :placeholder="form.tipo === 'bloqueio' ? 'Ex.: manutenção, uso interno, reserva da diretoria' : ''" /></label>
         <div v-if="plano" class="resumo small">
-          <strong>{{ plano.itens.length }} agendamento(s) · {{ brl(plano.total) }}</strong>
-          <span v-if="minimo > 1" class="muted"> · mínimo de {{ minimo }} {{ unidade }} por dia</span>
+          <strong v-if="form.tipo === 'bloqueio'">{{ plano.itens.length }} {{ plano.itens.length === 1 ? 'dia' : 'dias' }} com {{ plano.itens.reduce((s, i) => s + i.slots.length, 0) }} turno(s) não disponível(is)</strong>
+          <strong v-else>{{ plano.itens.length }} agendamento(s) · {{ brl(plano.total) }}</strong>
+          <span v-if="form.tipo === 'locacao' && minimo > 1" class="muted"> · mínimo de {{ minimo }} {{ unidade }} por dia</span>
+          <span v-if="form.repetir === 'mes' || form.repetir === 'ano'" class="muted"> · datas que já passaram ficam de fora</span>
           <ul v-if="plano.pulados.length" class="pulados">
             <li v-for="p in plano.pulados.slice(0, 5)" :key="p.d">{{ dataBR(p.d) }}: {{ p.motivo }}</li>
             <li v-if="plano.pulados.length > 5">e mais {{ plano.pulados.length - 5 }} dia(s) pulados</li>
@@ -764,14 +800,15 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
       <!-- agendamento existente -->
       <form v-else-if="form.modo === 'editar'" class="pf" @submit.prevent="salvarEdicao">
         <p class="small muted quando"><Icon name="clock" :size="14" /> {{ DIAS_SEMANA[dowDe(form.data)] }}, {{ dataBR(form.data) }}</p>
-        <label class="field">Profissional
+        <p v-if="form.tipo === 'bloqueio'" class="small muted nd-txt">Turno marcado como não disponível pela administração. Use “Liberar turno” para voltar a alugá-lo.</p>
+        <label v-if="form.tipo === 'locacao'" class="field">Profissional
           <select v-model="form.profId">
             <option value="" disabled>Escolha o profissional</option>
             <option v-for="p in profissionais" :key="p.id" :value="p.id">{{ p.nome }}{{ p.profissao ? ` · ${p.profissao}` : '' }}</option>
             <option value="__novo">+ Cadastrar novo profissional</option>
           </select>
         </label>
-        <label v-if="form.profId === '__novo'" class="field">Nome do novo profissional<input v-model="form.novoNome" placeholder="Nome completo" /></label>
+        <label v-if="form.tipo === 'locacao' && form.profId === '__novo'" class="field">Nome do novo profissional<input v-model="form.novoNome" placeholder="Nome completo" /></label>
         <div class="field">
           <span>Turnos</span>
           <div class="slots">
@@ -780,15 +817,15 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
             </button>
           </div>
         </div>
-        <div class="row2">
+        <div v-if="form.tipo === 'locacao'" class="row2">
           <label class="field">Valor (R$)<input v-model.number="form.valor" type="number" min="0" step="0.01" /></label>
           <label class="field">Status<select v-model="form.status"><option v-for="s in STATUS_AGENDA" :key="s">{{ s }}</option></select></label>
         </div>
-        <label class="field">Observação<input v-model="form.obs" /></label>
+        <label class="field">{{ form.tipo === 'bloqueio' ? 'Motivo' : 'Observação' }}<input v-model="form.obs" /></label>
         <p v-if="form.erro" class="erro small">{{ form.erro }}</p>
         <div class="pf-act">
-          <button class="btn danger sm" type="button" @click="excluir(false)"><Icon name="trash" :size="14" /> Excluir</button>
-          <button v-if="serieRestante > 1" class="btn danger sm" type="button" @click="excluir(true)">Excluir {{ serieRestante }} da série</button>
+          <button class="btn danger sm" type="button" @click="excluir(false)"><Icon name="trash" :size="14" /> {{ form.tipo === 'bloqueio' ? 'Liberar turno' : 'Excluir' }}</button>
+          <button v-if="serieRestante > 1" class="btn danger sm" type="button" @click="excluir(true)">{{ form.tipo === 'bloqueio' ? 'Liberar' : 'Excluir' }} {{ serieRestante }} da série</button>
           <span class="grow" />
           <button class="btn primary" type="submit">Salvar</button>
         </div>
@@ -949,6 +986,11 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .leg-prof .nome { font-weight: 500; margin-right: 4px; }
 .leg-vazia { margin: 10px 0 0; }
 .k-off { border: 1px dashed var(--border); }
+.k-nd { background: repeating-linear-gradient(45deg, var(--muted) 0 1.5px, var(--surface-2) 1.5px 5px); }
+.seg.tipo { display: flex; }
+.seg.tipo button { flex: 1; }
+.seg.tipo button.on.nd { background: var(--surface); color: var(--bad); }
+.nd-txt { margin: -2px 0 0; }
 .sem-h { margin-top: 12px; }
 .lista { margin-top: 14px; }
 .lista summary { cursor: pointer; font-size: 13px; color: var(--accent-ink); margin-bottom: 6px; }

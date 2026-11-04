@@ -91,7 +91,7 @@ const prev = computed(() => {
   let livre = null
   if (e && c.inicio) {
     const outros = state.data.contratos.filter((x) => x.id !== c.id && x.espacoId === e.id && ativoEm(x, c.inicio.slice(0, 7)))
-    livre = capacidadeMes(e, c.inicio.slice(0, 7)) - outros.reduce((a, x) => a + (Number(x.quantidade) || 0), 0)
+    livre = capacidadeMes(e, c.inicio.slice(0, 7), state.data.agendamentos) - outros.reduce((a, x) => a + (Number(x.quantidade) || 0), 0)
   }
   return { mensal: valorMensal(c), duracao: d, total: d ? valorTotal(c) : null, livre, unidade: UNIDADE[c.modalidade] }
 })

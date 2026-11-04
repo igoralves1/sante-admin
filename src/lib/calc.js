@@ -1,7 +1,7 @@
 // Regras de negócio. As fórmulas de ocupação e ponto de equilíbrio seguem a planilha
 // Sistema_Controle_Sante.xlsx; contratos passam a ter início e fim (vigência).
 import { addMes, mesAtual } from './format'
-import { ativoAg, capacidadeMes, migrarAgenda, unidadesAg } from './agenda'
+import { capacidadeMes, ehLocacao, migrarAgenda, unidadesAg } from './agenda'
 
 export const MODALIDADES = ['Hora', 'Turno', 'Mensal']
 export const UNIDADE = { Hora: 'horas', Turno: 'turnos', Mensal: 'contratos' }
@@ -51,13 +51,13 @@ export const despesasEspaco = (e) => soma(e.despesas || [], (d) => n(d.valor))
 export function resumoMes(data, mes) {
   const ativos = data.contratos.filter((c) => ativoEm(c, mes))
   // agendamentos da agenda (por dia e horário) somam-se aos contratos do mês
-  const ags = (data.agendamentos || []).filter((a) => ativoAg(a) && a.data?.startsWith(mes))
+  const ags = (data.agendamentos || []).filter((a) => ehLocacao(a) && a.data?.startsWith(mes))
   const espacos = data.espacos.map((e) => {
     const cs = ativos.filter((c) => c.espacoId === e.id)
     const as = ags.filter((a) => a.espacoId === e.id)
     const asConf = as.filter((a) => a.status === 'Confirmada')
     // salas e piscina: turnos (ou horas) abertos na agenda deste mês; mensal/administrativo: cadastro
-    const cap = capacidadeMes(e, mes)
+    const cap = capacidadeMes(e, mes, data.agendamentos)
     const preco = n(e.preco)
     const ocupado = soma(cs, (c) => n(c.quantidade)) + soma(as, (a) => unidadesAg(e, a))
     const confirmado = soma(cs.filter(firme), (c) => n(c.quantidade)) + soma(asConf, (a) => unidadesAg(e, a))

@@ -45,7 +45,7 @@ const uso = computed(() => {
   const m = {}
   const espPorId = Object.fromEntries(state.data.espacos.map((e) => [e.id, e]))
   for (const a of state.data.agendamentos || []) {
-    if (!ativoAg(a) || !a.profissionalId) continue
+    if (!ativoAg(a) || a.tipo === 'bloqueio' || !a.profissionalId) continue
     const u = (m[a.profissionalId] ||= { total: 0, mes: 0, turnosMes: 0, receitaMes: 0, receita: 0, salas: new Set() })
     u.total++
     u.receita += Number(a.valor) || 0
