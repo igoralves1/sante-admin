@@ -8,18 +8,30 @@ export const STATUS_AGENDA = ['Confirmada', 'Proposta', 'Cancelada']
 const pad = (v) => String(v).padStart(2, '0')
 
 // Turnos da Santé: toda sala é alugada por turno.
-// Seg–sex: 08–12, 14–18 e 19–22. Sábado: só 08–12. (16 turnos por semana → 69,28 por mês)
-export const AGENDA_VERSAO = 2
+// Seg–sex: 08–12, 14–18 e 19–22. Sábado: 08–12 e 14–18. (17 turnos por semana → 73,61 por mês)
+export const AGENDA_VERSAO = 3
 export function agendaPadrao() {
   return {
     versao: AGENDA_VERSAO,
     minimo: 1,
     horarios: [
       { nome: 'Manhã', ini: '08:00', fim: '12:00', dias: [1, 2, 3, 4, 5, 6] },
-      { nome: 'Tarde', ini: '14:00', fim: '18:00', dias: [1, 2, 3, 4, 5] },
+      { nome: 'Tarde', ini: '14:00', fim: '18:00', dias: [1, 2, 3, 4, 5, 6] },
       { nome: 'Noite', ini: '19:00', fim: '22:00', dias: [1, 2, 3, 4, 5] },
     ],
   }
+}
+
+// Agendas salvas em versões anteriores: a v2 (turnos) ganha a tarde de sábado e mantém as
+// outras mudanças; versões mais antigas (por hora) voltam ao padrão.
+export function migrarAgenda(ag) {
+  if (ag?.versao === AGENDA_VERSAO) return ag
+  if (ag?.versao === 2 && ag.horarios) {
+    const tarde = ag.horarios.find((h) => h.ini === '14:00' && h.fim === '18:00')
+    if (tarde && !tarde.dias.includes(6)) tarde.dias = [...tarde.dias, 6].sort()
+    return { ...ag, versao: AGENDA_VERSAO }
+  }
+  return agendaPadrao()
 }
 
 export const chave = (h) => `${h.ini}-${h.fim}`

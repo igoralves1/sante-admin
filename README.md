@@ -18,7 +18,7 @@ e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 | **Painel** | Ocupação do mês (ponderada pela receita), ocupação por espaço contra a meta, receita disponível, receita mês a mês e tabela ordenável |
 | **Situação atual** | CRUD dos contratos por espaço: período, **duração**, valor mensal, **valor total do contrato**, status, vigência, **despesas e resultado de cada espaço**; renovação de contratos |
 | **Espaços** | Lista dos espaços; **Cadastrar novo espaço** e edição com modalidade, capacidade, preço, descrição e **despesas associadas** |
-| **Página do espaço** (`#/espacos/:id`) | Aberta pelo nome do espaço. Valor pedido por turno (vira a receita potencial), agenda em turnos (08–12, 14–18, 19–22; sábado 08–12) com clique ou arraste para reservar, histórico por ano, comparativo anual, uso por dia × turno, receita por profissional e movimentação |
+| **Página do espaço** (`#/espacos/:id`) | Aberta pelo nome do espaço. Valor pedido por turno (vira a receita potencial), agenda em turnos (08–12, 14–18, 19–22; sábado 08–12 e 14–18) com clique ou arraste para reservar, histórico por ano, comparativo anual, uso por dia × turno, receita por profissional e movimentação |
 | **Profissionais** | Cadastro de quem aluga: profissão, registro, contato, ano de formatura e redes sociais (Instagram, LinkedIn, TikTok, Facebook, YouTube, X e outras). Usado na lista da agenda |
 | **Estatísticas** | Média, mediana e desvio da ocupação, ticket médio, concentração, projeção de 12 meses, linha do tempo dos contratos, potencial × ocupação, curva de equilíbrio e simulador de cenários |
 | **Marketing** | Espaços abaixo da meta, campanhas com funil (leads → visitas → contratos), receita atribuída, CAC e ROI |

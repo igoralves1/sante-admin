@@ -1,7 +1,7 @@
 // Regras de negócio. As fórmulas de ocupação e ponto de equilíbrio seguem a planilha
 // Sistema_Controle_Sante.xlsx; contratos passam a ter início e fim (vigência).
 import { addMes, mesAtual } from './format'
-import { AGENDA_VERSAO, agendaPadrao, ativoAg, unidadesAg } from './agenda'
+import { ativoAg, capacidadeAgenda, migrarAgenda, unidadesAg } from './agenda'
 
 export const MODALIDADES = ['Hora', 'Turno', 'Mensal']
 export const UNIDADE = { Hora: 'horas', Turno: 'turnos', Mensal: 'contratos' }
@@ -201,9 +201,11 @@ export function normalizar(d) {
     obs: e.obs || '',
     despesas: e.despesas || [],
     // agenda em turnos; versões antigas (por hora) voltam ao padrão de turnos
-    agenda: e.agenda?.versao === AGENDA_VERSAO ? e.agenda : agendaPadrao(),
+    agenda: migrarAgenda(e.agenda),
     precoTurno: e.precoTurno ?? null,
   }))
+  // sala que cobra por turno: capacidade = turnos que a agenda oferece no mês
+  d.espacos.forEach((e) => e.precoTurno && (e.capacidade = capacidadeAgenda(e.agenda, 'Turno').mes))
   const porNome = Object.fromEntries(d.espacos.map((e) => [e.nome, e.id]))
   if (!d.contratos && d.reservas) {
     // planilha original: cada linha vale para o mês da data

@@ -160,6 +160,7 @@ function aoSelecionar(s) {
     dias: gCols.value.slice(s.c0, s.c1 + 1).map((c) => c.k),
     slots: gRows.value.slice(s.r0, s.r1 + 1).map((x) => x.k),
     ...novoProf(), valorDia: null, valorTurno: null, status: 'Confirmada', obs: '', repetir: false, ate: '', erro: '',
+    travado: true, // turnos vêm da seleção na agenda; os outros ficam desabilitados
   }
 }
 const novoProf = () => ({ profId: profissionais.value.length ? '' : '__novo', novoNome: '' })
@@ -254,6 +255,25 @@ const plano = computed(() => {
     itens.push({ data: d, slots: livres, valor: f.valorDia ?? unidadesSlots(livres) * (Number(esp.value.preco) || 0) })
   }
   return { itens, pulados, total: itens.reduce((s, i) => s + Number(i.valor || 0), 0) }
+})
+// turnos no formulário de novo agendamento: fora da seleção ou fechados nos dias escolhidos ficam desabilitados
+const opcoesNovo = computed(() => {
+  const f = form.value
+  if (!f || f.modo !== 'novo') return []
+  const dows = [...new Set(f.dias.filter(Boolean).map(dowDe))]
+  return agenda.value.horarios.map((h) => {
+    const k = chave(h)
+    const fechado = dows.length > 0 && dows.every((d) => !h.dias.includes(d))
+    const fora = f.travado && !f.slots.includes(k)
+    return { k, h, bloq: fechado || fora, motivo: fechado ? 'fechado' : fora ? 'não selecionado' : `${h.ini}–${h.fim}` }
+  })
+})
+// no agendamento manual, um turno que fecha no dia escolhido sai da seleção
+watch(() => form.value?.modo === 'novo' && form.value.dias.join(), () => {
+  const f = form.value
+  if (f?.modo !== 'novo' || f.travado) return
+  const bloq = opcoesNovo.value.filter((o) => o.bloq).map((o) => o.k)
+  f.slots = f.slots.filter((k) => !bloq.includes(k))
 })
 // horários disponíveis para marcar no formulário de edição (do próprio dia)
 const opcoesEdicao = computed(() => {
@@ -649,10 +669,11 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
         <div class="field">
           <span>Turnos</span>
           <div class="slots">
-            <button v-for="h in agenda.horarios" :key="chave(h)" type="button" class="slot" :class="{ on: form.slots.includes(chave(h)) }" :aria-pressed="form.slots.includes(chave(h))" @click="alternar(form.slots, chave(h))">
-              {{ h.nome }} <small>{{ h.ini }}–{{ h.fim }}</small>
+            <button v-for="o in opcoesNovo" :key="o.k" type="button" class="slot" :class="{ on: form.slots.includes(o.k) }" :disabled="o.bloq" :aria-pressed="form.slots.includes(o.k)" @click="alternar(form.slots, o.k)">
+              {{ o.h.nome }} <small>{{ o.motivo }}</small>
             </button>
           </div>
+          <small v-if="form.travado" class="muted">Para incluir outros turnos, arraste sobre eles na agenda.</small>
         </div>
         <label v-if="!esp.precoTurno" class="field">Valor pedido por turno desta sala (R$)
           <input v-model.number="form.valorTurno" type="number" min="0" step="0.01" :placeholder="esp.modalidade === 'Mensal' ? 'obrigatório' : 'opcional'" />
@@ -743,7 +764,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
       <div class="card-head">
         <div>
           <h2>Turnos e regras da agenda</h2>
-          <p>Padrão da Santé: 08–12, 14–18 e 19–22 de segunda a sexta; sábado só 08–12. Cada turno é uma linha da matriz.</p>
+          <p>Padrão da Santé: 08–12, 14–18 e 19–22 de segunda a sexta; sábado 08–12 e 14–18. Cada turno é uma linha da matriz.</p>
         </div>
         <div class="toolbar">
           <button class="btn sm" type="button" @click="addHorario"><Icon name="plus" :size="14" /> Turno</button>
@@ -873,7 +894,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .slot { border: 1px solid var(--border); background: var(--surface); color: var(--text-2); border-radius: 8px; padding: 4px 8px; font: inherit; font-size: 12px; cursor: pointer; display: grid; text-align: left; }
 .slot small { color: var(--muted); font-size: 11px; }
 .slot.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-ink); }
-.slot:disabled { opacity: 0.45; cursor: not-allowed; }
+.slot:disabled { opacity: 0.4; cursor: not-allowed; border-style: dashed; background: transparent; }
 .check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
 .check input { height: auto; }
 .resumo { background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
