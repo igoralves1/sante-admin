@@ -56,12 +56,12 @@ const alvo = computed(() => alvoPct.value / 100)
 const cen = computed(() => cenario(state.data, state.mes, alvo.value))
 const curva = computed(() => curvaEquilibrio(state.data, state.mes))
 const cenColunas = [
-  { key: 'nome', label: 'Espaço' },
-  { key: 'taxa', label: 'Hoje', num: true, format: pct, bar: true },
-  { key: 'taxaCenario', label: 'Cenário', num: true, format: pct, bar: true },
-  { key: 'unidades', label: 'A vender', num: true, format: (v) => (v ? num(v) : '—') },
-  { key: 'unidadeTxt', label: 'Unidade' },
-  { key: 'adicional', label: 'Receita adicional', num: true, format: brl },
+  { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
+  { key: 'taxa', label: 'Hoje', num: true, format: pct, bar: true, hint: 'Taxa de ocupação atual: Ocupado ÷ Capacidade no mês de referência.' },
+  { key: 'taxaCenario', label: 'Cenário', num: true, format: pct, bar: true, hint: 'A maior entre a ocupação de hoje e a meta escolhida no controle acima. Espaços já acima da meta não mudam.' },
+  { key: 'unidades', label: 'A vender', num: true, format: (v) => (v ? num(v) : '—'), hint: 'Taxa do cenário × Capacidade − Ocupado. Quanto falta vender para chegar ao cenário.' },
+  { key: 'unidadeTxt', label: 'Unidade', hint: 'Unidade da coluna A vender, conforme a modalidade: horas, turnos ou contratos.' },
+  { key: 'adicional', label: 'Receita adicional', num: true, format: brl, hint: 'Receita no cenário − Receita de hoje. A receita no cenário é Taxa do cenário × Potencial, nunca menor que a receita de hoje.' },
 ]
 const cenLinhas = computed(() =>
   cen.value.espacos.map((e) => ({
@@ -74,14 +74,14 @@ const cenLinhas = computed(() =>
 
 // ---------- tabela por espaço ----------
 const espColunas = [
-  { key: 'nome', label: 'Espaço' },
-  { key: 'taxa', label: 'Ocupação', num: true, format: pct, bar: true },
-  { key: 'receitaOcupada', label: 'Receita/mês', num: true, format: brl },
-  { key: 'despesas', label: 'Despesas/mês', num: true, format: brl },
-  { key: 'margem', label: 'Margem', num: true, format: (v) => (v === null ? '—' : pct(v)) },
-  { key: 'participacao', label: '% da receita', num: true, format: pct, bar: true },
-  { key: 'nVig', label: 'Contratos', num: true, format: num },
-  { key: 'vence', label: 'Próximo término', num: true, format: (v) => (v === null ? '—' : v === 0 ? 'este mês' : `em ${v} ${v === 1 ? 'mês' : 'meses'}`) },
+  { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
+  { key: 'taxa', label: 'Ocupação', num: true, format: pct, bar: true, hint: 'Ocupado ÷ Capacidade no mês de referência.' },
+  { key: 'receitaOcupada', label: 'Receita/mês', num: true, format: brl, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês.' },
+  { key: 'despesas', label: 'Despesas/mês', num: true, format: brl, hint: 'Soma das despesas mensais cadastradas no espaço.' },
+  { key: 'margem', label: 'Margem', num: true, format: (v) => (v === null ? '—' : pct(v)), hint: '(Receita − Despesas) ÷ Receita. Fica em branco quando o espaço não tem receita.' },
+  { key: 'participacao', label: '% da receita', num: true, format: pct, bar: true, hint: 'Receita do espaço ÷ Receita total da clínica no mês.' },
+  { key: 'nVig', label: 'Contratos', num: true, format: num, hint: 'Número de contratos vigentes no mês, exceto os cancelados.' },
+  { key: 'vence', label: 'Próximo término', num: true, format: (v) => (v === null ? '—' : v === 0 ? 'este mês' : `em ${v} ${v === 1 ? 'mês' : 'meses'}`), hint: 'Meses até o primeiro contrato do espaço terminar, contando do mês de referência. Contratos sem data de fim não entram.' },
 ]
 const espLinhas = computed(() => {
   const total = r.value.receitaOcupada

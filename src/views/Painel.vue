@@ -59,17 +59,17 @@ function tomResultado(e) {
   return { c: 'warn', t: `Ganho por ${e.modalidade === 'Hora' ? 'hora' : 'turno'}` }
 }
 const colunas = [
-  { key: 'nome', label: 'Espaço' },
-  { key: 'modalidade', label: 'Modalidade' },
-  { key: 'capacidade', label: 'Capacidade', num: true, format: num },
-  { key: 'ocupado', label: 'Ocupado', num: true, format: num },
-  { key: 'disponivel', label: 'Disponível', num: true, format: num },
-  { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true },
-  { key: 'potencial', label: 'Potencial', num: true, format: brl },
-  { key: 'receitaOcupada', label: 'Receita', num: true, format: brl },
-  { key: 'despesas', label: 'Despesas', num: true, format: brl },
-  { key: 'resultado', label: 'Resultado', num: true, format: brl, tone: tomResultado },
-  { key: 'receitaDisponivel', label: 'Disponível R$', num: true, format: brl },
+  { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
+  { key: 'modalidade', label: 'Modalidade', hint: 'Como o espaço é alugado: por hora, por turno ou por contrato mensal. Define a unidade das colunas de capacidade, ocupado e disponível.' },
+  { key: 'capacidade', label: 'Capacidade', num: true, format: num, hint: 'Quantas unidades o espaço pode vender no mês: horas, turnos ou contratos. Valor cadastrado em Espaços.' },
+  { key: 'ocupado', label: 'Ocupado', num: true, format: num, hint: 'Soma das quantidades dos contratos vigentes no mês (confirmados, base inicial e propostas). Contratos cancelados ficam de fora.' },
+  { key: 'disponivel', label: 'Disponível', num: true, format: num, hint: 'Capacidade − Ocupado. Nunca fica abaixo de zero.' },
+  { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true, hint: 'Ocupado ÷ Capacidade.\nNa linha Total, a taxa é ponderada pela receita: Receita total ÷ Potencial total, porque horas, turnos e contratos não se somam.' },
+  { key: 'potencial', label: 'Potencial', num: true, format: brl, hint: 'Capacidade × Preço da unidade. É a receita do mês com o espaço 100% ocupado.' },
+  { key: 'receitaOcupada', label: 'Receita', num: true, format: brl, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês.' },
+  { key: 'despesas', label: 'Despesas', num: true, format: brl, hint: 'Soma das despesas mensais cadastradas no próprio espaço. Custos gerais da clínica ficam no Financeiro.' },
+  { key: 'resultado', label: 'Resultado', num: true, format: brl, tone: tomResultado, hint: 'Receita − Despesas do espaço.\nVerde: ganho de sala mensal. Amarelo: ganho por hora ou turno. Vermelho: zero ou negativo.' },
+  { key: 'receitaDisponivel', label: 'Disponível R$', num: true, format: brl, hint: 'Disponível × Preço da unidade. É a receita que ainda pode ser vendida neste mês.' },
 ]
 const rodape = computed(() => ({
   nome: 'Total',

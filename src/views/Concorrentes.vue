@@ -99,13 +99,13 @@ const precoItems = [...base.precoHora].sort((a, b) => a.valor - b.valor).map((p)
 
 // ---------- tabelas ----------
 const canaisCols = [
-  { key: 'nome', label: 'Concorrente' },
-  { key: 'seguidores', label: 'Seguidores IG', num: true, format: (v) => (v == null ? '—' : num(v)) },
-  { key: 'posts', label: 'Posts', num: true, format: (v) => (v == null ? '—' : num(v)) },
-  { key: 'nota', label: 'Nota Google', num: true, format: nf1 },
-  { key: 'avaliacoes', label: 'Avaliações', num: true, format: (v) => (v == null ? '—' : num(v)) },
-  { key: 'anuncios', label: 'Anúncios Meta' },
-  { key: 'reserva', label: 'Como reserva' },
+  { key: 'nome', label: 'Concorrente', hint: 'Nome do espaço. A Santé aparece marcada com (nós).' },
+  { key: 'seguidores', label: 'Seguidores IG', num: true, format: (v) => (v == null ? '—' : num(v)), hint: 'Seguidores do perfil no Instagram, lidos na página pública no dia da coleta.' },
+  { key: 'posts', label: 'Posts', num: true, format: (v) => (v == null ? '—' : num(v)), hint: 'Total de publicações no perfil do Instagram no dia da coleta.' },
+  { key: 'nota', label: 'Nota Google', num: true, format: nf1, hint: 'Média das avaliações (1 a 5) no Google Maps. Com poucas avaliações, a nota é pouco confiável.' },
+  { key: 'avaliacoes', label: 'Avaliações', num: true, format: (v) => (v == null ? '—' : num(v)), hint: 'Quantidade de avaliações no Google Maps no dia da coleta.' },
+  { key: 'anuncios', label: 'Anúncios Meta', hint: 'Anúncios ativos na Biblioteca de Anúncios da Meta (Instagram e Facebook) no dia da coleta.' },
+  { key: 'reserva', label: 'Como reserva', hint: 'Canal que o espaço oferece para reservar: WhatsApp, agenda online, telefone etc.' },
 ]
 const canaisRows = players.map((p) => ({
   nome: p.proprio ? `${p.nome} (nós)` : p.nome,
@@ -118,14 +118,14 @@ const canaisRows = players.map((p) => ({
 }))
 const nomeDe = (id) => players.find((p) => p.id === id)?.nome || id
 const sitesCols = [
-  { key: 'site', label: 'Site' },
-  { key: 'desempenho', label: 'Desempenho', num: true, bar: true, format: (v) => Math.round(v * 100) },
-  { key: 'acessibilidade', label: 'Acessibilidade', num: true, bar: true, format: (v) => Math.round(v * 100) },
-  { key: 'boasPraticas', label: 'Boas práticas', num: true, bar: true, format: (v) => Math.round(v * 100) },
-  { key: 'seo', label: 'SEO', num: true, bar: true, format: (v) => Math.round(v * 100) },
-  { key: 'lcp', label: 'Carregamento (LCP)', num: true, format: (v) => `${nf1(v)} s` },
-  { key: 'paginas', label: 'Páginas', num: true },
-  { key: 'dominio', label: 'Domínio desde', format: (v) => (v ? dataBR(v) : '—') },
+  { key: 'site', label: 'Site', hint: 'Endereço auditado. A Santé aparece marcada com (nós).' },
+  { key: 'desempenho', label: 'Desempenho', num: true, bar: true, format: (v) => Math.round(v * 100), hint: 'Nota de 0 a 100 do Lighthouse no celular. Pesa a velocidade de carregamento: LCP, bloqueios e estabilidade da página.' },
+  { key: 'acessibilidade', label: 'Acessibilidade', num: true, bar: true, format: (v) => Math.round(v * 100), hint: 'Nota de 0 a 100 do Lighthouse: contraste, textos alternativos, rótulos e navegação por teclado.' },
+  { key: 'boasPraticas', label: 'Boas práticas', num: true, bar: true, format: (v) => Math.round(v * 100), hint: 'Nota de 0 a 100 do Lighthouse: HTTPS, erros no console, imagens no tamanho certo e bibliotecas seguras.' },
+  { key: 'seo', label: 'SEO', num: true, bar: true, format: (v) => Math.round(v * 100), hint: 'Nota de 0 a 100 do Lighthouse: título, descrição, links rastreáveis e página adaptada ao celular.' },
+  { key: 'lcp', label: 'Carregamento (LCP)', num: true, format: (v) => `${nf1(v)} s`, hint: 'Segundos até o maior elemento da tela aparecer no celular (Largest Contentful Paint). O Google considera bom até 2,5 s.' },
+  { key: 'paginas', label: 'Páginas', num: true, hint: 'Número de endereços listados no sitemap do site.' },
+  { key: 'dominio', label: 'Domínio desde', format: (v) => (v ? dataBR(v) : '—'), hint: 'Data de registro do domínio, consultada no Registro.br (RDAP).' },
 ]
 const sitesRows = base.sites.map((s) => ({
   ...s, site: s.id === 'sante' ? `${s.site} (nós)` : s.site,
