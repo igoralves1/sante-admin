@@ -52,6 +52,13 @@ const cheios = computed(() => r.value.espacos.filter((e) => e.taxa >= 1))
 const vazios = computed(() => r.value.espacos.filter((e) => e.ocupado === 0))
 const abaixoMeta = computed(() => r.value.espacos.filter((e) => e.taxa > 0 && e.taxa < meta.value))
 
+// Mês de referência no título da tabela, ex.: "Nov-2026"
+const MES_ABREV = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+const mesTitulo = computed(() => {
+  const [y, m] = state.mes.split('-').map(Number)
+  return `${MES_ABREV[m - 1]}-${y}`
+})
+
 // Resultado: verde = ganho de sala mensal, amarelo = outro ganho, vermelho = zero ou negativo
 function tomResultado(e) {
   if (e.resultado <= 0) return { c: 'bad', t: 'Sem ganho neste mês' }
@@ -155,7 +162,7 @@ const rodape = computed(() => ({
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Tabela do mês</h2>
+          <h2>Tabela mensal ({{ mesTitulo }})</h2>
           <p>Clique no cabeçalho para ordenar</p>
         </div>
       </div>
