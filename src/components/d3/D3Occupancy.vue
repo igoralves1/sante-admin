@@ -30,7 +30,6 @@ const { el, tip } = useChart((root, W, tip) => {
   const g = svg.selectAll('g.row').data(rows).join('g').attr('class', 'row')
     .attr('transform', (d, i) => `translate(0,${top + i * rh})`)
   g.append('rect').attr('class', 'hover').attr('x', -6).attr('width', W + 12).attr('height', rh - 2).attr('rx', 8)
-  g.append('text').attr('class', 'name').attr('y', 16).text((d) => d.nome)
   g.append('text').attr('class', 'axis').attr('y', 30).text((d) => d.modalidade)
 
   const by = 11
@@ -60,6 +59,9 @@ const { el, tip } = useChart((root, W, tip) => {
       ])
     })
     .on('mouseleave', () => (tip.value = null))
+  // nome do espaço por cima da camada do tooltip, como link para a página do espaço
+  g.append('a').attr('class', 'lnk').attr('href', (d) => `#/espacos/${d.id}`)
+    .append('text').attr('class', 'name').attr('y', 16).text((d) => d.nome)
 }, () => [props.espacos, props.meta])
 </script>
 

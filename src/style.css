@@ -188,6 +188,9 @@ td input, td select { height: 32px; width: 100%; }
 .chart .axis { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
 .chart .axis.cur { fill: var(--text); font-weight: 600; }
 .chart .name { fill: var(--text); font-size: 13px; font-weight: 500; }
+.chart a.lnk { cursor: pointer; }
+.chart a.lnk .name { fill: var(--accent-ink); }
+.chart a.lnk:hover .name, .chart a.lnk:focus-visible .name { text-decoration: underline; }
 .chart .val { fill: var(--text); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .chart .val.soft { font-weight: 500; fill: var(--text-2); }
 .chart .track { fill: var(--s-track); }

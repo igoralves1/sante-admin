@@ -20,6 +20,7 @@ const oportunidades = computed(() =>
     .sort((a, b) => b.receitaDisponivel - a.receitaDisponivel)
     .map((e) => ({
       label: e.nome,
+      href: `#/espacos/${e.id}`,
       sub: `${num(e.disponivel)} ${UNIDADE[e.modalidade]} livres`,
       value: e.receitaDisponivel,
       rows: [
@@ -124,13 +125,16 @@ const rodape = computed(() => ({
         <div class="card-head"><h2>Leitura rápida</h2></div>
         <ul class="facts">
           <li><span class="chip good">Lotados</span>
-            <span>{{ cheios.length ? cheios.map((e) => e.nome).join(', ') : 'Nenhum espaço com 100%' }}</span></li>
+            <span v-if="cheios.length"><template v-for="(e, i) in cheios" :key="e.id">{{ i ? ', ' : '' }}<RouterLink :to="`/espacos/${e.id}`" class="lk">{{ e.nome }}</RouterLink></template></span>
+            <span v-else>Nenhum espaço com 100%</span></li>
           <li><span class="chip warn">Abaixo da meta</span>
-            <span>{{ abaixoMeta.length ? abaixoMeta.map((e) => `${e.nome} (${pct(e.taxa)})`).join(', ') : 'Nenhum' }}</span></li>
+            <span v-if="abaixoMeta.length"><template v-for="(e, i) in abaixoMeta" :key="e.id">{{ i ? ', ' : '' }}<RouterLink :to="`/espacos/${e.id}`" class="lk">{{ e.nome }}</RouterLink> ({{ pct(e.taxa) }})</template></span>
+            <span v-else>Nenhum</span></li>
           <li><span class="chip bad">Sem contratos</span>
-            <span>{{ vazios.length ? vazios.map((e) => e.nome).join(', ') : 'Todos têm contratos' }}</span></li>
+            <span v-if="vazios.length"><template v-for="(e, i) in vazios" :key="e.id">{{ i ? ', ' : '' }}<RouterLink :to="`/espacos/${e.id}`" class="lk">{{ e.nome }}</RouterLink></template></span>
+            <span v-else>Todos têm contratos</span></li>
           <li v-if="oportunidades[0]"><span class="chip info">Maior oportunidade</span>
-            <span>{{ oportunidades[0].label }}: {{ brl(oportunidades[0].value) }} livres no mês</span></li>
+            <span><a :href="oportunidades[0].href" class="lk">{{ oportunidades[0].label }}</a>: {{ brl(oportunidades[0].value) }} livres no mês</span></li>
         </ul>
         <div class="note small">
           Horas, turnos e contratos mensais são unidades diferentes. Por isso a ocupação geral é
@@ -181,6 +185,8 @@ const rodape = computed(() => ({
 <style scoped>
 .facts { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 14px; }
 .facts li { display: grid; gap: 4px; justify-items: start; color: var(--text-2); }
+.lk { font-weight: 500; text-decoration: none; }
+.lk:hover { text-decoration: underline; }
 .tone-legend { margin: 12px 0 0; color: var(--text-2); line-height: 2; }
 .tone-legend .tone { font-weight: 500; }
 </style>
