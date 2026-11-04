@@ -163,8 +163,8 @@ const rodape = computed(() => ({
     <section class="card">
       <div class="card-head">
         <div>
-          <h2>Tabela mensal ({{ mesTitulo }})</h2>
-          <p>Clique no cabeçalho para ordenar</p>
+          <h2>Demonstrativo de margem de contribuição ({{ mesTitulo }})</h2>
+          <p>Por espaço (centro de custo) · clique no cabeçalho para ordenar</p>
         </div>
       </div>
       <D3Table :columns="colunas" :rows="r.espacos" :footer="rodape" sort-key="receitaDisponivel" compact />
