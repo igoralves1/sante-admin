@@ -6,7 +6,7 @@ import { ascending, descending, select } from 'd3'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
-  columns: Array, // [{ key, label, num, format, bar, tone, hint }]
+  columns: Array, // [{ key, label, num, format, bar, tone, hint, link(row) -> href }]
   rows: Array,
   footer: Object, // linha de totais opcional (mesmas chaves)
   sortKey: String,
@@ -76,7 +76,9 @@ function render() {
       const txt = d.c.format ? d.c.format(d.v) : d.v ?? '—'
       // `tone(row)` devolve { c: 'good' | 'warn' | 'bad', t: explicação } e pinta o valor
       const tone = d.c.tone?.(d.r)
-      if (tone) {
+      if (d.c.link) {
+        td.append('a').attr('class', 'cell-link').attr('href', d.c.link(d.r)).text(txt)
+      } else if (tone) {
         td.append('span').attr('class', `tone ${tone.c}`).attr('title', tone.t).text(txt)
       } else if (d.c.bar) {
         const w = td.append('span').attr('class', 'cellbar')
@@ -131,6 +133,8 @@ table.compact th { font-size: 11px; }
 table.compact .cellbar { gap: 6px; }
 table.compact .cellbar-track { width: 32px; }
 table.compact .tone { padding: 1px 6px; }
+.cell-link { font-weight: 500; text-decoration: none; }
+.cell-link:hover { text-decoration: underline; }
 .tone { display: inline-block; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
 .tone.good { color: var(--good); background: var(--good-soft); }
 .tone.warn { color: var(--warn); background: var(--warn-soft); }

@@ -5,6 +5,7 @@ import Icon from '../components/Icon.vue'
 import { state } from '../lib/store'
 import { MODALIDADES, SEMANAS_MES, TIPOS, UNIDADE } from '../lib/calc'
 import { brl, clone, num, uid } from '../lib/format'
+import { agendaPadrao } from '../lib/agenda'
 
 const route = useRoute()
 const router = useRouter()
@@ -53,12 +54,20 @@ function salvar() {
   e.capacidade = Number(e.capacidade)
   e.preco = Number(e.preco) || 0
   e.despesas = e.despesas.filter((d) => d.descricao.trim() || Number(d.valor)).map((d) => ({ ...d, valor: Number(d.valor) || 0 }))
-  if (novo) state.data.espacos.push({ ...e, id: uid('e') })
-  else state.data.espacos.splice(state.data.espacos.findIndex((x) => x.id === e.id), 1, e)
-  router.push('/espacos')
+  // agenda em turnos (padrão da Santé) para espaço novo
+  if (novo || !e.agenda) e.agenda = agendaPadrao()
+  if (novo) {
+    state.data.espacos.push({ ...e, id: uid('e') })
+    router.push('/espacos')
+  } else {
+    state.data.espacos.splice(state.data.espacos.findIndex((x) => x.id === e.id), 1, e)
+    router.push(`/espacos/${e.id}`)
+  }
 }
 function excluir() {
   if (contratos.value) return alert(`Este espaço tem ${contratos.value} contrato(s). Exclua ou mova os contratos antes.`)
+  const ags = (state.data.agendamentos || []).filter((a) => a.espacoId === draft.value.id).length
+  if (ags) return alert(`Este espaço tem ${ags} agendamento(s) na agenda. Exclua-os na página do espaço antes.`)
   if (!confirm(`Remover ${draft.value.nome}?`)) return
   state.data.espacos = state.data.espacos.filter((x) => x.id !== draft.value.id)
   router.push('/espacos')

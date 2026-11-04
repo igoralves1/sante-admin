@@ -56,7 +56,7 @@ const alvo = computed(() => alvoPct.value / 100)
 const cen = computed(() => cenario(state.data, state.mes, alvo.value))
 const curva = computed(() => curvaEquilibrio(state.data, state.mes))
 const cenColunas = [
-  { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
+  { key: 'nome', label: 'Espaço', link: (e) => `#/espacos/${e.id}`, hint: 'Sala ou área cadastrada em Espaços. Clique para abrir a página do espaço.' },
   { key: 'taxa', label: 'Taxa de\nOcupação atual', num: true, format: pct, bar: true, hint: 'Capacidade utilizada ÷ Capacidade instalada no mês de referência.' },
   { key: 'taxaCenario', label: 'Taxa de\nOcupação no cenário', num: true, format: pct, bar: true, hint: 'A maior entre a taxa de ocupação atual e a meta escolhida no controle acima. Espaços já acima da meta não mudam.' },
   { key: 'unidades', label: 'Capacidade\na vender', num: true, format: (v) => (v ? num(v) : '—'), hint: 'Taxa de ocupação no cenário × Capacidade instalada − Capacidade utilizada. Quanto falta locar para chegar ao cenário.' },
@@ -74,7 +74,7 @@ const cenLinhas = computed(() =>
 
 // ---------- tabela por espaço ----------
 const espColunas = [
-  { key: 'nome', label: 'Espaço', hint: 'Nome da sala ou área cadastrada em Espaços.' },
+  { key: 'nome', label: 'Espaço', link: (e) => `#/espacos/${e.id}`, hint: 'Sala ou área cadastrada em Espaços. Clique para abrir a página do espaço.' },
   { key: 'taxa', label: 'Taxa de\nOcupação', num: true, format: pct, bar: true, hint: 'Capacidade utilizada ÷ Capacidade instalada no mês de referência.' },
   { key: 'receitaOcupada', label: 'Receita bruta\n(faturamento)', num: true, format: brl, hint: 'Soma de Quantidade × Preço de cada contrato vigente no mês, antes de impostos e custos.' },
   { key: 'despesas', label: 'Custos\ndiretos', num: true, format: brl, hint: 'Custos mensais lançados no próprio espaço. Custos fixos gerais, impostos e comissões ficam no Financeiro.' },

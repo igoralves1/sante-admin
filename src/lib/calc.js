@@ -1,6 +1,7 @@
 // Regras de negócio. As fórmulas de ocupação e ponto de equilíbrio seguem a planilha
 // Sistema_Controle_Sante.xlsx; contratos passam a ter início e fim (vigência).
 import { addMes, mesAtual } from './format'
+import { AGENDA_VERSAO, agendaPadrao, ativoAg, unidadesAg } from './agenda'
 
 export const MODALIDADES = ['Hora', 'Turno', 'Mensal']
 export const UNIDADE = { Hora: 'horas', Turno: 'turnos', Mensal: 'contratos' }
@@ -49,18 +50,23 @@ export const despesasEspaco = (e) => soma(e.despesas || [], (d) => n(d.valor))
 
 export function resumoMes(data, mes) {
   const ativos = data.contratos.filter((c) => ativoEm(c, mes))
+  // agendamentos da agenda (por dia e horário) somam-se aos contratos do mês
+  const ags = (data.agendamentos || []).filter((a) => ativoAg(a) && a.data?.startsWith(mes))
   const espacos = data.espacos.map((e) => {
     const cs = ativos.filter((c) => c.espacoId === e.id)
+    const as = ags.filter((a) => a.espacoId === e.id)
+    const asConf = as.filter((a) => a.status === 'Confirmada')
     const cap = n(e.capacidade)
     const preco = n(e.preco)
-    const ocupado = soma(cs, (c) => n(c.quantidade))
-    const confirmado = soma(cs.filter(firme), (c) => n(c.quantidade))
+    const ocupado = soma(cs, (c) => n(c.quantidade)) + soma(as, (a) => unidadesAg(e, a))
+    const confirmado = soma(cs.filter(firme), (c) => n(c.quantidade)) + soma(asConf, (a) => unidadesAg(e, a))
     const disponivel = Math.max(0, cap - ocupado)
-    const receitaOcupada = soma(cs, valorMensal)
+    const receitaOcupada = soma(cs, valorMensal) + soma(as, (a) => n(a.valor))
     const despesas = despesasEspaco(e)
     return {
       ...e,
       contratos: cs,
+      agendamentos: as,
       ocupado,
       confirmado,
       proposta: ocupado - confirmado,
@@ -69,7 +75,7 @@ export function resumoMes(data, mes) {
       taxaConfirmada: cap ? confirmado / cap : 0,
       potencial: cap * preco,
       receitaOcupada,
-      receitaConfirmada: soma(cs.filter(firme), valorMensal),
+      receitaConfirmada: soma(cs.filter(firme), valorMensal) + soma(asConf, (a) => n(a.valor)),
       receitaDisponivel: disponivel * preco,
       despesas,
       resultado: receitaOcupada - despesas,
@@ -194,6 +200,9 @@ export function normalizar(d) {
     descricao: e.descricao || '',
     obs: e.obs || '',
     despesas: e.despesas || [],
+    // agenda em turnos; versões antigas (por hora) voltam ao padrão de turnos
+    agenda: e.agenda?.versao === AGENDA_VERSAO ? e.agenda : agendaPadrao(),
+    precoTurno: e.precoTurno ?? null,
   }))
   const porNome = Object.fromEntries(d.espacos.map((e) => [e.nome, e.id]))
   if (!d.contratos && d.reservas) {
@@ -214,6 +223,8 @@ export function normalizar(d) {
   }
   delete d.reservas
   d.contratos ||= []
+  d.agendamentos ||= []
+  d.profissionais ||= []
   d.campanhas.forEach((c) => (c.espacos = (c.espacos || []).map((x) => porNome[x] || x)))
   d.meta.versao = 2
   return d

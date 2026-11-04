@@ -13,6 +13,7 @@ const nav = [
   { to: '/painel', label: 'Painel', icon: 'painel' },
   { to: '/situacao', label: 'Situação atual', icon: 'reservas' },
   { to: '/espacos', label: 'Espaços', icon: 'espacos' },
+  { to: '/profissionais', label: 'Profissionais', icon: 'user' },
   { to: '/estatisticas', label: 'Estatísticas', icon: 'stats' },
   { to: '/marketing', label: 'Marketing', icon: 'marketing' },
   { to: '/concorrentes', label: 'Concorrentes', icon: 'users' },
@@ -73,7 +74,7 @@ const instagram = computed(() => state.data?.meta?.instagram)
     <main class="main">
       <header v-if="!route.meta.home" class="topbar">
         <div>
-          <h1>{{ route.meta.title }}</h1>
+          <h1>{{ route.meta.dinamico && state.tituloPagina ? state.tituloPagina : route.meta.title }}</h1>
           <p v-if="route.meta.mes" class="muted sub">Referência: {{ mesLongo(state.mes) }}</p>
         </div>
         <div v-if="route.meta.mes" class="month">

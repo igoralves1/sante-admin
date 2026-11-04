@@ -15,6 +15,7 @@ export const state = reactive({
   local: false,
   salvoEm: null,
   mes: mesAtual(),
+  tituloPagina: '', // título da página quando ele depende dos dados (ex.: nome do espaço)
 })
 
 let pularProximo = false

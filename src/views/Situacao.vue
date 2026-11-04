@@ -168,7 +168,7 @@ const dur = (c) => {
         <dl class="space-kpis small">
           <div><dt>Ocupação</dt><dd class="tnum">{{ pct(g.e.taxa) }}</dd></div>
           <div><dt>Receita/mês</dt><dd class="tnum">{{ brl(g.e.receitaOcupada) }}</dd></div>
-          <div><dt>Despesas/mês</dt><dd class="tnum"><RouterLink :to="`/espacos/${g.e.id}`">{{ brl(g.e.despesas) }}</RouterLink></dd></div>
+          <div><dt>Despesas/mês</dt><dd class="tnum"><RouterLink :to="`/espacos/${g.e.id}/editar`">{{ brl(g.e.despesas) }}</RouterLink></dd></div>
           <div><dt>Resultado</dt><dd class="tnum" :class="{ neg: g.e.resultado < 0 }">{{ brl(g.e.resultado) }}</dd></div>
         </dl>
       </div>

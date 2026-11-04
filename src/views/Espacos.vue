@@ -49,7 +49,7 @@ const metaPct = computed({
       <div class="card-head">
         <div>
           <h2>Espaços</h2>
-          <p>Clique em um espaço para editar capacidade, preço e despesas.</p>
+          <p>Clique no nome para ver a agenda, o histórico e a movimentação do espaço. O lápis abre o cadastro.</p>
         </div>
         <RouterLink to="/espacos/novo" class="btn primary"><Icon name="plus" :size="16" /> Cadastrar novo espaço</RouterLink>
       </div>
@@ -73,7 +73,7 @@ const metaPct = computed({
               <td class="num">{{ e.despesasMes ? brl(e.despesasMes) : '—' }}</td>
               <td class="num">{{ e.vigentes }}</td>
               <td class="acts">
-                <RouterLink :to="`/espacos/${e.id}`" class="btn icon sm ghost" aria-label="Editar"><Icon name="edit" :size="15" /></RouterLink>
+                <RouterLink :to="`/espacos/${e.id}/editar`" class="btn icon sm ghost" aria-label="Editar"><Icon name="edit" :size="15" /></RouterLink>
                 <button class="btn icon sm ghost danger" type="button" aria-label="Remover" @click="remover(e)"><Icon name="trash" :size="15" /></button>
               </td>
             </tr>
