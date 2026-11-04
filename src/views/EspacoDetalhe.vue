@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import Icon from '../components/Icon.vue'
 import StatTile from '../components/StatTile.vue'
 import Popover from '../components/Popover.vue'
+import TurnosEditor from '../components/TurnosEditor.vue'
 import D3SlotGrid from '../components/d3/D3SlotGrid.vue'
 import D3Columns from '../components/d3/D3Columns.vue'
 import D3Lines from '../components/d3/D3Lines.vue'
@@ -13,7 +14,7 @@ import D3Table from '../components/d3/D3Table.vue'
 import { state } from '../lib/store'
 import { STATUS, UNIDADE, despesasEspaco, fimDoMes, firme, idxMes, resumoMes, valorMensal } from '../lib/calc'
 import {
-  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, horasDe, aplicarValorTurno, ativoAg, capacidadeMes, ehBloqueio, ehLocacao, expandirDatas, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
+  AGENDA_VERSAO, DIAS_SEMANA, STATUS_AGENDA, agendaDe, agendaPadrao, horasDe, horasMediasTurno, resumoSemana, usaTurnosDaSante, aplicarValorTurno, ativoAg, capacidadeMes, ehBloqueio, ehLocacao, expandirDatas, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
   posicoesMensais, somaDias, unidadesAg,
 } from '../lib/agenda'
 import { addMes, brl, brl0, brlCompact, dataBR, mesAtual, mesCurto, num, pct, uid } from '../lib/format'
@@ -54,7 +55,7 @@ const mesesAgenda = computed(() => {
 const porVagas = computed(() => esp.value?.tipo === 'Administrativo')
 const unidade = computed(() => UNIDADE[esp.value?.modalidade] || 'unidades')
 const unidadeUm = computed(() => ({ Hora: 'hora', Turno: 'turno', Mensal: 'contrato' })[esp.value?.modalidade] || 'unidade')
-const agenda = computed(() => (esp.value?.agenda?.horarios ? esp.value.agenda : agendaPadrao()))
+const agenda = computed(() => agendaDe(esp.value))
 const horarioPorChave = computed(() => Object.fromEntries(agenda.value.horarios.map((h) => [chave(h), h])))
 const nomeSlot = (k) => horarioPorChave.value[k]?.nome || k.replace('-', '–')
 const todosAgs = () => state.data.agendamentos || (state.data.agendamentos = [])
@@ -424,11 +425,6 @@ function excluirContrato() {
   fechar()
 }
 
-// ---------- configuração ----------
-function garantirAgenda() {
-  if (!esp.value.agenda?.horarios) esp.value.agenda = agendaPadrao()
-  return esp.value.agenda
-}
 // turnos abertos na agenda no mês de referência (contagem real dos dias do mês)
 // ---------- turnos do mês (card de resumo) ----------
 // total = turnos abertos na agenda; não disponíveis = bloqueados pela administração;
@@ -439,9 +435,10 @@ const resumoTurnos = computed(() => {
   const hs = agenda.value.horarios
   const total = dias.value.reduce((s, d) => s + hs.filter((h) => h.dias.includes(d.dow)).length, 0)
   const doMes = ags.value.filter((a) => ativoAg(a) && a.data.startsWith(state.mes))
-  const naoDisp = doMes.filter(ehBloqueio).reduce((s, a) => s + a.slots.length, 0)
+  const abre = (k, data) => horarioPorChave.value[k]?.dias.includes(dowDe(data))
+  const naoDisp = doMes.filter(ehBloqueio).reduce((s, a) => s + a.slots.filter((k) => abre(k, a.data)).length, 0)
   const naAgenda = doMes.filter((a) => !ehBloqueio(a)).reduce((s, a) => s + a.slots.length, 0)
-  const horasMedias = hs.length ? hs.reduce((s, h) => s + horasDe(chave(h)), 0) / hs.length : 4
+  const horasMedias = horasMediasTurno(agenda.value) || 1
   const semHor = semHorario.value.reduce((s, c) => s + (c.modalidade === 'Hora' ? (Number(c.quantidade) || 0) / horasMedias : Number(c.quantidade) || 0), 0)
   const abertos = Math.max(0, total - naoDisp)
   const mensal = contratoMensalMes.value ? Math.max(0, abertos - naAgenda) : 0
@@ -465,43 +462,31 @@ const notaTurnos = computed(() => {
 })
 const pctDe = (v) => `${resumoTurnos.value?.total ? (v / resumoTurnos.value.total) * 100 : 0}%`
 const turnosMes = computed(() => (esp.value ? capacidadeMes({ ...esp.value, tipo: 'Consultório', modalidade: 'Turno' }, state.mes, state.data.agendamentos) : 0))
-function mudarHora(h, campo, valor) {
-  garantirAgenda()
-  const antiga = chave(h)
-  h[campo] = valor
-  const nova = chave(h)
-  if (antiga !== nova) todosAgs().forEach((a) => a.espacoId === esp.value.id && (a.slots = a.slots.map((k) => (k === antiga ? nova : k))))
+// ---------- turnos: os da Santé (todas as salas) ou os próprios desta sala ----------
+const proprios = computed(() => !usaTurnosDaSante(esp.value))
+const salasNoPadrao = computed(() => state.data.espacos.filter((e) => e.tipo !== 'Administrativo' && usaTurnosDaSante(e)))
+// Salvar: troca os turnos e ajusta os agendamentos dos espaços afetados (todos os que usam o padrão,
+// ou só esta sala). As telas recalculam na hora porque leem os mesmos dados.
+function salvarTurnos({ agenda: nova, renomes, removidos }) {
+  const afetados = new Set(proprios.value ? [esp.value.id] : salasNoPadrao.value.map((e) => e.id))
+  const presos = todosAgs().filter((a) => afetados.has(a.espacoId) && ativoAg(a) && a.slots.some((k) => removidos.includes(k)))
+  if (presos.length) return `Há ${presos.length} agendamento(s) ou bloqueio(s) nos turnos removidos. Exclua ou mude esses registros antes.`
+  todosAgs().forEach((a) => {
+    if (afetados.has(a.espacoId) && a.slots.some((k) => renomes[k])) a.slots = a.slots.map((k) => renomes[k] || k)
+  })
+  if (proprios.value) esp.value.agenda = { versao: AGENDA_VERSAO, ...nova }
+  else Object.assign(state.data.turnos, { versao: AGENDA_VERSAO, ...nova })
+  return ''
 }
-function alternarDia(h, d) {
-  garantirAgenda()
-  const i = h.dias.indexOf(d)
-  if (i >= 0) h.dias.splice(i, 1)
-  else h.dias.push(d)
-  h.dias.sort()
+function personalizar() {
+  esp.value.agenda = { ...JSON.parse(JSON.stringify(agendaPadrao())), versao: AGENDA_VERSAO }
 }
-function addHorario() {
-  const ag = garantirAgenda()
-  const ult = ag.horarios[ag.horarios.length - 1]
-  const ini = ult ? ult.fim : '08:00'
-  const [H, M] = ini.split(':').map(Number)
-  const fim = `${pad(Math.min(23, H + (esp.value.modalidade === 'Hora' ? 1 : 4)))}:${pad(M)}`
-  ag.horarios.push({ nome: esp.value.modalidade === 'Hora' ? `${pad(H)}h` : 'Novo turno', ini, fim, dias: [1, 2, 3, 4, 5] })
+function voltarAoPadrao() {
+  const chaves = new Set(agendaPadrao().horarios.map(chave))
+  const fora = ags.value.filter((a) => ativoAg(a) && a.slots.some((k) => !chaves.has(k))).length
+  if (fora && !confirm(`${fora} agendamento(s) desta sala estão em turnos que não existem nos turnos da Santé e sairão da matriz. Continuar?`)) return
+  esp.value.agenda = null
 }
-function delHorario(h) {
-  const k = chave(h)
-  const n = ags.value.filter((a) => a.slots.includes(k)).length
-  if (n) return alert(`Há ${n} agendamento(s) neste horário. Exclua ou mude esses agendamentos antes.`)
-  const ag = garantirAgenda()
-  ag.horarios.splice(ag.horarios.indexOf(h), 1)
-}
-function restaurar() {
-  if (ags.value.length && !confirm('Restaurar os horários padrão? Agendamentos em horários que deixarem de existir somem da matriz (continuam na movimentação).')) return
-  esp.value.agenda = agendaPadrao()
-}
-const minimoEdit = computed({
-  get: () => agenda.value.minimo,
-  set: (v) => (garantirAgenda().minimo = Math.max(1, Math.round(Number(v) || 1))),
-})
 
 // ---------- histórico ----------
 const anos = computed(() => {
@@ -670,21 +655,22 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
       <StatTile label="Taxa de ocupação" :value="pct(r.taxa)" :tone="r.taxa >= meta ? 'good' : 'bad'" :hint="`${num(r.ocupado)} de ${num(r.capacidade)} ${unidade} · meta ${pct(meta)}`" />
       <StatTile label="Receita bruta (faturamento)" :value="brl(r.receitaOcupada)" :hint="`Receita potencial ${brl0(r.potencial)}`" />
       <StatTile label="Margem de contribuição" :value="brl(r.resultado)" :tone="r.resultado > 0 ? 'good' : 'bad'" :hint="`Custos diretos ${brl(r.despesas)}`" />
-      <StatTile label="Receita ociosa" :value="brl(r.receitaDisponivel)" :hint="`${num(r.disponivel)} ${unidade} livres no mês`" />
+      <StatTile label="Receita ociosa" :value="brl(r.receitaDisponivel)" :hint="`${num(r.disponivel)} ${unidade} em aberto livres no mês${r.receitaBloqueada > 0 ? ` · ${brl0(r.receitaBloqueada)} perdidos com não disponíveis` : ''}`" />
     </section>
 
     <section v-if="resumoTurnos" class="card turnos">
       <div class="card-head">
         <div>
           <h2>Turnos em {{ mesTitulo }}</h2>
-          <p>Contagem na agenda desta sala: dias úteis com 3 turnos e sábados com 2</p>
+          <p>Calendário do mês com os turnos desta sala: {{ resumoSemana(agenda) }}</p>
         </div>
       </div>
       <div class="t-grid">
-        <div><span>Total na agenda</span><strong class="tnum">{{ num(resumoTurnos.total) }}</strong><small>turnos abertos no mês</small></div>
-        <div><span><i class="k k-oc" />Ocupados</span><strong class="tnum">{{ num(+resumoTurnos.ocupados.toFixed(1)) }}</strong><small>{{ pct(resumoTurnos.total ? resumoTurnos.ocupados / resumoTurnos.total : 0) }} do total</small></div>
-        <div><span><i class="k k-li" />Disponíveis</span><strong class="tnum good">{{ num(+resumoTurnos.livres.toFixed(1)) }}</strong><small>livres para locar</small></div>
-        <div><span><i class="k k-nd" />Não disponíveis</span><strong class="tnum">{{ num(resumoTurnos.naoDisp) }}</strong><small>bloqueados pela administração</small></div>
+        <div><span>No calendário</span><strong class="tnum">{{ num(resumoTurnos.total) }}</strong><small>turnos do mês</small></div>
+        <div><span><i class="k k-nd" />Não disponíveis</span><strong class="tnum">{{ num(resumoTurnos.naoDisp) }}</strong><small :class="{ perda: r.receitaBloqueada > 0 }">{{ r.receitaBloqueada > 0 ? `${brl(r.receitaBloqueada)} não realizados` : 'bloqueados pela administração' }}</small></div>
+        <div><span>Em aberto</span><strong class="tnum">{{ num(resumoTurnos.total - resumoTurnos.naoDisp) }}</strong><small>para locação (capacidade)</small></div>
+        <div><span><i class="k k-oc" />Ocupados</span><strong class="tnum">{{ num(+resumoTurnos.ocupados.toFixed(1)) }}</strong><small>{{ pct(resumoTurnos.total - resumoTurnos.naoDisp ? resumoTurnos.ocupados / (resumoTurnos.total - resumoTurnos.naoDisp) : 0) }} dos em aberto</small></div>
+        <div><span><i class="k k-li" />Livres</span><strong class="tnum good">{{ num(+resumoTurnos.livres.toFixed(1)) }}</strong><small>em aberto sem locatário</small></div>
         <div><span>Profissionais</span><strong class="tnum">{{ num(resumoTurnos.profissionais) }}</strong><small>{{ resumoTurnos.estimados ? `+ ${resumoTurnos.estimados} contrato estimado (base inicial)` : 'usando a sala no mês' }}</small></div>
       </div>
       <div class="t-bar" role="img" :aria-label="`${num(+resumoTurnos.ocupados.toFixed(1))} ocupados, ${num(resumoTurnos.naoDisp)} não disponíveis e ${num(+resumoTurnos.livres.toFixed(1))} disponíveis de ${num(resumoTurnos.total)} turnos`">
@@ -912,44 +898,26 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
     </Popover>
     <datalist id="clientes"><option v-for="c in clientes" :key="c" :value="c" /></datalist>
 
-    <!-- ===== configuração ===== -->
+    <!-- ===== turnos ===== -->
     <section v-if="!porVagas" class="card">
       <div class="card-head">
         <div>
-          <h2>Turnos e regras da agenda</h2>
-          <p>Padrão da Santé: 08–12, 14–18 e 19–22 de segunda a sexta; sábado 08–12 e 14–18. Cada turno é uma linha da matriz.</p>
+          <h2>Turnos da agenda</h2>
+          <p v-if="proprios">Esta sala tem turnos próprios. Salvar muda só esta sala.</p>
+          <p v-else>Turnos da Santé, guardados no <code>sante.json</code>. Salvar atualiza na hora os {{ salasNoPadrao.length }} espaços que usam estes turnos.</p>
         </div>
         <div class="toolbar">
-          <button class="btn sm" type="button" @click="addHorario"><Icon name="plus" :size="14" /> Turno</button>
-          <button class="btn sm ghost" type="button" @click="restaurar">Restaurar padrão</button>
+          <span class="chip" :class="proprios ? 'warn' : 'info'">{{ proprios ? 'Turnos próprios' : 'Turnos da Santé' }}</span>
+          <button v-if="proprios" class="btn sm ghost" type="button" @click="voltarAoPadrao">Usar os turnos da Santé</button>
+          <button v-else class="btn sm ghost" type="button" @click="personalizar">Personalizar só esta sala</button>
         </div>
       </div>
-      <div class="table-wrap">
-        <table class="cfg">
-          <thead><tr><th>Nome</th><th>Início</th><th>Fim</th><th>Dias da semana</th><th /></tr></thead>
-          <tbody>
-            <tr v-for="(h, i) in agenda.horarios" :key="i">
-              <td><input v-model="h.nome" class="in-nome" @input="garantirAgenda" /></td>
-              <td><input :value="h.ini" type="time" @change="mudarHora(h, 'ini', $event.target.value)" /></td>
-              <td><input :value="h.fim" type="time" @change="mudarHora(h, 'fim', $event.target.value)" /></td>
-              <td>
-                <div class="dias">
-                  <button v-for="d in [1, 2, 3, 4, 5, 6, 0]" :key="d" type="button" class="dia" :class="{ on: h.dias.includes(d) }" :aria-pressed="h.dias.includes(d)" @click="alternarDia(h, d)">{{ DIAS_SEMANA[d] }}</button>
-                </div>
-              </td>
-              <td class="num"><button class="btn icon sm ghost" type="button" aria-label="Remover horário" @click="delHorario(h)"><Icon name="trash" :size="14" /></button></td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="regras">
-        <label class="field">Mínimo de {{ unidade }} por reserva no mesmo dia<input v-model.number="minimoEdit" type="number" min="1" step="1" /></label>
-        <div class="cap">
-          <span class="small muted">Capacidade em {{ mesTitulo }}, contada nesta agenda</span>
-          <strong class="tnum">{{ num(turnosMes) }} turnos{{ esp.modalidade === 'Hora' ? ` · ${num(r.capacidade)} horas` : '' }}</strong>
-          <span v-if="usaAgenda(esp)" class="small muted">Muda a cada mês conforme os dias úteis e sábados. É a capacidade usada no Painel gerencial e em Projeções e cenários.</span>
-          <span v-else class="small muted">Esta sala está em contrato mensal: a capacidade cadastrada ({{ num(esp.capacidade) }} {{ unidade }}) vale até você informar o valor por turno.</span>
-        </div>
+      <TurnosEditor :agenda="agenda" :ao-salvar="salvarTurnos" :unidade="unidade" />
+      <div class="cap">
+        <span class="small muted">Turnos em aberto em {{ mesTitulo }} (capacidade do mês)</span>
+        <strong class="tnum">{{ num(turnosMes) }} turnos{{ esp.modalidade === 'Hora' ? ` · ${num(r.capacidade)} horas` : '' }}</strong>
+        <span v-if="usaAgenda(esp)" class="small muted">Calendário do mês × turnos acima, menos os não disponíveis. É a capacidade usada no Painel gerencial e em Projeções e cenários.</span>
+        <span v-else class="small muted">Esta sala está em contrato mensal: a capacidade cadastrada ({{ num(esp.capacidade) }} {{ unidade }}) vale até você informar o valor por turno.</span>
       </div>
     </section>
 
@@ -1042,12 +1010,15 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .leg-vazia { margin: 10px 0 0; }
 .k-off { border: 1px dashed var(--border); }
 .turnos .card-head { margin-bottom: 10px; }
-.t-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
-@media (max-width: 900px) { .t-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.t-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 1100px) { .t-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .t-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.cap { display: grid; gap: 2px; justify-items: start; margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
 .t-grid > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
 .t-grid span { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .t-grid strong { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
 .t-grid strong.good { color: var(--good); }
+.t-grid small.perda { color: var(--bad); font-weight: 500; }
 .t-grid small { font-size: 11px; color: var(--muted); }
 .t-grid .k { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 .k-oc { background: var(--s-firm); }
@@ -1097,5 +1068,4 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .vt p { margin: 0 0 8px; }
 @media (max-width: 640px) { .vt { grid-template-columns: minmax(0, 1fr); } }
 .warnote { background: var(--warn-soft); color: var(--warn); }
-.cap { display: grid; gap: 2px; justify-items: start; }
 </style>

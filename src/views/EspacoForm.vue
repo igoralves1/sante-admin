@@ -5,7 +5,7 @@ import Icon from '../components/Icon.vue'
 import { state } from '../lib/store'
 import { MODALIDADES, SEMANAS_MES, TIPOS, UNIDADE } from '../lib/calc'
 import { brl, clone, num, uid } from '../lib/format'
-import { agendaPadrao, capacidadeMes, usaAgenda } from '../lib/agenda'
+import { capacidadeMes, usaAgenda } from '../lib/agenda'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,8 +28,8 @@ function aplicarSemana() {
   draft.value.capacidade = +(porSemana.value * SEMANAS_MES).toFixed(2)
 }
 const dicaSemana = computed(() => ({
-  Hora: 'Horas disponíveis por semana (ex.: 40 → 173,2 h/mês)',
-  Turno: 'Turnos por semana (ex.: 11,5 → 50 turnos/mês)',
+  Hora: 'Horas disponíveis por semana',
+  Turno: 'Turnos por semana',
   Mensal: 'Para mensal, informe o número de contratos/posições',
 })[draft.value?.modalidade])
 
@@ -59,7 +59,8 @@ function salvar() {
   e.preco = Number(e.preco) || 0
   e.despesas = e.despesas.filter((d) => d.descricao.trim() || Number(d.valor)).map((d) => ({ ...d, valor: Number(d.valor) || 0 }))
   // agenda em turnos (padrão da Santé) para espaço novo
-  if (novo || !e.agenda) e.agenda = agendaPadrao()
+  // espaço novo usa os turnos da Santé (bloco central do sante.json)
+  if (novo) e.agenda = null
   if (novo) {
     state.data.espacos.push({ ...e, id: uid('e') })
     router.push('/espacos')

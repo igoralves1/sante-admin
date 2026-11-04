@@ -4,8 +4,8 @@ import Icon from '../components/Icon.vue'
 import StatTile from '../components/StatTile.vue'
 import { state } from '../lib/store'
 import { UNIDADE, ativoEm, despesasEspaco } from '../lib/calc'
-import { capacidadeMes, usaAgenda } from '../lib/agenda'
-import { brl, mesAtual, num } from '../lib/format'
+import { agendaPadrao, capacidadeMes, listaTurnos, usaAgenda } from '../lib/agenda'
+import { brl, mesAtual, mesLongo, num } from '../lib/format'
 
 const hoje = mesAtual()
 const linhas = computed(() =>
@@ -18,6 +18,9 @@ const linhas = computed(() =>
     total: state.data.contratos.filter((c) => c.espacoId === e.id).length,
   })),
 )
+// texto da nota: turnos da Santé e quantos o mês de referência tem (sem bloqueios)
+const turnosSante = computed(() => listaTurnos(agendaPadrao()))
+const turnosNoMes = computed(() => capacidadeMes({ id: '', tipo: 'Consultório', modalidade: 'Turno', agenda: null }, state.mes))
 const potencial = computed(() => linhas.value.reduce((a, e) => a + e.potencial, 0))
 const despesas = computed(() => linhas.value.reduce((a, e) => a + e.despesasMes, 0))
 
@@ -88,10 +91,10 @@ const metaPct = computed({
     </section>
 
     <section class="note">
-      <strong>Como a capacidade é calculada:</strong> salas e piscina contam os turnos abertos na agenda de cada uma
-      no mês de referência (08–12, 14–18 e 19–22 nos dias úteis; 08–12 e 14–18 no sábado). Em novembro de 2026 são
-      71 turnos. Salas por hora usam as horas desses turnos. Salas em contrato mensal e o administrativo (16 posições)
-      usam a capacidade cadastrada.
+      <strong>Como a capacidade é calculada:</strong> salas e piscina contam, no calendário do mês de referência, os
+      turnos da Santé guardados no <code>sante.json</code> ({{ turnosSante }}), menos os turnos marcados como não disponíveis.
+      Em {{ mesLongo(state.mes) }} são {{ num(turnosNoMes) }} turnos por sala antes dos bloqueios. Salas por hora usam as horas desses turnos.
+      Salas em contrato mensal e o administrativo usam a capacidade cadastrada. Para mudar os turnos, abra qualquer sala e use “Turnos da agenda”.
     </section>
   </div>
 </template>

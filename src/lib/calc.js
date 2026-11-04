@@ -1,7 +1,7 @@
 // Regras de negócio. As fórmulas de ocupação e ponto de equilíbrio seguem a planilha
 // Sistema_Controle_Sante.xlsx; contratos passam a ter início e fim (vigência).
 import { addMes, mesAtual } from './format'
-import { capacidadeMes, ehLocacao, migrarAgenda, unidadesAg } from './agenda'
+import { capacidadeMes, ehLocacao, migrarAgenda, normalizarTurnos, unidadesAg } from './agenda'
 
 export const MODALIDADES = ['Hora', 'Turno', 'Mensal']
 export const UNIDADE = { Hora: 'horas', Turno: 'turnos', Mensal: 'contratos' }
@@ -56,8 +56,11 @@ export function resumoMes(data, mes) {
     const cs = ativos.filter((c) => c.espacoId === e.id)
     const as = ags.filter((a) => a.espacoId === e.id)
     const asConf = as.filter((a) => a.status === 'Confirmada')
-    // salas e piscina: turnos (ou horas) abertos na agenda deste mês; mensal/administrativo: cadastro
+    // salas e piscina: turnos (ou horas) EM ABERTO no mês = calendário − não disponíveis.
+    // Toda estatística de ocupação e receita usa só os em aberto; os não disponíveis ficam à parte.
+    const instalada = capacidadeMes(e, mes)
     const cap = capacidadeMes(e, mes, data.agendamentos)
+    const bloqueado = Math.max(0, instalada - cap)
     const preco = n(e.preco)
     const ocupado = soma(cs, (c) => n(c.quantidade)) + soma(as, (a) => unidadesAg(e, a))
     const confirmado = soma(cs.filter(firme), (c) => n(c.quantidade)) + soma(asConf, (a) => unidadesAg(e, a))
@@ -67,6 +70,9 @@ export function resumoMes(data, mes) {
     return {
       ...e,
       capacidade: cap,
+      capacidadeInstalada: instalada,
+      bloqueado,
+      receitaBloqueada: bloqueado * preco, // receita que os turnos não disponíveis deixam de gerar
       contratos: cs,
       agendamentos: as,
       ocupado,
@@ -94,6 +100,8 @@ export function resumoMes(data, mes) {
     receitaConfirmada,
     receitaProposta: receitaOcupada - receitaConfirmada,
     receitaDisponivel: soma(espacos, (e) => e.receitaDisponivel),
+    receitaBloqueada: soma(espacos, (e) => e.receitaBloqueada),
+    espacosComBloqueio: espacos.filter((e) => e.bloqueado > 0).length,
     despesasEspacos: soma(espacos, (e) => e.despesas),
     // ponderada pela receita: horas, turnos e contratos não se somam diretamente
     taxaReceita: potencial ? receitaOcupada / potencial : 0,
@@ -192,6 +200,8 @@ export function normalizar(d) {
   d.metas ||= { ocupacaoAlvo: 0.6 }
   d.custos ||= { fixos: [], impostos: 0, comissoes: 0 }
   d.campanhas ||= []
+  // turnos da Santé: bloco central do sante.json, usado por todas as salas sem turnos próprios
+  d.turnos = normalizarTurnos(d.turnos)
   d.espacos = (d.espacos || []).map((e, i) => ({
     id: e.id || `e${i + 1}`,
     nome: e.nome,
@@ -202,8 +212,8 @@ export function normalizar(d) {
     descricao: e.descricao || '',
     obs: e.obs || '',
     despesas: e.despesas || [],
-    // agenda em turnos; versões antigas (por hora) voltam ao padrão de turnos
-    agenda: migrarAgenda(e.agenda),
+    // null = usa os turnos da Santé; objeto = turnos próprios desta sala
+    agenda: migrarAgenda(e.agenda, d.turnos),
     precoTurno: e.precoTurno ?? null,
   }))
   const porNome = Object.fromEntries(d.espacos.map((e) => [e.nome, e.id]))

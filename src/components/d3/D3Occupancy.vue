@@ -53,7 +53,8 @@ const { el, tip } = useChart((root, W, tip) => {
       tip.value = tipAt(el.value, ev, `${d.nome} · ${d.modalidade}`, [
         { label: 'Confirmado + base', value: `${num(d.confirmado)} ${u}`, color: 'var(--s-firm)' },
         { label: 'Em proposta', value: `${num(d.proposta)} ${u}`, color: 'var(--s-prop)' },
-        { label: 'Disponível', value: `${num(d.disponivel)} de ${num(d.capacidade)}`, color: 'var(--s-track)' },
+        { label: 'Disponível', value: `${num(d.disponivel)} de ${num(d.capacidade)} em aberto`, color: 'var(--s-track)' },
+        ...(d.bloqueado ? [{ label: 'Não disponível', value: `${num(d.bloqueado)} ${u} · ${brl(d.receitaBloqueada)}` }] : []),
         { label: 'Receita no mês', value: brl(d.receitaOcupada) },
         { label: 'Receita disponível', value: brl(d.receitaDisponivel) },
       ])

@@ -103,7 +103,7 @@ const espLinhas = computed(() => {
   <div class="stack">
     <section class="grid cols-4">
       <StatTile label="Ocupação média dos espaços" :value="pct(est.media)">
-        Mediana {{ pct(est.mediana) }} · desvio padrão {{ pct(est.desvio) }}
+        Mediana {{ pct(est.mediana) }} · desvio padrão {{ pct(est.desvio) }} · sobre os turnos em aberto<template v-if="r.receitaBloqueada > 0"> · {{ brl0(r.receitaBloqueada) }} não realizados com turnos não disponíveis</template>
       </StatTile>
       <StatTile label="Ticket médio por contrato" :value="brl(est.ticket)" :hint="`${est.nContratos} contratos vigentes no mês`" />
       <StatTile label="Concentração da receita" :value="pct(est.top3)" hint="Parte da receita que vem dos 3 maiores espaços" />

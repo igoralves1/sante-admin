@@ -2,6 +2,7 @@
 // Orçamento -> leads -> visitas -> contratos -> clientes ativos -> receita.
 // Os números padrão são o caminho feliz: metas plausíveis se a execução sair bem.
 import { addMes, uid } from './format.js'
+import { agendaDe, agendaPadrao, horasMediasTurno } from './agenda.js'
 
 export const INICIO = '2026-11'
 
@@ -66,12 +67,13 @@ export const PADRAO = {
 }
 
 export const HORA_PACOTE = 35 // R$/h do pacote Start proposto
-export const HORAS_TURNO_MES = 4.33 * 4 // 1 turno de 4 h por semana
+// 1 turno fixo por semana: semanas do mês (52 ÷ 12) × duração média do turno nos turnos da Santé
+export const horasTurnoMes = () => (52 / 12) * horasMediasTurno(agendaPadrao())
 
 const ticket = (a, p) => (a < 3 ? p.ticket0 : p.ticket0 * (1 - p.upgrade) + p.ticket1 * p.upgrade)
 const horas = (a, p) => {
   const h0 = p.ticket0 / HORA_PACOTE
-  return a < 3 ? h0 : h0 * (1 - p.upgrade) + HORAS_TURNO_MES * p.upgrade
+  return a < 3 ? h0 : h0 * (1 - p.upgrade) + horasTurnoMes() * p.upgrade
 }
 // no mês de entrada o cliente usa, em média, metade do mês
 const entrada = (a) => (a === 0 ? 0.5 : 1)
@@ -139,11 +141,11 @@ export function simular(cen, p = PADRAO) {
   }
 }
 
-// Horas livres hoje nos consultórios por hora e por turno (turno = 4 h)
+// Horas livres no mês nos consultórios por hora e por turno (turno = duração média dos turnos da sala)
 export function horasLivres(resumo) {
   return resumo.espacos
     .filter((e) => e.tipo === 'Consultório' && (e.modalidade === 'Hora' || e.modalidade === 'Turno'))
-    .reduce((s, e) => s + e.disponivel * (e.modalidade === 'Turno' ? 4 : 1), 0)
+    .reduce((s, e) => s + e.disponivel * (e.modalidade === 'Turno' ? horasMediasTurno(agendaDe(e)) : 1), 0)
 }
 
 // Campanhas que o botão "Adicionar ao plano" cria na lista do Marketing

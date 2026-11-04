@@ -7,31 +7,88 @@ export const STATUS_AGENDA = ['Confirmada', 'Proposta', 'Cancelada']
 
 const pad = (v) => String(v).padStart(2, '0')
 
-// Turnos da Santé: toda sala é alugada por turno.
-// Seg–sex: 08–12, 14–18 e 19–22. Sábado: 08–12 e 14–18. (17 turnos por semana → 73,61 por mês)
+// Turnos da Santé. A fonte de verdade é o bloco `turnos` do sante.json (state.data.turnos):
+// todas as salas usam esses turnos, a não ser que tenham turnos próprios em `espaco.agenda`.
+// TURNOS_INICIAIS só serve para criar o bloco num sante.json antigo que ainda não o tenha.
 export const AGENDA_VERSAO = 3
-export function agendaPadrao() {
-  return {
-    versao: AGENDA_VERSAO,
-    minimo: 1,
-    horarios: [
-      { nome: 'Manhã', ini: '08:00', fim: '12:00', dias: [1, 2, 3, 4, 5, 6] },
-      { nome: 'Tarde', ini: '14:00', fim: '18:00', dias: [1, 2, 3, 4, 5, 6] },
-      { nome: 'Noite', ini: '19:00', fim: '22:00', dias: [1, 2, 3, 4, 5] },
-    ],
-  }
+const TURNOS_INICIAIS = {
+  versao: AGENDA_VERSAO,
+  minimo: 1,
+  horarios: [
+    { nome: 'Manhã', ini: '08:00', fim: '12:00', dias: [1, 2, 3, 4, 5, 6] },
+    { nome: 'Tarde', ini: '14:00', fim: '18:00', dias: [1, 2, 3, 4, 5, 6] },
+    { nome: 'Noite', ini: '19:00', fim: '22:00', dias: [1, 2, 3, 4, 5] },
+  ],
+}
+const copia = (v) => JSON.parse(JSON.stringify(v))
+export const turnosIniciais = () => copia(TURNOS_INICIAIS)
+
+// O store informa onde estão os turnos da Santé (state.data.turnos), para as contas serem reativas.
+let fonte = () => null
+export function definirFonteTurnos(fn) {
+  fonte = fn
+}
+export const agendaPadrao = () => fonte() || TURNOS_INICIAIS
+// turnos que valem para um espaço: os próprios, se houver, ou os da Santé
+export const agendaDe = (e) => (e?.agenda?.horarios ? e.agenda : agendaPadrao())
+export const usaTurnosDaSante = (e) => !e?.agenda?.horarios
+
+export function mesmaAgenda(a, b) {
+  const n = (x) => JSON.stringify({ m: Number(x?.minimo) || 1, h: (x?.horarios || []).map((h) => [h.nome, h.ini, h.fim, [...h.dias].sort()]) })
+  return n(a) === n(b)
 }
 
-// Agendas salvas em versões anteriores: a v2 (turnos) ganha a tarde de sábado e mantém as
-// outras mudanças; versões mais antigas (por hora) voltam ao padrão.
-export function migrarAgenda(ag) {
-  if (ag?.versao === AGENDA_VERSAO) return ag
-  if (ag?.versao === 2 && ag.horarios) {
-    const tarde = ag.horarios.find((h) => h.ini === '14:00' && h.fim === '18:00')
+// Bloco `turnos` do sante.json (cria a partir dos iniciais se faltar)
+export function normalizarTurnos(t) {
+  if (!t?.horarios) return turnosIniciais()
+  return { versao: AGENDA_VERSAO, minimo: Number(t.minimo) || 1, horarios: t.horarios }
+}
+
+// Turnos próprios de uma sala salvos em versões anteriores. Devolve null quando são iguais
+// aos da Santé (a sala passa a usar o bloco central). A v2 ganha a tarde de sábado.
+export function migrarAgenda(ag, turnos) {
+  if (!ag?.horarios) return null
+  let a = ag
+  if (ag.versao === 2) {
+    a = copia(ag)
+    const tarde = a.horarios.find((h) => h.ini === '14:00' && h.fim === '18:00')
     if (tarde && !tarde.dias.includes(6)) tarde.dias = [...tarde.dias, 6].sort()
-    return { ...ag, versao: AGENDA_VERSAO }
-  }
-  return agendaPadrao()
+  } else if (ag.versao !== AGENDA_VERSAO) return null
+  a = { ...a, versao: AGENDA_VERSAO }
+  return mesmaAgenda(a, turnos) ? null : a
+}
+
+// Textos gerados a partir dos turnos (nada fixo no código)
+const NOMES_DIA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado']
+const ORDEM = [1, 2, 3, 4, 5, 6, 0]
+const curto = (s) => s.replace(/:00$/, '')
+function faixaDias(dias) {
+  const ds = ORDEM.filter((d) => dias.includes(d))
+  const grupos = []
+  ds.forEach((d) => {
+    const g = grupos[grupos.length - 1]
+    if (g && ORDEM.indexOf(d) === ORDEM.indexOf(g[g.length - 1]) + 1) g.push(d)
+    else grupos.push([d])
+  })
+  return grupos.map((g) => (g.length > 2 ? `${NOMES_DIA[g[0]]} a ${NOMES_DIA[g[g.length - 1]]}` : g.map((d) => NOMES_DIA[d]).join(' e '))).join(', ')
+}
+// "Manhã 08–12 (segunda a sábado) · Tarde 14–18 (...)"
+export const listaTurnos = (agenda) => (agenda?.horarios || []).map((h) => `${h.nome} ${curto(h.ini)}–${curto(h.fim)} (${faixaDias(h.dias)})`).join(' · ')
+// "segunda a sexta com 3 turnos, sábado com 2, domingo fechado"
+export function resumoSemana(agenda) {
+  const n = (d) => (agenda?.horarios || []).filter((h) => h.dias.includes(d)).length
+  const grupos = []
+  ORDEM.forEach((d) => {
+    const g = grupos[grupos.length - 1]
+    if (g && g.n === n(d)) g.dias.push(d)
+    else grupos.push({ n: n(d), dias: [d] })
+  })
+  return grupos.map((g) => `${faixaDias(g.dias)} ${g.n ? `com ${g.n} ${g.n === 1 ? 'turno' : 'turnos'}` : 'fechado'}`).join(', ')
+}
+// duração média de um turno, em horas
+export const horasMediasTurno = (agenda) => {
+  const hs = agenda?.horarios || []
+  return hs.length ? hs.reduce((s, h) => s + horasDe(chave(h)), 0) / hs.length : 0
 }
 
 export const chave = (h) => `${h.ini}-${h.fim}`
@@ -75,10 +132,10 @@ export function somaDias(iso, n) {
   return `${x.getFullYear()}-${pad(x.getMonth() + 1)}-${pad(x.getDate())}`
 }
 
-// Capacidade por semana e por mês que a agenda configurada permite
+// Turnos (ou horas) que a agenda oferece por semana
 export function capacidadeAgenda(agenda, modalidade) {
   const sem = (agenda?.horarios || []).reduce((s, h) => s + h.dias.length * (modalidade === 'Hora' ? horasDe(chave(h)) : 1), 0)
-  return { semana: sem, mes: +(sem * 4.33).toFixed(2) }
+  return { semana: sem }
 }
 
 // Mapa horário -> agendamento ocupando, para um espaço e um dia
@@ -122,15 +179,21 @@ export function aplicarValorTurno(espaco, valor) {
 export const usaAgenda = (e) => !!e && e.tipo !== 'Administrativo' && e.modalidade !== 'Mensal'
 
 // Capacidade do mês: turnos abertos na agenda em cada dia do mês (ou as horas desses
-// turnos, se a sala cobra por hora). Ex.: nov/2026 = 21 dias úteis × 3 + 4 sábados × 2 = 71 turnos.
+// turnos, se a sala cobra por hora), contados no calendário real do mês.
 // Turnos marcados como "Não disponível" (agendamentos do tipo bloqueio) são descontados.
 export function capacidadeMes(e, mes, agendamentos = []) {
   if (!usaAgenda(e)) return Number(e?.capacidade) || 0
-  const hs = (e.agenda?.horarios ? e.agenda : agendaPadrao()).horarios
+  const hs = agendaDe(e).horarios
   const abertos = diasDoMes(mes).reduce((s, d) => s + hs.filter((h) => h.dias.includes(d.dow))
     .reduce((t, h) => t + (e.modalidade === 'Hora' ? horasDe(chave(h)) : 1), 0), 0)
+  // só descontam bloqueios em turnos que existem e abrem naquele dia
+  const porChave = Object.fromEntries(hs.map((h) => [chave(h), h]))
   const bloqueados = (agendamentos || []).filter((a) => ehBloqueio(a) && ativoAg(a) && a.espacoId === e.id && a.data?.startsWith(mes))
-    .reduce((s, a) => s + unidadesAg(e, a), 0)
+    .reduce((s, a) => {
+      const dow = dowDe(a.data)
+      const validos = a.slots.filter((k) => porChave[k]?.dias.includes(dow))
+      return s + unidadesAg(e, { slots: validos })
+    }, 0)
   return Math.max(0, abertos - bloqueados)
 }
 

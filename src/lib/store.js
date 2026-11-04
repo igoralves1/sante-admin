@@ -1,6 +1,7 @@
 import { reactive, watch } from 'vue'
 import { clone, mesAtual } from './format'
 import { normalizar } from './calc'
+import { definirFonteTurnos } from './agenda'
 
 const KEY = 'sante-admin:v2'
 const KEY_ANTIGA = 'sante-ocupacao:v1'
@@ -17,6 +18,9 @@ export const state = reactive({
   mes: mesAtual(),
   tituloPagina: '', // título da página quando ele depende dos dados (ex.: nome do espaço)
 })
+
+// as contas de turnos leem state.data.turnos (o bloco central do sante.json)
+definirFonteTurnos(() => state.data?.turnos)
 
 let pularProximo = false
 
@@ -67,6 +71,26 @@ export async function carregar() {
     },
     { deep: true },
   )
+
+  // outra aba do mesmo navegador salvou (ex.: turnos editados): atualiza esta na hora
+  window.addEventListener('storage', (ev) => {
+    if (ev.key !== KEY) return
+    try {
+      const novo = ev.newValue ? JSON.parse(ev.newValue) : null
+      pularProximo = true
+      if (novo?.data) {
+        state.data = normalizar(novo.data)
+        state.local = true
+        state.salvoEm = novo.salvoEm
+      } else if (state.publicado) {
+        state.data = clone(state.publicado)
+        state.local = false
+        state.salvoEm = null
+      }
+    } catch {
+      /* ignora conteúdo inválido */
+    }
+  })
 }
 
 export function descartarLocal() {
