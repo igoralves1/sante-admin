@@ -8,7 +8,7 @@
     "whatsapp": "https://wa.me/558233167100",
     "site": "https://santeconsultorios.com.br/",
     "instagram": "https://www.instagram.com/santeconsultoriosmaceio/",
-    "atualizadoEm": "2026-11-03"
+    "atualizadoEm": "2026-11-04"
   },
   "metas": {
     "ocupacaoAlvo": 0.6
@@ -23,7 +23,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e2",
@@ -34,7 +79,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e3",
@@ -45,7 +135,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e4",
@@ -56,7 +191,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e5",
@@ -67,7 +247,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e6",
@@ -78,7 +303,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e7",
@@ -89,7 +359,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e8",
@@ -100,7 +415,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e9",
@@ -111,7 +471,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e10",
@@ -122,7 +527,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Consultório",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e11",
@@ -133,7 +583,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Piscina",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     },
     {
       "id": "e12",
@@ -144,7 +639,52 @@
       "obs": "Importado da planilha original; validar",
       "tipo": "Administrativo",
       "descricao": "",
-      "despesas": []
+      "despesas": [],
+      "agenda": {
+        "versao": 3,
+        "minimo": 1,
+        "horarios": [
+          {
+            "nome": "Manhã",
+            "ini": "08:00",
+            "fim": "12:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Tarde",
+            "ini": "14:00",
+            "fim": "18:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          },
+          {
+            "nome": "Noite",
+            "ini": "19:00",
+            "fim": "22:00",
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        ]
+      },
+      "precoTurno": null
     }
   ],
   "custos": {
@@ -378,5 +918,7 @@
       "campanha": "",
       "obs": "Estimativa importada; informe cliente, término e valores reais"
     }
-  ]
+  ],
+  "agendamentos": [],
+  "profissionais": []
 }
