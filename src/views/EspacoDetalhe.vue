@@ -13,7 +13,7 @@ import D3Table from '../components/d3/D3Table.vue'
 import { state } from '../lib/store'
 import { STATUS, UNIDADE, despesasEspaco, fimDoMes, firme, idxMes, resumoMes, valorMensal } from '../lib/calc'
 import {
-  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, aplicarValorTurno, ativoAg, capacidadeMes, ehBloqueio, ehLocacao, expandirDatas, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
+  DIAS_SEMANA, STATUS_AGENDA, agendaPadrao, horasDe, aplicarValorTurno, ativoAg, capacidadeMes, ehBloqueio, ehLocacao, expandirDatas, usaAgenda, chave, diasDoMes, dowDe, ocupacaoDia,
   posicoesMensais, somaDias, unidadesAg,
 } from '../lib/agenda'
 import { addMes, brl, brl0, brlCompact, dataBR, mesAtual, mesCurto, num, pct, uid } from '../lib/format'
@@ -430,6 +430,40 @@ function garantirAgenda() {
   return esp.value.agenda
 }
 // turnos abertos na agenda no mês de referência (contagem real dos dias do mês)
+// ---------- turnos do mês (card de resumo) ----------
+// total = turnos abertos na agenda; não disponíveis = bloqueados pela administração;
+// ocupados = turnos marcados na agenda + contrato mensal (todos os turnos que sobram) +
+// contratos sem horário (em turnos; nas salas por hora, horas ÷ duração média do turno).
+const resumoTurnos = computed(() => {
+  if (!esp.value || porVagas.value) return null
+  const hs = agenda.value.horarios
+  const total = dias.value.reduce((s, d) => s + hs.filter((h) => h.dias.includes(d.dow)).length, 0)
+  const doMes = ags.value.filter((a) => ativoAg(a) && a.data.startsWith(state.mes))
+  const naoDisp = doMes.filter(ehBloqueio).reduce((s, a) => s + a.slots.length, 0)
+  const naAgenda = doMes.filter((a) => !ehBloqueio(a)).reduce((s, a) => s + a.slots.length, 0)
+  const horasMedias = hs.length ? hs.reduce((s, h) => s + horasDe(chave(h)), 0) / hs.length : 4
+  const semHor = semHorario.value.reduce((s, c) => s + (c.modalidade === 'Hora' ? (Number(c.quantidade) || 0) / horasMedias : Number(c.quantidade) || 0), 0)
+  const abertos = Math.max(0, total - naoDisp)
+  const mensal = contratoMensalMes.value ? Math.max(0, abertos - naAgenda) : 0
+  const ocupados = Math.min(abertos, naAgenda + mensal + semHor)
+  const nomes = new Set()
+  doMes.filter((a) => !ehBloqueio(a)).forEach((a) => a.cliente && nomes.add(a.cliente.trim().toLowerCase()))
+  ;(r.value?.contratos || []).forEach((c) => c.cliente && nomes.add(c.cliente.trim().toLowerCase()))
+  const estimados = [...nomes].filter((n) => /^base inicial/.test(n)).length
+  return {
+    total, naoDisp, naAgenda, mensal, semHor, ocupados, livres: Math.max(0, abertos - ocupados),
+    profissionais: nomes.size - estimados, estimados,
+  }
+})
+const notaTurnos = computed(() => {
+  const t = resumoTurnos.value
+  if (!t) return ''
+  const partes = [`${num(t.naAgenda)} marcados na agenda`]
+  if (t.mensal) partes.push(`${num(t.mensal)} do contrato mensal`)
+  if (t.semHor) partes.push(`${num(+t.semHor.toFixed(1))} em contratos sem horário${esp.value.modalidade === 'Hora' ? ' (horas convertidas em turnos)' : ''}`)
+  return `Ocupados: ${partes.join(' + ')}.`
+})
+const pctDe = (v) => `${resumoTurnos.value?.total ? (v / resumoTurnos.value.total) * 100 : 0}%`
 const turnosMes = computed(() => (esp.value ? capacidadeMes({ ...esp.value, tipo: 'Consultório', modalidade: 'Turno' }, state.mes, state.data.agendamentos) : 0))
 function mudarHora(h, campo, valor) {
   garantirAgenda()
@@ -637,6 +671,27 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
       <StatTile label="Receita bruta (faturamento)" :value="brl(r.receitaOcupada)" :hint="`Receita potencial ${brl0(r.potencial)}`" />
       <StatTile label="Margem de contribuição" :value="brl(r.resultado)" :tone="r.resultado > 0 ? 'good' : 'bad'" :hint="`Custos diretos ${brl(r.despesas)}`" />
       <StatTile label="Receita ociosa" :value="brl(r.receitaDisponivel)" :hint="`${num(r.disponivel)} ${unidade} livres no mês`" />
+    </section>
+
+    <section v-if="resumoTurnos" class="card turnos">
+      <div class="card-head">
+        <div>
+          <h2>Turnos em {{ mesTitulo }}</h2>
+          <p>Contagem na agenda desta sala: dias úteis com 3 turnos e sábados com 2</p>
+        </div>
+      </div>
+      <div class="t-grid">
+        <div><span>Total na agenda</span><strong class="tnum">{{ num(resumoTurnos.total) }}</strong><small>turnos abertos no mês</small></div>
+        <div><span><i class="k k-oc" />Ocupados</span><strong class="tnum">{{ num(+resumoTurnos.ocupados.toFixed(1)) }}</strong><small>{{ pct(resumoTurnos.total ? resumoTurnos.ocupados / resumoTurnos.total : 0) }} do total</small></div>
+        <div><span><i class="k k-li" />Disponíveis</span><strong class="tnum good">{{ num(+resumoTurnos.livres.toFixed(1)) }}</strong><small>livres para locar</small></div>
+        <div><span><i class="k k-nd" />Não disponíveis</span><strong class="tnum">{{ num(resumoTurnos.naoDisp) }}</strong><small>bloqueados pela administração</small></div>
+        <div><span>Profissionais</span><strong class="tnum">{{ num(resumoTurnos.profissionais) }}</strong><small>{{ resumoTurnos.estimados ? `+ ${resumoTurnos.estimados} contrato estimado (base inicial)` : 'usando a sala no mês' }}</small></div>
+      </div>
+      <div class="t-bar" role="img" :aria-label="`${num(+resumoTurnos.ocupados.toFixed(1))} ocupados, ${num(resumoTurnos.naoDisp)} não disponíveis e ${num(+resumoTurnos.livres.toFixed(1))} disponíveis de ${num(resumoTurnos.total)} turnos`">
+        <span class="b-oc" :style="{ width: pctDe(resumoTurnos.ocupados) }" />
+        <span class="b-nd" :style="{ width: pctDe(resumoTurnos.naoDisp) }" />
+      </div>
+      <p class="small muted t-nota">{{ notaTurnos }}</p>
     </section>
 
     <!-- ===== agenda ===== -->
@@ -986,6 +1041,22 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
 .leg-prof .nome { font-weight: 500; margin-right: 4px; }
 .leg-vazia { margin: 10px 0 0; }
 .k-off { border: 1px dashed var(--border); }
+.turnos .card-head { margin-bottom: 10px; }
+.t-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 900px) { .t-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.t-grid > div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: grid; gap: 2px; }
+.t-grid span { font-size: 12px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
+.t-grid strong { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.t-grid strong.good { color: var(--good); }
+.t-grid small { font-size: 11px; color: var(--muted); }
+.t-grid .k { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.k-oc { background: var(--s-firm); }
+.k-li { background: var(--s-track); border: 1px solid var(--border); }
+.t-bar { display: flex; gap: 2px; height: 12px; margin-top: 12px; background: var(--s-track); border-radius: 4px; overflow: hidden; }
+.t-bar span { display: block; height: 100%; }
+.b-oc { background: var(--s-firm); }
+.b-nd { background: repeating-linear-gradient(45deg, var(--muted) 0 1.5px, var(--surface-2) 1.5px 5px); }
+.t-nota { margin: 8px 0 0; }
 .k-nd { background: repeating-linear-gradient(45deg, var(--muted) 0 1.5px, var(--surface-2) 1.5px 5px); }
 .seg.tipo { display: flex; }
 .seg.tipo button { flex: 1; }
