@@ -89,3 +89,17 @@ Página `#/marketing/estrategia`. Números de mercado são ordens de grandeza: n
 | CPM e CPC médios da Meta no Brasil | [SuperAds](https://www.superads.ai/facebook-ads-costs/cost-per-lead/brazil) |
 
 Premissas do caminho feliz (editáveis no simulador, código em `src/lib/estrategia.js`): CPL R$ 22, 60% de leads qualificados, 25% visitam, 40% fecham, R$ 380/mês nos 3 primeiros meses, 30% sobem para turno fixo (R$ 740/mês), churn de 10% ao mês, margem de 75%.
+
+## Monitor social (coleta de 08/11/2026)
+
+Página `#/marketing/social`, inspirada no [Social Bearing](https://tomelliott.com/social-media/twitter-search-analytics-tool) (busca e análise de tweets, fora do ar desde a mudança de preço da API do X). Dados em `src/data/social.json`, coletados à mão em páginas públicas, sem login.
+
+| Rede | O que foi coletado | Como |
+|---|---|---|
+| Instagram | Seguidores, seguindo e posts de 9 perfis; 45 posts recentes com data, tipo, legenda e curtidas | Página do perfil e de cada post (curtidas visíveis sem login; comentários e alcance não) |
+| Facebook | Seguidores, check-ins e "falando sobre isso" das páginas encontradas | Link no site de cada empresa ou mesmo @ do Instagram |
+| YouTube | Canais do setor e duas buscas: "aluguel de consultório Maceió" e "sala para psicólogo Maceió consultório por hora" | Página do canal e da busca |
+
+Terceira rede: YouTube, a plataforma pública mais usada no Brasil (~150 milhões de contas; Instagram ~147 mi, Facebook ~109 mi, TikTok ~131 mi 18+), segundo o DataReportal Digital 2026 Brasil citado por [RD Station](https://www.rdstation.com/blog/marketing/redes-sociais-mais-usadas-no-brasil/) e [mLabs](https://mlabs.com.br/blog/estatisticas-das-redes-sociais/). O WhatsApp tem mais usuários, mas não tem conteúdo público para buscar.
+
+Nomes de profissionais citados nas legendas foram trocados por "[profissional]". O Espaço Levit (pilates/fisioterapia) apareceu numa collab com a Santé, mas não aluga salas e ficou fora.

@@ -100,6 +100,18 @@ function funil(c) {
       </StatTile>
     </section>
 
+    <section class="card social">
+      <div>
+        <span class="chip info"><Icon name="insta" :size="13" /> Monitor social</span>
+        <h2>Santé e concorrentes no Instagram, Facebook e YouTube</h2>
+        <p class="muted">
+          Busca por palavra, @perfil ou #hashtag nos posts da Santé e dos concorrentes, no estilo do Social Bearing:
+          linha do tempo, engajamento por perfil, temas que dão curtida, hashtags, palavras, dia da semana e tom.
+        </p>
+      </div>
+      <RouterLink to="/marketing/social" class="btn primary">Abrir o monitor social</RouterLink>
+    </section>
+
     <section class="card estr">
       <div class="estr-main">
         <span class="chip info"><Icon name="target" :size="13" /> Estratégia</span>
@@ -259,6 +271,11 @@ function funil(c) {
 
 <style scoped>
 .fw { font-weight: 500; }
+.social { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.social > div { display: grid; gap: 8px; max-width: 820px; }
+.social h2 { font-size: 17px; }
+.social p { margin: 0; line-height: 1.55; }
+.social .chip { justify-self: start; }
 .estr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); gap: 20px; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 @media (max-width: 900px) { .estr { grid-template-columns: minmax(0, 1fr); } }
 .estr-main { display: grid; gap: 10px; align-content: start; }

@@ -23,6 +23,7 @@ e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 | **Projeções e cenários** | Média, mediana e desvio da ocupação, ticket médio, concentração, projeção de 12 meses, linha do tempo dos contratos, potencial × ocupação, curva de equilíbrio e simulador de cenários |
 | **Comercial** (Marketing) | Espaços abaixo da meta, campanhas com funil (leads → visitas → contratos), receita atribuída, CAC e ROI |
 | **Estratégia: recém-formados** | Plano Primeiro Consultório: público-alvo, personas, oferta, 16 redes e canais, calendário, orçamento em 3 cenários, simulador de custo-benefício e métricas (dentro de Marketing) |
+| **Monitor social** (`#/marketing/social`) | Busca por palavra, @perfil ou #hashtag nos posts da Santé e dos concorrentes no Instagram, Facebook e YouTube, no estilo Social Bearing: linha do tempo, engajamento por perfil, temas, hashtags, palavras, dia da semana e tom |
 | **Análise de mercado** (Concorrentes) | Mapa dos concorrentes em Maceió: preços, Instagram, Google Maps, sites (Lighthouse), Similarweb, análise SWOT e ações sugeridas |
 | **Custos e equilíbrio** | Custos gerais, impostos, comissões e ponto de equilíbrio (inclui as despesas dos espaços) |
 | **Base de dados** | Importar/exportar Excel e `sante.json`; instruções de publicação |

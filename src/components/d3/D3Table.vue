@@ -76,8 +76,10 @@ function render() {
       const txt = d.c.format ? d.c.format(d.v) : d.v ?? '—'
       // `tone(row)` devolve { c: 'good' | 'warn' | 'bad', t: explicação } e pinta o valor
       const tone = d.c.tone?.(d.r)
-      if (d.c.link) {
-        td.append('a').attr('class', 'cell-link').attr('href', d.c.link(d.r)).text(txt)
+      const href = d.c.link?.(d.r)
+      if (href) {
+        const a = td.append('a').attr('class', 'cell-link').attr('href', href).text(txt)
+        if (/^https?:/.test(href)) a.attr('target', '_blank').attr('rel', 'noopener')
       } else if (tone) {
         td.append('span').attr('class', `tone ${tone.c}`).attr('title', tone.t).text(txt)
       } else if (d.c.bar) {

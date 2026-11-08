@@ -1,0 +1,772 @@
+{
+ "coletadoEm": "2026-11-08",
+ "nota": "Coleta manual de páginas públicas, sem login. Curtidas lidas na página de cada post; comentários e alcance não aparecem sem login. Nomes de profissionais citados nas legendas foram trocados por [profissional].",
+ "redes": [
+  {
+   "id": "instagram",
+   "nome": "Instagram",
+   "contasBR": "147 milhões",
+   "fonte": "DataReportal Digital 2026 Brasil (out/2025)"
+  },
+  {
+   "id": "facebook",
+   "nome": "Facebook",
+   "contasBR": "109 milhões",
+   "fonte": "DataReportal Digital 2026 Brasil (out/2025)"
+  },
+  {
+   "id": "youtube",
+   "nome": "YouTube",
+   "contasBR": "150 milhões",
+   "fonte": "DataReportal Digital 2026 Brasil (out/2025)",
+   "porque": "Plataforma pública mais usada no Brasil. O WhatsApp tem mais usuários, mas é mensagem privada e não tem nada público para buscar; o TikTok vem depois, com 131 milhões (18+)."
+  }
+ ],
+ "perfis": [
+  {
+   "id": "ig-sante",
+   "empresa": "sante",
+   "rede": "instagram",
+   "handle": "santeconsultoriosmaceio",
+   "nome": "Santé Consultórios",
+   "seguidores": 7215,
+   "seguindo": 154,
+   "publicacoes": 24,
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/",
+   "status": "ativo"
+  },
+  {
+   "id": "ig-transmutar",
+   "empresa": "transmutar",
+   "rede": "instagram",
+   "handle": "transmutar.harmony",
+   "nome": "Transmutar",
+   "seguidores": 3563,
+   "seguindo": 5817,
+   "publicacoes": 369,
+   "url": "https://www.instagram.com/transmutar.harmony/",
+   "status": "ativo"
+  },
+  {
+   "id": "ig-nutriclin",
+   "empresa": "nutriclin",
+   "rede": "instagram",
+   "handle": "nutriclinsaudeintegrada",
+   "nome": "NutriClin",
+   "seguidores": 3294,
+   "seguindo": 46,
+   "publicacoes": 29,
+   "url": "https://www.instagram.com/nutriclinsaudeintegrada/",
+   "status": "ativo"
+  },
+  {
+   "id": "ig-innate",
+   "empresa": "innate",
+   "rede": "instagram",
+   "handle": "innatesaudeintegrada",
+   "nome": "Innate",
+   "seguidores": 3256,
+   "seguindo": 4327,
+   "publicacoes": 313,
+   "url": "https://www.instagram.com/innatesaudeintegrada/",
+   "status": "ativo"
+  },
+  {
+   "id": "ig-rather",
+   "empresa": "rather",
+   "rede": "instagram",
+   "handle": "rathercoworking",
+   "nome": "Rather Coworking",
+   "seguidores": 2731,
+   "seguindo": 932,
+   "publicacoes": 225,
+   "url": "https://www.instagram.com/rathercoworking/",
+   "status": "parado",
+   "obs": "Coworking geral (concorrente indireto); posts recentes não analisados"
+  },
+  {
+   "id": "ig-clintime",
+   "empresa": "clintime",
+   "rede": "instagram",
+   "handle": "clintimesaude",
+   "nome": "ClinTime",
+   "seguidores": 1207,
+   "seguindo": 24,
+   "publicacoes": 51,
+   "url": "https://www.instagram.com/clintimesaude/",
+   "status": "ativo"
+  },
+  {
+   "id": "ig-elleva",
+   "empresa": "elleva",
+   "rede": "instagram",
+   "handle": "elleva.harmony",
+   "nome": "Elleva",
+   "seguidores": 907,
+   "seguindo": 1530,
+   "publicacoes": 28,
+   "url": "https://www.instagram.com/elleva.harmony/",
+   "status": "parado"
+  },
+  {
+   "id": "ig-luz",
+   "empresa": "luz",
+   "rede": "instagram",
+   "handle": "luzsaudeconsultorios",
+   "nome": "Luz Saúde",
+   "seguidores": 708,
+   "seguindo": 1384,
+   "publicacoes": 360,
+   "url": "https://www.instagram.com/luzsaudeconsultorios/",
+   "status": "parado"
+  },
+  {
+   "id": "ig-medicine",
+   "empresa": "medicine",
+   "rede": "instagram",
+   "handle": "medicineservice.com.br",
+   "nome": "Medicine Service",
+   "seguidores": 122,
+   "seguindo": 0,
+   "publicacoes": 11,
+   "url": "https://www.instagram.com/medicineservice.com.br/",
+   "status": "parado",
+   "obs": "Último post em 2024"
+  },
+  {
+   "id": "fb-sante",
+   "empresa": "sante",
+   "rede": "facebook",
+   "nome": "Santé Consultórios",
+   "status": "nao-encontrado",
+   "obs": "A página antiga (clinicasantemaceio) aparece como indisponível sem login"
+  },
+  {
+   "id": "fb-rather",
+   "empresa": "rather",
+   "rede": "facebook",
+   "handle": "rathercoworking",
+   "nome": "Rather Coworking",
+   "seguidores": 790,
+   "checkins": 580,
+   "url": "https://www.facebook.com/rathercoworking",
+   "status": "ativo"
+  },
+  {
+   "id": "fb-ampla",
+   "empresa": "ampla",
+   "rede": "facebook",
+   "handle": "amplaconsultorios",
+   "nome": "Ampla Consultórios",
+   "seguidores": 336,
+   "checkins": 1107,
+   "url": "https://www.facebook.com/amplaconsultorios",
+   "status": "ativo"
+  },
+  {
+   "id": "fb-innate",
+   "empresa": "innate",
+   "rede": "facebook",
+   "handle": "innatesaudeintegrada",
+   "nome": "Innate",
+   "seguidores": 16,
+   "checkins": 9,
+   "url": "https://www.facebook.com/innatesaudeintegrada",
+   "status": "ativo"
+  },
+  {
+   "id": "fb-transmutar",
+   "empresa": "transmutar",
+   "rede": "facebook",
+   "handle": "transmutar.harmony",
+   "nome": "Transmutar",
+   "seguidores": 9,
+   "checkins": 163,
+   "falandoSobre": 2,
+   "url": "https://www.facebook.com/transmutar.harmony",
+   "status": "ativo"
+  },
+  {
+   "id": "fb-elleva",
+   "empresa": "elleva",
+   "rede": "facebook",
+   "handle": "elleva.harmony",
+   "nome": "Elleva",
+   "status": "perfil-pessoal",
+   "obs": "Perfil pessoal, sem números públicos",
+   "url": "https://www.facebook.com/elleva.harmony"
+  },
+  {
+   "id": "fb-clintime",
+   "empresa": "clintime",
+   "rede": "facebook",
+   "nome": "ClinTime",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "fb-nutriclin",
+   "empresa": "nutriclin",
+   "rede": "facebook",
+   "nome": "NutriClin",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "fb-luz",
+   "empresa": "luz",
+   "rede": "facebook",
+   "nome": "Luz Saúde",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "yt-sante",
+   "empresa": "sante",
+   "rede": "youtube",
+   "nome": "Santé Consultórios",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "yt-rather",
+   "empresa": "rather",
+   "rede": "youtube",
+   "handle": "rathercoworking",
+   "nome": "Rather Coworking",
+   "seguidores": 13,
+   "publicacoes": 3,
+   "url": "https://www.youtube.com/rathercoworking",
+   "status": "parado"
+  },
+  {
+   "id": "yt-ampla",
+   "empresa": "ampla",
+   "rede": "youtube",
+   "handle": "amplaconsultorios8712",
+   "nome": "Ampla Consultórios",
+   "seguidores": 3,
+   "url": "https://www.youtube.com/channel/UC9GqYKytmdiiRP6wnCjMVmg",
+   "status": "parado"
+  },
+  {
+   "id": "yt-transmutar",
+   "empresa": "transmutar",
+   "rede": "youtube",
+   "nome": "Transmutar",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "yt-clintime",
+   "empresa": "clintime",
+   "rede": "youtube",
+   "nome": "ClinTime",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "yt-innate",
+   "empresa": "innate",
+   "rede": "youtube",
+   "nome": "Innate",
+   "status": "nao-encontrado"
+  },
+  {
+   "id": "yt-nutriclin",
+   "empresa": "nutriclin",
+   "rede": "youtube",
+   "nome": "NutriClin",
+   "status": "nao-encontrado"
+  }
+ ],
+ "posts": [
+  {
+   "id": "Dc3WOF9C1Zy",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-09-04",
+   "tipo": "reel",
+   "curtidas": 7,
+   "legenda": "Um espaço amplo, confortável e preparado para você atender seus pacientes com praticidade e profissionalismo. Ideal para profissionais da área da saúde que buscam um espaço completo para seus atendimentos. 📍Santé Consultórios 📲 Entre em contato e consulte disponibilidade e valores. #clinicamaceió #alugueldesalas #profissionaisdasaude",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/Dc3WOF9C1Zy/"
+  },
+  {
+   "id": "DaDgyqFq34z",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-06-26",
+   "tipo": "reel",
+   "curtidas": 6,
+   "legenda": "Seu atendimento merece o melhor espaço ✨ Conheça nosso consultório 5 da Santé. Estrutura completa, ambiente acolhedor e tudo preparado para proporcionar uma excelente experiência aos seus pacientes. 💙 #clinicamaceió #profissionaisdasaúde #alugueldesalas #santéconsultórios",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DaDgyqFq34z/"
+  },
+  {
+   "id": "DZsIpNZi_Hl",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-06-17",
+   "tipo": "reel",
+   "curtidas": 7,
+   "legenda": "Aqui você encontra salas prontas para atender, sem precisar se preocupar. 📲✅ Agende sua visita e conheça nossas salas disponíveis. 📍Rua José Alves Morgado, 111 - Jatiuca, Maceió.",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DZsIpNZi_Hl/"
+  },
+  {
+   "id": "DZchx4oiuT8",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-06-11",
+   "tipo": "reel",
+   "curtidas": 19,
+   "legenda": "Seu atendimento merece o melhor espaço ✨ Conheça nosso consultório 6 da Santé. Estrutura completa, ambiente acolhedor e tudo preparado para proporcionar uma excelente experiência aos seus pacientes. 💙 #clinicamaceió #profissionaisdasaúde",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DZchx4oiuT8/"
+  },
+  {
+   "id": "DZIFxGPCLkB",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-06-03",
+   "tipo": "reel",
+   "curtidas": 14,
+   "legenda": "Tenha tudo pronto para iniciar seus atendimentos! Na Santé Consultórios, você encontra praticidade, estrutura e conforto. Conheça nossos planos e venha alugar sua sala. 💙 #consultoriomaceio #alugueldesalas #clinicamaceió #profissionaisdasaude",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DZIFxGPCLkB/"
+  },
+  {
+   "id": "DYPalQmiVtR",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-05-12",
+   "tipo": "reel",
+   "curtidas": 56,
+   "legenda": "Cuidar de pessoas também começa pelo ambiente ✨🧠 A [profissional] escolheu a Santé Consultórios para realizar seus atendimentos em um espaço pensado para oferecer conforto, acolhimento e praticidade no dia a dia profissional 💼🤍",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DYPalQmiVtR/"
+  },
+  {
+   "id": "DX9hLquBYRU",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-05-05",
+   "tipo": "reel",
+   "curtidas": 125,
+   "legenda": "✨ Um espaço à altura da sua profissão ✨ A [profissional], dermatologista, escolheu a Santé Consultórios para oferecer aos seus pacientes um atendimento com mais conforto, estrutura e profissionalismo. A Santé é o lugar ideal para profissionais da saúde.",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DX9hLquBYRU/"
+  },
+  {
+   "id": "DXrY5dSCqiz",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-04-28",
+   "tipo": "reel",
+   "curtidas": 151,
+   "legenda": "Quem vive a experiência, recomenda. 💼✨ O [profissional] já faz parte da Santé Consultórios e compartilha como a estrutura, o conforto e o ambiente fazem toda a diferença no atendimento e na experiência dos seus pacientes. 💙",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DXrY5dSCqiz/"
+  },
+  {
+   "id": "DTbK4ETEvye",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2026-01-12",
+   "tipo": "reel",
+   "curtidas": 9,
+   "legenda": "Garanta seu espaço na Clínica Santé e atenda seus pacientes em um ambiente completo, acolhedor e pronto para receber você.✨",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DTbK4ETEvye/"
+  },
+  {
+   "id": "DSkWEiDjoo5",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2025-12-22",
+   "tipo": "reel",
+   "curtidas": null,
+   "legenda": "Você merece atender em um espaço que valorize a sua profissão tanto quanto você valoriza seus pacientes. Em Maceió, a Santé Consultórios foi pensada para profissionais da saúde que buscam estrutura, conforto, ética e uma ambiência que transmite confiança.",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/reel/DSkWEiDjoo5/"
+  },
+  {
+   "id": "DSar5x3Eheg",
+   "perfil": "ig-sante",
+   "rede": "instagram",
+   "data": "2025-12-18",
+   "tipo": "foto",
+   "curtidas": null,
+   "legenda": "2026 começa com escolhas mais conscientes. ✨ Escolha atender em um espaço que valoriza você e seus pacientes: conforto, estrutura profissional e ótima localização. ➡️ Fale conosco. Isso é Santé Consultórios.",
+   "url": "https://www.instagram.com/santeconsultoriosmaceio/p/DSar5x3Eheg/"
+  },
+  {
+   "id": "DfZeiKqlx7j",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-11-06",
+   "tipo": "foto",
+   "curtidas": null,
+   "legenda": "Um consultório não precisa ser seu para oferecer uma experiência profissional de excelência. ✨ Com a Transmutar, você tem liberdade para escolher como e quando utilizar o espaço, sem assumir os custos de um consultório próprio.",
+   "url": "https://www.instagram.com/transmutar.harmony/p/DfZeiKqlx7j/"
+  },
+  {
+   "id": "DfVdFI-hZQ0",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-11-04",
+   "tipo": "reel",
+   "curtidas": null,
+   "legenda": "Seu consultório está gerando receita ou apenas despesas? Ter um espaço próprio envolve muito mais do que atender pacientes. Existem custos fixos, manutenção e compromissos financeiros que continuam mesmo quando a agenda está vazia.",
+   "url": "https://www.instagram.com/transmutar.harmony/reel/DfVdFI-hZQ0/"
+  },
+  {
+   "id": "DfLYre1hdlx",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-31",
+   "tipo": "reel",
+   "curtidas": null,
+   "legenda": "Um espaço, diferentes possibilidades para a sua prática profissional. ✨ A Transmutar está localizada no Harmony Trade Center e conta com salas distribuídas em dois andares, oferecendo diferentes opções de atendimento.",
+   "url": "https://www.instagram.com/transmutar.harmony/reel/DfLYre1hdlx/"
+  },
+  {
+   "id": "DezH-PWRGd4",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-22",
+   "tipo": "foto",
+   "curtidas": 8,
+   "legenda": "Sua agenda mudou? Nosso espaço de atendimento pode acompanhar. Aqui na Transmutar, seu coworking de saúde em Maceió, você aluga consultórios prontos por hora, turno ou mês, com flexibilidade para organizar sua rotina.",
+   "url": "https://www.instagram.com/transmutar.harmony/p/DezH-PWRGd4/"
+  },
+  {
+   "id": "DerN2y2prwX",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-19",
+   "tipo": "foto",
+   "curtidas": 8,
+   "legenda": "Você sabia que o seu negócio pode ter um endereço profissional sem o custo de manter um escritório próprio? Ideal para profissionais autônomos e empreendedores que precisam formalizar sua empresa.",
+   "url": "https://www.instagram.com/transmutar.harmony/p/DerN2y2prwX/"
+  },
+  {
+   "id": "DepIeWXvDhx",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-18",
+   "tipo": "foto",
+   "curtidas": 9,
+   "legenda": "Por trás de cada diagnóstico, orientação e tratamento, existe um profissional que dedica conhecimento, responsabilidade e sensibilidade ao cuidado com o outro. Reconhecemos nos médicos que confiam em nosso espaço. #diadomedico",
+   "url": "https://www.instagram.com/transmutar.harmony/p/DepIeWXvDhx/"
+  },
+  {
+   "id": "DejfVUDumjU",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-16",
+   "tipo": "reel",
+   "curtidas": 5,
+   "legenda": "Que tal um tour pela sala 8? Mais um consultório que une estrutura, conforto e sofisticação para atendimentos que exigem ainda mais versatilidade.",
+   "url": "https://www.instagram.com/transmutar.harmony/reel/DejfVUDumjU/"
+  },
+  {
+   "id": "Deeu93HxxkH",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-14",
+   "tipo": "reel",
+   "curtidas": 8,
+   "legenda": "Essa nova sala da Transmutar foi pensada para acolher profissionais que buscam um espaço adequado para oferecer um atendimento integrativo com conforto, privacidade e profissionalismo.",
+   "url": "https://www.instagram.com/transmutar.harmony/reel/Deeu93HxxkH/"
+  },
+  {
+   "id": "DeO6E3CR_R6",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-08",
+   "tipo": "reel",
+   "curtidas": 8,
+   "legenda": "Novas salas, novas possibilidades de atendimento. ✨ Venha conhecer nossas novas salas no Harmony Trade Center, sala 614. Agende sua visita através do WhatsApp. Link na descrição. #harmonytradecenter",
+   "url": "https://www.instagram.com/transmutar.harmony/reel/DeO6E3CR_R6/"
+  },
+  {
+   "id": "DeHIcrLNcxK",
+   "perfil": "ig-transmutar",
+   "rede": "instagram",
+   "data": "2026-10-05",
+   "tipo": "foto",
+   "curtidas": 7,
+   "legenda": "Nosso intuito é proporcionar aos profissionais da saúde uma estrutura preparada para atender com conforto, privacidade e profissionalismo. Oferecemos mais do que salas para atendimento, mas um ambiente acolhedor.",
+   "url": "https://www.instagram.com/transmutar.harmony/p/DeHIcrLNcxK/"
+  },
+  {
+   "id": "DfaroLEKYT6",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-11-06",
+   "tipo": "reel",
+   "curtidas": 42,
+   "legenda": "Você só queria um consultório para atender… Mas encontrou liberdade, organização, estrutura impecável, cuidado e um time que torce por você ✨ Quer saber mais? Chama a gente no WhatsApp 📲",
+   "url": "https://www.instagram.com/clintimesaude/reel/DfaroLEKYT6/"
+  },
+  {
+   "id": "DfVa34oq6UJ",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-11-04",
+   "tipo": "reel",
+   "curtidas": 136,
+   "legenda": "É com muita alegria que anunciamos a chegada de [profissional], psicopedagoga e neuropsicopedagoga, para integrar a equipe ClinTime! 💚 Seguimos ampliando nosso time de profissionais.",
+   "url": "https://www.instagram.com/clintimesaude/reel/DfVa34oq6UJ/"
+  },
+  {
+   "id": "DfIsss7Kxx8",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-10-30",
+   "tipo": "foto",
+   "curtidas": 9,
+   "legenda": "Lembrando que nesse sábado, 31, funcionaremos normalmente até às 14h ✅ Chama no WhatsApp e venha conhecer o seu novo espaço de atendimento 📲",
+   "url": "https://www.instagram.com/clintimesaude/p/DfIsss7Kxx8/"
+  },
+  {
+   "id": "DfF85Wcu7z0",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-10-29",
+   "tipo": "reel",
+   "curtidas": 53,
+   "legenda": "Você sabia que pode conferir cada cantinho da ClinTime na palma da sua mão? 📲 Com nossas imagens 360º você pode conhecer os detalhes de todos os nossos consultórios, salas de procedimentos e recepção.",
+   "url": "https://www.instagram.com/clintimesaude/reel/DfF85Wcu7z0/"
+  },
+  {
+   "id": "DfA0G1iGSVY",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-10-27",
+   "tipo": "foto",
+   "curtidas": 13,
+   "legenda": "A ClinTime está de portas abertas para te receber ✅ Você, profissional da saúde, que busca um espaço amplo, organizado, totalmente equipado e com excelente localização para atender seus pacientes.",
+   "url": "https://www.instagram.com/clintimesaude/p/DfA0G1iGSVY/"
+  },
+  {
+   "id": "De2rMFPq75u",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-10-23",
+   "tipo": "reel",
+   "curtidas": 61,
+   "legenda": "A ClinTime é o espaço ideal para todas as suas fases profissionais 💚 Comodidade, segurança, equipe preparada e pronta para recepcionar da melhor forma, você, profissional, e seus pacientes! 📝",
+   "url": "https://www.instagram.com/clintimesaude/reel/De2rMFPq75u/"
+  },
+  {
+   "id": "Deuu2uhq8Z3",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-10-20",
+   "tipo": "reel",
+   "curtidas": 64,
+   "legenda": "O time ClinTime está crescendo! 💚 Ganhamos mais um reforço: o [profissional], nutricionista, chega para contribuir com a saúde, o desempenho e a qualidade de vida de seus pacientes.",
+   "url": "https://www.instagram.com/clintimesaude/reel/Deuu2uhq8Z3/"
+  },
+  {
+   "id": "DaiQVhVubS6",
+   "perfil": "ig-clintime",
+   "rede": "instagram",
+   "data": "2026-07-08",
+   "tipo": "reel",
+   "curtidas": 22,
+   "legenda": "Você conhece onde a ClinTime está localizada? ✨ O Harmony Medical Farol é referência em estrutura e comodidade. Além de estar na melhor localização do bairro médico de Maceió: a Gruta de Lourdes 🗺️",
+   "url": "https://www.instagram.com/clintimesaude/reel/DaiQVhVubS6/"
+  },
+  {
+   "id": "Db9uUJ-Ba0m",
+   "perfil": "ig-innate",
+   "rede": "instagram",
+   "data": "2026-08-12",
+   "tipo": "reel",
+   "curtidas": 26,
+   "legenda": "Se você é profissional da saúde e ainda não encontrou o espaço ideal para atender em Maceió, esse Reels é para você. 👀✨ Ou talvez você até tenha um consultório, mas esteja cansado de lidar com burocracia.",
+   "url": "https://www.instagram.com/innatesaudeintegrada/reel/Db9uUJ-Ba0m/"
+  },
+  {
+   "id": "DbzfWkzSSTs",
+   "perfil": "ig-innate",
+   "rede": "instagram",
+   "data": "2026-08-08",
+   "tipo": "foto",
+   "curtidas": 14,
+   "legenda": "Hoje celebramos aqueles que ensinam pelo exemplo, cuidam com amor e deixam marcas que levamos para a vida inteira. 🤎 Ser pai é estar presente, orientar, proteger e, acima de tudo, construir memórias. #diadospais",
+   "url": "https://www.instagram.com/innatesaudeintegrada/p/DbzfWkzSSTs/"
+  },
+  {
+   "id": "DUn9xKskQfA",
+   "perfil": "ig-innate",
+   "rede": "instagram",
+   "data": "2026-02-11",
+   "tipo": "foto",
+   "curtidas": 11,
+   "legenda": "Seu atendimento merece um espaço à altura do seu talento.✨ Cada sala da Innate foi pensada para oferecer conforto, profissionalismo e a estrutura que eleva a percepção do seu paciente 🩺🤍",
+   "url": "https://www.instagram.com/innatesaudeintegrada/p/DUn9xKskQfA/"
+  },
+  {
+   "id": "DUWXpskj1a3",
+   "perfil": "ig-innate",
+   "rede": "instagram",
+   "data": "2026-02-04",
+   "tipo": "reel",
+   "curtidas": 20,
+   "legenda": "Na Innate Saúde Integrada, cada detalhe foi pensado para quem leva a profissão a sério 🩺🤍 ✔️ Salas amplas, equipadas e prontas para atender ✔️ Área de expurgo e esterilização adequadas às normas",
+   "url": "https://www.instagram.com/innatesaudeintegrada/reel/DUWXpskj1a3/"
+  },
+  {
+   "id": "DWl3XjQDeYF",
+   "perfil": "ig-nutriclin",
+   "rede": "instagram",
+   "data": "2026-04-01",
+   "tipo": "reel",
+   "curtidas": 82,
+   "legenda": "Reserve seu horário num espaço único e com o melhor preço de Maceió ✅ Sala 01 com balança de bioimpedância e estadiômetro ⏰ 55 minutos por R$35,00 ⏳ 01 turno de 5 horas por R$150,00",
+   "url": "https://www.instagram.com/nutriclinsaudeintegrada/reel/DWl3XjQDeYF/"
+  },
+  {
+   "id": "DNQJi8au8RO",
+   "perfil": "ig-nutriclin",
+   "rede": "instagram",
+   "data": "2025-08-12",
+   "tipo": "reel",
+   "curtidas": 35,
+   "legenda": "Reserve seu horário num espaço único e com o melhor preço de Maceió ✅ Sala 01 com balança de bioimpedância e estadiômetro ⏰ 55 minutos por R$35,00 ⏳ 01 turno de 5 horas por R$150,00",
+   "url": "https://www.instagram.com/nutriclinsaudeintegrada/reel/DNQJi8au8RO/"
+  },
+  {
+   "id": "DLBuh-NN-qJ",
+   "perfil": "ig-nutriclin",
+   "rede": "instagram",
+   "data": "2025-06-17",
+   "tipo": "reel",
+   "curtidas": 133,
+   "legenda": "Reserve seu horário num espaço único e com o melhor preço de Maceió ✅ Sala 01 com balança de bioimpedância e estadiômetro ⏰ 55 minutos por R$35,00 ⏳ 01 turno de 5 horas por R$150,00",
+   "url": "https://www.instagram.com/nutriclinsaudeintegrada/reel/DLBuh-NN-qJ/"
+  },
+  {
+   "id": "DLBsnadNddx",
+   "perfil": "ig-nutriclin",
+   "rede": "instagram",
+   "data": "2025-06-17",
+   "tipo": "foto",
+   "curtidas": 20,
+   "legenda": "Reserve seu horário num espaço único e com o melhor preço de Maceió ✅ Sala 01 com balança de bioimpedância e estadiômetro ⏰ 55 minutos por R$35,00 ⏳ 01 turno de 5 horas por R$150,00",
+   "url": "https://www.instagram.com/nutriclinsaudeintegrada/p/DLBsnadNddx/"
+  },
+  {
+   "id": "DKAF9RDR_xN",
+   "perfil": "ig-nutriclin",
+   "rede": "instagram",
+   "data": "2025-05-23",
+   "tipo": "reel",
+   "curtidas": 12,
+   "legenda": "Reserve seu horário num espaço único e com o melhor preço de Maceió ✅ Sala 01 com balança de bioimpedância e estadiômetro ⏰ 55 minutos por R$35,00 ⏳ 01 turno de 5 horas por R$150,00",
+   "url": "https://www.instagram.com/nutriclinsaudeintegrada/reel/DKAF9RDR_xN/"
+  },
+  {
+   "id": "DWP4VlkEfIg",
+   "perfil": "ig-elleva",
+   "rede": "instagram",
+   "data": "2026-03-23",
+   "tipo": "foto",
+   "curtidas": 8,
+   "legenda": "Atender seus pacientes não precisa ser complicado. Na Elleva, você encontra um consultório pronto para usar, sem burocracia e com toda a estrutura que um atendimento profissional exige.",
+   "url": "https://www.instagram.com/elleva.harmony/p/DWP4VlkEfIg/"
+  },
+  {
+   "id": "DHdhB54xHi0",
+   "perfil": "ig-elleva",
+   "rede": "instagram",
+   "data": "2025-03-21",
+   "tipo": "reel",
+   "curtidas": 33,
+   "legenda": "Aqui na Elleva, estamos sempre aprimorando nossos serviços para oferecer o melhor para você! ✨ E a nossa grande novidade é o serviço de recepção! Agora, sua rotina fica ainda mais prática.",
+   "url": "https://www.instagram.com/elleva.harmony/reel/DHdhB54xHi0/"
+  },
+  {
+   "id": "DAUJAhgPB0y",
+   "perfil": "ig-elleva",
+   "rede": "instagram",
+   "data": "2024-09-24",
+   "tipo": "foto",
+   "curtidas": null,
+   "legenda": "A Elleva está sempre comprometida em oferecer os melhores profissionais e hoje temos o prazer de apresentar a nossa nutróloga [profissional] 🤍 Uma profissional altamente capacitada.",
+   "url": "https://www.instagram.com/elleva.harmony/p/DAUJAhgPB0y/"
+  },
+  {
+   "id": "DNy0N_TUg3u",
+   "perfil": "ig-luz",
+   "rede": "instagram",
+   "data": "2025-08-25",
+   "tipo": "foto",
+   "curtidas": 7,
+   "legenda": "No site do Luz Saúde, você encontra a lista de profissionais que atendem por aqui: psicólogos, nutricionistas, massoterapeutas e muito mais. 🔍 É a sua chance de descobrir talentos incríveis.",
+   "url": "https://www.instagram.com/luzsaudeconsultorios/p/DNy0N_TUg3u/"
+  },
+  {
+   "id": "DNn0ojJsSzE",
+   "perfil": "ig-luz",
+   "rede": "instagram",
+   "data": "2025-08-21",
+   "tipo": "foto",
+   "curtidas": 3,
+   "legenda": "Entre um atendimento e outro, seu corpo grita por cuidado? 👐 Temos massoterapeutas no Luz Saúde prontos para aliviar tensão, estresse e cansaço. Agende sua sessão.",
+   "url": "https://www.instagram.com/luzsaudeconsultorios/p/DNn0ojJsSzE/"
+  },
+  {
+   "id": "DNipj_DiXZY",
+   "perfil": "ig-luz",
+   "rede": "instagram",
+   "data": "2025-08-19",
+   "tipo": "foto",
+   "curtidas": 5,
+   "legenda": "A psicologia já comprova: amizades verdadeiras são um dos pilares da saúde emocional. Acolhem, escutam, validam. Ajudam a atravessar fases difíceis e ampliam a sensação de pertencimento. 🤝",
+   "url": "https://www.instagram.com/luzsaudeconsultorios/p/DNipj_DiXZY/"
+  },
+  {
+   "id": "DNYURQXimv9",
+   "perfil": "ig-luz",
+   "rede": "instagram",
+   "data": "2025-08-15",
+   "tipo": "foto",
+   "curtidas": 2,
+   "legenda": "Trabalhar num coworking é dizer adeus às dores de cabeça com aluguel, recepção, limpeza e manutenção. No Luz Saúde, você tem: ✅ Salas mobiliadas ✅ Agendamento flexível ✅ Ambiente climatizado",
+   "url": "https://www.instagram.com/luzsaudeconsultorios/p/DNYURQXimv9/"
+  }
+ ],
+ "buscasYoutube": [
+  {
+   "termo": "aluguel de consultório Maceió",
+   "analisados": 15,
+   "doSetor": 0,
+   "resumo": "Só imóveis residenciais, aluguel de carro e turismo",
+   "destaques": [
+    {
+     "titulo": "Quanto custa viver em Maceió?",
+     "canal": "Os Cariocas em Maceió",
+     "views": "11 mil"
+    },
+    {
+     "titulo": "Locação de apartamento em Ponta Verde",
+     "canal": "Raquel Penna Imóveis",
+     "views": "735"
+    }
+   ]
+  },
+  {
+   "termo": "sala para psicólogo Maceió consultório por hora",
+   "analisados": 8,
+   "doSetor": 0,
+   "resumo": "Nenhum vídeo local; vídeos nacionais sobre montar consultório têm audiência",
+   "destaques": [
+    {
+     "titulo": "Tour pelo meu consultório | dicas para escolher o lugar ideal para atender",
+     "canal": "Pedro Psicólogo",
+     "views": "4,7 mil"
+    },
+    {
+     "titulo": "Consultório de psicologia: tour pelo meu consultório",
+     "canal": "RedeMaisPsi",
+     "views": "2 mil"
+    },
+    {
+     "titulo": "Como abrir seu consultório de psicologia do zero",
+     "canal": "O Casal: Psicologia, Clínicas e Negócios",
+     "views": "124 (10 dias)"
+    }
+   ]
+  }
+ ]
+}

@@ -18,6 +18,7 @@ const router = createRouter({
     { path: '/profissionais', component: () => import('./views/Profissionais.vue'), meta: { title: 'Locatários', mes: true } },
     { path: '/estatisticas', component: () => import('./views/Estatisticas.vue'), meta: { title: 'Projeções e cenários', mes: true } },
     { path: '/marketing', component: () => import('./views/Marketing.vue'), meta: { title: 'Comercial', mes: true } },
+    { path: '/marketing/social', component: () => import('./views/Social.vue'), meta: { title: 'Monitor social', secao: '/marketing' } },
     { path: '/marketing/estrategia', component: () => import('./views/Estrategia.vue'), meta: { title: 'Estratégia: recém-formados', secao: '/marketing' } },
     { path: '/concorrentes', component: () => import('./views/Concorrentes.vue'), meta: { title: 'Análise de mercado' } },
     { path: '/financeiro', component: () => import('./views/Financeiro.vue'), meta: { title: 'Custos e ponto de equilíbrio', mes: true } },
