@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { select, zoom as d3zoom, zoomIdentity } from 'd3'
 import Icon from '../components/Icon.vue'
 import { carregarEsquema } from '../lib/banco'
+import { req } from '../lib/api'
 import { state } from '../lib/store'
 
 const router = useRouter()
@@ -37,6 +38,7 @@ async function carregar() {
     const r = await carregarEsquema()
     esquema.value = r.esquema
     aoVivo.value = r.aoVivo
+    await lerPosicoes()
     await nextTick()
     ajustar(false)
   } catch (e) {
@@ -55,8 +57,9 @@ const altura = (t) => HEAD + Math.max(1, linhasDe(t).length) * ROW + PAD
 const area = ref({ w: 1000, h: 640 })
 const GAP_LINHA = 60
 
-// testa várias alturas de coluna e várias quebras dos grupos em duas linhas; fica com o maior zoom
-const desenho = computed(() => {
+// arrumação automática: testa várias alturas de coluna e quebras dos grupos em duas linhas,
+// e fica com a que dá o maior zoom
+const auto = computed(() => {
   const e = esquema.value
   if (!e) return null
   const livre = area.value.w > 900 ? area.value.w - PAINEL : area.value.w
@@ -69,7 +72,47 @@ const desenho = computed(() => {
       if (!melhor || k > melhor.k + 0.001) melhor = { ...d, k, secoes }
     }
   }
-  return { ...melhor, ligacoes: ligacoes(e, melhor.pos) }
+  return melhor
+})
+
+// posições arrumadas à mão (servidor ou navegador) e a tabela sendo arrastada agora
+const salvas = ref({})
+const arrasto = ref(null)
+const PASSO = 10 // grade: as tabelas encaixam de 10 em 10
+
+const desenho = computed(() => {
+  const a = auto.value
+  const e = esquema.value
+  if (!a || !e) return null
+  const pos = new Map()
+  for (const [nome, p] of a.pos) {
+    const s = arrasto.value?.nome === nome ? arrasto.value : salvas.value[nome]
+    pos.set(nome, s ? { ...p, x: s.x, y: s.y } : p)
+  }
+  // moldura de cada grupo: envolve as tabelas do grupo, onde quer que estejam
+  const grupos = [...new Set([...ORDEM_GRUPOS, ...e.tabelas.map((t) => t.grupo)])]
+  const caixas = []
+  for (const g of grupos) {
+    const ps = e.tabelas.filter((t) => t.grupo === g).map((t) => pos.get(t.nome)).filter(Boolean)
+    if (!ps.length) continue
+    const x0 = Math.min(...ps.map((p) => p.x))
+    const y0 = Math.min(...ps.map((p) => p.y))
+    const x1 = Math.max(...ps.map((p) => p.x + p.w))
+    const y1 = Math.max(...ps.map((p) => p.y + p.h))
+    caixas.push({ grupo: g, nome: e.grupos?.[g] || g, x: x0, y: y0 - TOPO, w: x1 - x0, h: y1 - y0 + TOPO })
+  }
+  const minX = Math.min(...caixas.map((c) => c.x)) - 20
+  const minY = Math.min(...caixas.map((c) => c.y))
+  const maxX = Math.max(...caixas.map((c) => c.x + c.w)) + 20
+  const maxY = Math.max(...caixas.map((c) => c.y + c.h)) + 24
+  return { pos, caixas, ligacoes: ligacoes(e, pos), minX, minY, largura: maxX - minX, altura: maxY - minY }
+})
+const arrumadoAMao = computed(() => Object.keys(salvas.value).length > 0)
+// a tabela em foco (ou sendo arrastada) é desenhada por último, por cima das outras
+const ordemDesenho = computed(() => {
+  const ts = esquema.value?.tabelas || []
+  const topo = arrasto.value?.nome || sel.value
+  return topo ? [...ts.filter((t) => t.nome !== topo), ...ts.filter((t) => t.nome === topo)] : ts
 })
 
 // cada grupo montado sozinho, a partir de (0, 0)
@@ -164,10 +207,12 @@ function ligacoes(e, pos) {
       const sy = yLinha(r.de, r.colunas[0])
       const ty = yLinha(r.para, r.refColunas[0])
       let d
-      if (s.x === t.x) {
+      if (Math.abs(s.x - t.x) < W * 0.75) {
+        // uma sobre a outra: sai e entra pela direita
         const sx = s.x + W
         const tx = t.x + W
-        d = `M${sx},${sy} C${sx + 60},${sy} ${tx + 60},${ty} ${tx},${ty}`
+        const cx = Math.max(sx, tx) + 60
+        d = `M${sx},${sy} C${cx},${sy} ${cx},${ty} ${tx},${ty}`
       } else {
         const paraDireita = t.x > s.x
         const sx = paraDireita ? s.x + W : s.x
@@ -202,7 +247,8 @@ const tr = ref(zoomIdentity)
 let zoom = null
 onMounted(() => {
   zoom = d3zoom()
-    .scaleExtent([0.15, 2.5])
+    .scaleExtent([0.08, 3])
+    .filter((ev) => (ev.type === 'wheel' || !ev.target.closest?.('.tab')) && (!ev.ctrlKey || ev.type === 'wheel') && !ev.button)
     .on('zoom', (ev) => (tr.value = ev.transform))
   select(svgEl.value).call(zoom).on('dblclick.zoom', null)
   medidor = new ResizeObserver(([en]) => {
@@ -216,6 +262,8 @@ onMounted(() => {
 })
 let medidor = null
 onBeforeUnmount(() => {
+  window.removeEventListener('pointermove', mover)
+  clearTimeout(espera)
   medidor?.disconnect()
   if (svgEl.value) select(svgEl.value).on('.zoom', null)
 })
@@ -226,7 +274,9 @@ function ajustar(animar = true) {
   const { width, height } = svgEl.value.getBoundingClientRect()
   const livre = width > 900 ? width - PAINEL : width
   const k = Math.min((livre - 40) / d.largura, (height - 40) / (d.altura + 10), 1.1)
-  const t = zoomIdentity.translate((livre - d.largura * k) / 2, Math.max(16, (height - d.altura * k) / 2)).scale(k)
+  const t = zoomIdentity
+    .translate((livre - d.largura * k) / 2 - d.minX * k, Math.max(16, (height - d.altura * k) / 2) - d.minY * k)
+    .scale(k)
   const alvo = select(svgEl.value)
   ;(animar ? alvo.transition().duration(350) : alvo).call(zoom.transform, t)
 }
@@ -247,6 +297,116 @@ function buscar() {
   if (t && termo.value) focar(t.nome)
 }
 watch(compacto, () => nextTick(() => ajustar()))
+
+// ---------- arrastar tabelas (como no draw.io) ----------
+const grade = (v) => Math.round(v / PASSO) * PASSO
+let inicio = null
+
+function iniciarArrasto(ev, nome) {
+  if (ev.button) return
+  const p = desenho.value.pos.get(nome)
+  inicio = { nome, px: ev.clientX, py: ev.clientY, x: p.x, y: p.y, moveu: false }
+  window.addEventListener('pointermove', mover)
+  window.addEventListener('pointerup', soltar, { once: true })
+}
+function mover(ev) {
+  if (!inicio) return
+  const dx = (ev.clientX - inicio.px) / tr.value.k
+  const dy = (ev.clientY - inicio.py) / tr.value.k
+  if (!inicio.moveu && Math.hypot(ev.clientX - inicio.px, ev.clientY - inicio.py) < 4) return
+  inicio.moveu = true
+  hover.value = inicio.nome
+  arrasto.value = { nome: inicio.nome, x: grade(inicio.x + dx), y: grade(inicio.y + dy) }
+}
+function soltar() {
+  window.removeEventListener('pointermove', mover)
+  const i = inicio
+  inicio = null
+  if (!i) return
+  if (!i.moveu) {
+    sel.value = i.nome // foi um clique
+    return
+  }
+  const a = arrasto.value
+  arrasto.value = null
+  if (a) fixar({ [a.nome]: { x: a.x, y: a.y } })
+}
+function setas(ev, nome) {
+  const passos = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key]
+  if (!passos) return
+  ev.preventDefault()
+  const p = desenho.value.pos.get(nome)
+  const f = ev.shiftKey ? 5 : 1
+  fixar({ [nome]: { x: p.x + passos[0] * PASSO * f, y: p.y + passos[1] * PASSO * f } })
+}
+
+// ao mexer na primeira tabela, todas as outras ficam onde estão (a arrumação automática não as move mais)
+function fixar(mudancas) {
+  const base = arrumadoAMao.value
+    ? salvas.value
+    : Object.fromEntries([...desenho.value.pos].map(([n, p]) => [n, { x: p.x, y: p.y }]))
+  salvas.value = { ...base, ...mudancas }
+  agendarSalvar()
+}
+
+// ---------- salvar posições ----------
+const CHAVE = 'sante-diagrama-posicoes'
+const salvo = ref({ status: '', quando: null, erro: '' })
+let espera = null
+
+async function lerPosicoes() {
+  if (aoVivo.value) {
+    try {
+      salvas.value = (await req('GET', '/banco/diagrama')).posicoes || {}
+      return
+    } catch {
+      /* usa a cópia do navegador */
+    }
+  }
+  try {
+    salvas.value = JSON.parse(localStorage.getItem(CHAVE)) || {}
+  } catch {
+    salvas.value = {}
+  }
+}
+function agendarSalvar() {
+  salvo.value = { ...salvo.value, status: 'salvando', erro: '' }
+  clearTimeout(espera)
+  espera = setTimeout(salvar, 500)
+}
+async function salvar() {
+  const dados = salvas.value
+  try {
+    localStorage.setItem(CHAVE, JSON.stringify(dados))
+  } catch {
+    /* sem armazenamento */
+  }
+  if (!aoVivo.value) {
+    salvo.value = { status: 'navegador', quando: new Date(), erro: '' }
+    return
+  }
+  try {
+    await req('PUT', '/banco/diagrama', { posicoes: dados })
+    salvo.value = { status: 'servidor', quando: new Date(), erro: '' }
+  } catch (e) {
+    salvo.value = { status: 'erro', quando: null, erro: e.message }
+  }
+}
+async function arrumarAutomatico() {
+  if (!confirm('Voltar à arrumação automática? As posições que você arrumou à mão serão apagadas.')) return
+  salvas.value = {}
+  await salvar()
+  nextTick(() => ajustar())
+}
+const hora = (d) => d?.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+const textoSalvo = computed(() => {
+  const s = salvo.value
+  if (s.status === 'salvando') return 'Salvando posições…'
+  if (s.status === 'erro') return `Não salvou: ${s.erro}`
+  if (s.status === 'servidor') return `Posições salvas no servidor às ${hora(s.quando)}`
+  if (s.status === 'navegador') return `Posições salvas neste navegador às ${hora(s.quando)}`
+  return arrumadoAMao.value ? 'Arrumado à mão' : 'Arrumação automática'
+})
 
 // ---------- detalhes ----------
 const tabela = computed(() => esquema.value?.tabelas.find((t) => t.nome === sel.value) || null)
@@ -318,6 +478,7 @@ const quando = computed(() => {
         <span v-if="esquema" class="muted small">
           {{ esquema.banco }} · {{ esquema.tabelas.length }} tabelas · {{ esquema.relacoes.length }} relações
         </span>
+        <span v-if="esquema" class="salvo small" :class="salvo.status" role="status">{{ textoSalvo }}</span>
       </div>
       <div class="toolbar">
         <input v-model="busca" type="search" class="busca" placeholder="Procurar tabela ou coluna" aria-label="Procurar tabela ou coluna" @keydown.enter="buscar" />
@@ -325,6 +486,7 @@ const quando = computed(() => {
         <button class="btn sm icon" type="button" aria-label="Diminuir" title="Diminuir" @click="zoomPor(0.8)"><Icon name="minus" :size="16" /></button>
         <button class="btn sm icon" type="button" aria-label="Aumentar" title="Aumentar" @click="zoomPor(1.25)"><Icon name="plus" :size="16" /></button>
         <button class="btn sm" type="button" @click="ajustar()"><Icon name="fit" :size="15" /> Ajustar à tela</button>
+        <button v-if="arrumadoAMao" class="btn sm" type="button" title="Apaga as posições arrumadas à mão" @click="arrumarAutomatico"><Icon name="diagrama" :size="15" /> Arrumação automática</button>
         <button v-if="esquema" class="btn sm" type="button" @click="copiar(mermaid(), 'mermaid')">
           <Icon :name="copiado === 'mermaid' ? 'check' : 'copy'" :size="15" /> {{ copiado === 'mermaid' ? 'Copiado' : 'Copiar Mermaid' }}
         </button>
@@ -332,7 +494,7 @@ const quando = computed(() => {
     </section>
 
     <section class="card tela">
-      <svg ref="svgEl" class="er" role="img" aria-label="Diagrama das tabelas do banco de dados e suas relações" @click.self="sel = ''">
+      <svg ref="svgEl" class="er" role="img" aria-label="Diagrama das tabelas do banco de dados e suas relações">
         <defs>
           <marker id="er-muitos" viewBox="-16 -7 18 14" refX="0" refY="0" markerWidth="18" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
             <path d="M-11,0 L0,-6 M-11,0 L0,0 M-11,0 L0,6 M-15,-6 L-15,6" fill="none" stroke="context-stroke" stroke-width="1.5" />
@@ -340,7 +502,11 @@ const quando = computed(() => {
           <marker id="er-um" viewBox="-12 -7 14 14" refX="0" refY="0" markerWidth="14" markerHeight="14" markerUnits="userSpaceOnUse" orient="auto">
             <path d="M-5,-6 L-5,6 M-9,-6 L-9,6" fill="none" stroke="context-stroke" stroke-width="1.5" />
           </marker>
+          <pattern id="er-grade" :width="PASSO * 2" :height="PASSO * 2" patternUnits="userSpaceOnUse" :patternTransform="`translate(${tr.x},${tr.y}) scale(${tr.k})`">
+            <circle cx="1" cy="1" r="1" class="ponto" />
+          </pattern>
         </defs>
+        <rect width="100%" height="100%" fill="url(#er-grade)" class="fundo" @click="sel = ''" />
         <g v-if="desenho" :transform="`translate(${tr.x},${tr.y}) scale(${tr.k})`">
           <g v-for="s in desenho.caixas" :key="s.grupo" class="secao" :class="`g-${s.grupo}`">
             <rect :x="s.x - 20" :y="s.y" :width="s.w + 40" :height="s.h + 24" rx="18" class="secao-bg" />
@@ -356,10 +522,11 @@ const quando = computed(() => {
           </path>
 
           <g
-            v-for="t in esquema.tabelas" :key="t.nome" class="tab" :class="[`g-${t.grupo}`, { off: apagada(t), sel: sel === t.nome }]"
+            v-for="t in ordemDesenho" :key="t.nome" class="tab" :class="[`g-${t.grupo}`, { off: apagada(t) && arrasto?.nome !== t.nome, sel: sel === t.nome, arrastando: arrasto?.nome === t.nome }]"
             :transform="`translate(${desenho.pos.get(t.nome).x},${desenho.pos.get(t.nome).y})`"
             tabindex="0" role="button" :aria-label="t.linhas == null ? `Tabela ${t.nome}` : `Tabela ${t.nome}, ${t.linhas} linhas`"
-            @mouseenter="hover = t.nome" @mouseleave="hover = ''" @click.stop="sel = t.nome" @keydown.enter="sel = t.nome"
+            @mouseenter="hover = t.nome" @mouseleave="arrasto || (hover = '')" @pointerdown="iniciarArrasto($event, t.nome)"
+            @keydown.enter="sel = t.nome" @keydown="setas($event, t.nome)"
           >
             <rect :width="W" :height="altura(t)" rx="10" class="tab-bg" />
             <path :d="`M0,10 a10,10 0 0 1 10,-10 h${W - 20} a10,10 0 0 1 10,10 v${HEAD - 10} h-${W} z`" class="tab-head" />
@@ -449,7 +616,11 @@ const quando = computed(() => {
 
         <template v-else>
           <h2>Tabelas</h2>
-          <p class="muted small">Clique numa tabela para ver colunas, chaves e índices. Arraste para mover e use a roda do mouse para o zoom.</p>
+          <p class="muted small">
+            Arraste as tabelas para arrumar o desenho: as posições ficam salvas. Arraste o fundo para mover a tela e
+            use a roda do mouse para o zoom. Clique numa tabela para ver colunas, chaves e índices; com ela selecionada,
+            as setas do teclado também a movem.
+          </p>
           <div v-for="g in porGrupo" :key="g.grupo" class="lista-grupo">
             <span class="grupo-tag" :class="`g-${g.grupo}`">{{ g.nome }}</span>
             <ul>
@@ -481,8 +652,12 @@ const quando = computed(() => {
 .check input { height: auto; }
 
 .tela { position: relative; padding: 0; overflow: hidden; height: max(540px, calc(100vh - 230px)); }
-.er { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none; }
+.er { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; user-select: none; background: var(--surface); }
 .er:active { cursor: grabbing; }
+.ponto { fill: var(--border); }
+.salvo { color: var(--muted); }
+.salvo.servidor, .salvo.navegador { color: var(--good); }
+.salvo.erro { color: var(--bad); }
 .aviso { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
 .aviso.bad { color: var(--bad); }
 
@@ -494,7 +669,9 @@ const quando = computed(() => {
 .lig.on { stroke: var(--accent); stroke-width: 2.2; opacity: 1; }
 .lig.off { opacity: 0.12; }
 
-.tab { cursor: pointer; outline: none; transition: opacity 0.15s; }
+.tab { cursor: move; outline: none; transition: opacity 0.15s; }
+.tab.arrastando { transition: none; }
+.tab.arrastando .tab-bg { stroke: var(--accent); stroke-width: 2; filter: drop-shadow(0 6px 12px rgba(16, 24, 40, 0.18)); }
 .tab.off { opacity: 0.28; }
 .tab-bg { fill: var(--surface); stroke: var(--border); stroke-width: 1; }
 .tab:hover .tab-bg, .tab:focus-visible .tab-bg { stroke: var(--text-2); }

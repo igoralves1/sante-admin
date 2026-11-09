@@ -2131,6 +2131,172 @@
           }
         }
       }
+    },
+    "/api/banco/assistente": {
+      "get": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "O assistente de SQL está disponível?",
+        "description": "Diz se o servidor tem chave da API da Anthropic para traduzir perguntas em SQL.",
+        "operationId": "assistente_api_banco_assistente_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Assistente"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/banco/traduzir": {
+      "post": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "Traduz uma pergunta em português para SQL",
+        "description": "Usa o Claude (`claude-opus-5-5`) para escrever uma consulta PostgreSQL que responde à pergunta.\n\n- Vão para a Anthropic só a **estrutura** do banco (tabelas, colunas, tipos, relações e valores\n  possíveis dos campos de lista), as regras do negócio e a pergunta. **Nenhuma linha de dado sai do servidor.**\n- Antes de responder, a consulta é preparada no PostgreSQL (papel `sante_leitura`, sem executar).\n  Se o banco recusar, o erro volta para o modelo corrigir (até 3 tentativas).\n- A rota **não executa** a consulta: o front roda o SQL devolvido em `POST /api/banco/consulta`.\n- `historico` permite perguntas de continuação; `sqlAtual` permite pedir ajustes no SQL do editor.\n\nPrecisa de `ANTHROPIC_API_KEY` no `.env` do servidor.",
+        "operationId": "traduzir_api_banco_traduzir_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Pergunta"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Traducao"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Recurso desligado neste servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Muitas perguntas seguidas.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "A API da Anthropic falhou.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Sem chave da API da Anthropic, ou sem conexão com ela.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/banco/diagrama": {
+      "get": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "Posições salvas das tabelas no diagrama",
+        "description": "Posição de cada tabela arrastada na página **Diagrama do banco**. Vazio = arrumação automática.",
+        "operationId": "ler_posicoes_api_banco_diagrama_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Posicoes"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "Salva as posições das tabelas no diagrama",
+        "description": "Substitui todas as posições salvas. Envie `{\"posicoes\": {}}` para voltar à arrumação automática.",
+        "operationId": "salvar_posicoes_api_banco_diagrama_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Posicoes"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Posicoes"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2418,6 +2584,25 @@
             "tipo": "bloqueio"
           }
         ]
+      },
+      "Assistente": {
+        "properties": {
+          "disponivel": {
+            "type": "boolean",
+            "title": "Disponivel",
+            "description": "Há chave da API da Anthropic configurada no servidor."
+          },
+          "modelo": {
+            "type": "string",
+            "title": "Modelo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "disponivel",
+          "modelo"
+        ],
+        "title": "Assistente"
       },
       "Campanha": {
         "properties": {
@@ -3980,6 +4165,97 @@
         ],
         "title": "Outra"
       },
+      "Pergunta": {
+        "properties": {
+          "pergunta": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 2,
+            "title": "Pergunta",
+            "description": "A pergunta, em português."
+          },
+          "historico": {
+            "items": {
+              "$ref": "#/components/schemas/Troca"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Historico",
+            "description": "Perguntas anteriores e o SQL de cada uma, para perguntas de continuação (\"agora só da Sala 1\").",
+            "default": []
+          },
+          "sqlAtual": {
+            "type": "string",
+            "maxLength": 20000,
+            "title": "Sqlatual",
+            "description": "SQL que está no editor, para pedidos de ajuste.",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "pergunta"
+        ],
+        "title": "Pergunta",
+        "description": "Pergunta em português para virar SQL.",
+        "examples": [
+          {
+            "historico": [],
+            "pergunta": "Quanto cada sala faturou com locações neste mês?",
+            "sqlAtual": ""
+          }
+        ]
+      },
+      "Ponto": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "Ponto"
+      },
+      "Posicoes": {
+        "properties": {
+          "posicoes": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Ponto"
+            },
+            "type": "object",
+            "title": "Posicoes",
+            "description": "Nome da tabela → posição. Tabelas fora da lista usam a arrumação automática."
+          }
+        },
+        "type": "object",
+        "required": [
+          "posicoes"
+        ],
+        "title": "Posicoes",
+        "description": "Posição (canto superior esquerdo) de cada tabela no diagrama.",
+        "examples": [
+          {
+            "posicoes": {
+              "contrato": {
+                "x": 420,
+                "y": 44
+              },
+              "espaco": {
+                "x": 0,
+                "y": 44
+              }
+            }
+          }
+        ]
+      },
       "Profissional": {
         "properties": {
           "id": {
@@ -4479,6 +4755,62 @@
           "Outro"
         ],
         "title": "TipoEspaco"
+      },
+      "Traducao": {
+        "properties": {
+          "podeResponder": {
+            "type": "boolean",
+            "title": "Poderesponder",
+            "description": "Falso quando os dados do banco não respondem à pergunta."
+          },
+          "sql": {
+            "type": "string",
+            "title": "Sql",
+            "description": "Consulta pronta para `POST /api/banco/consulta`. Vazia quando `podeResponder` é falso."
+          },
+          "explicacao": {
+            "type": "string",
+            "title": "Explicacao",
+            "description": "O que a consulta mostra e as premissas assumidas, em português simples."
+          },
+          "tentativas": {
+            "type": "integer",
+            "title": "Tentativas",
+            "description": "Quantas vezes o modelo precisou escrever a consulta até o PostgreSQL aceitar."
+          },
+          "modelo": {
+            "type": "string",
+            "title": "Modelo",
+            "description": "Modelo do Claude que respondeu."
+          }
+        },
+        "type": "object",
+        "required": [
+          "podeResponder",
+          "sql",
+          "explicacao",
+          "tentativas",
+          "modelo"
+        ],
+        "title": "Traducao"
+      },
+      "Troca": {
+        "properties": {
+          "pergunta": {
+            "type": "string",
+            "title": "Pergunta"
+          },
+          "sql": {
+            "type": "string",
+            "title": "Sql"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pergunta",
+          "sql"
+        ],
+        "title": "Troca"
       },
       "ValidationError": {
         "properties": {

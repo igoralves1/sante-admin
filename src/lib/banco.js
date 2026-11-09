@@ -54,3 +54,7 @@ export function csv(colunas, linhas) {
   }
   return [colunas.map((c) => cel(c.nome)).join(','), ...linhas.map((l) => l.map(cel).join(','))].join('\n')
 }
+
+// ---------- perguntas em português -> SQL (Claude, no servidor) ----------
+export const assistente = () => req('GET', '/banco/assistente')
+export const traduzir = (pergunta, historico = [], sqlAtual = '') => req('POST', '/banco/traduzir', { pergunta, historico, sqlAtual })

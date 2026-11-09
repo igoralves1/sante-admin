@@ -1,9 +1,9 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Icon from '../components/Icon.vue'
 import GradeDados from '../components/GradeDados.vue'
-import { aoVivo, carregarEsquema, consultar, csv, linhasTabela } from '../lib/banco'
+import { aoVivo, assistente, carregarEsquema, consultar, csv, linhasTabela, traduzir } from '../lib/banco'
 import { baixar, state } from '../lib/store'
 
 const route = useRoute()
@@ -74,8 +74,77 @@ const grupos = computed(() => {
 const infoTabela = computed(() => esquema.value?.tabelas.find((t) => t.nome === tabela.value))
 
 // ---------- abas ----------
-const aba = ref(route.query.aba === 'sql' ? 'sql' : 'tabela')
-watch(aba, (a) => router.replace({ query: { ...route.query, aba: a === 'sql' ? 'sql' : undefined } }))
+const ABAS = ['perguntar', 'tabela', 'sql']
+const aba = ref(ABAS.includes(route.query.aba) ? route.query.aba : route.query.tabela ? 'tabela' : 'perguntar')
+watch(aba, (a) => router.replace({ query: { ...route.query, aba: a === 'perguntar' ? undefined : a } }))
+
+// ---------- perguntar em português ----------
+const SUGESTOES = [
+  'Quanto cada sala faturou com locações neste mês?',
+  'Quais contratos estão em vigor e qual o valor mensal de cada um?',
+  'Qual a ocupação de cada sala neste mês?',
+  'Quais turnos estão marcados como não disponíveis este mês?',
+  'Qual o total dos custos fixos por mês?',
+  'Quais concorrentes cobram menos por hora?',
+]
+const ia = ref(null) // { disponivel, modelo }
+const pergunta = ref('')
+const conversa = ref(ler('sante-perguntas', []).map((c) => ({ ...c, resultado: null, erro: '', estado: 'pronto' })))
+const fim = ref(null)
+const ocupado = computed(() => conversa.value.some((c) => c.estado !== 'pronto'))
+// guarda só pergunta, SQL e explicação (os resultados podem ter dados pessoais e ficam só na tela)
+watch(conversa, (cs) => gravar('sante-perguntas', cs.slice(-20).map(({ pergunta, sql, explicacao, pode }) => ({ pergunta, sql, explicacao, pode }))), { deep: true })
+
+async function perguntar(texto = pergunta.value) {
+  texto = texto.trim()
+  if (!texto || ocupado.value) return
+  const historico = conversa.value.filter((c) => c.sql).map((c) => ({ pergunta: c.pergunta, sql: c.sql }))
+  conversa.value.push({ pergunta: texto, sql: '', explicacao: '', pode: true, resultado: null, erro: '', estado: 'traduzindo', verSql: false })
+  const item = conversa.value[conversa.value.length - 1]
+  pergunta.value = ''
+  rolar()
+  try {
+    const r = await traduzir(texto, historico)
+    item.sql = r.sql
+    item.explicacao = r.explicacao
+    item.pode = r.podeResponder
+    if (r.podeResponder) await rodarItem(item)
+  } catch (e) {
+    item.erro = e.message
+  } finally {
+    item.estado = 'pronto'
+    rolar()
+  }
+}
+async function rodarItem(item) {
+  item.estado = 'rodando'
+  item.erro = ''
+  try {
+    item.resultado = await consultar(item.sql, 500)
+  } catch (e) {
+    item.erro = e.message
+    item.resultado = null
+  } finally {
+    item.estado = 'pronto'
+  }
+}
+function teclasPergunta(ev) {
+  if (ev.key === 'Enter' && !ev.shiftKey) {
+    ev.preventDefault()
+    perguntar()
+  }
+}
+function novaConversa() {
+  conversa.value = []
+  pergunta.value = ''
+}
+function noEditor(item) {
+  sql.value = item.sql
+  aba.value = 'sql'
+}
+function rolar() {
+  nextTick(() => fim.value?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
+}
 
 // ---------- navegar numa tabela ----------
 const tabela = ref(String(route.query.tabela || ''))
@@ -192,6 +261,7 @@ function exportar(r, nome) {
 const ms = (v) => `${v.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} ms`
 
 onMounted(async () => {
+  assistente().then((r) => (ia.value = r)).catch(() => (ia.value = { disponivel: false, modelo: '' }))
   await carregarLista()
   if (tabela.value) abrir()
 })
@@ -232,17 +302,86 @@ watch(() => state.modo, async () => {
 
     <section class="card principal">
       <div class="abas" role="tablist">
+        <button type="button" role="tab" :aria-selected="aba === 'perguntar'" :class="{ on: aba === 'perguntar' }" @click="aba = 'perguntar'">
+          <Icon name="pergunta" :size="16" /> Perguntar
+        </button>
         <button type="button" role="tab" :aria-selected="aba === 'tabela'" :class="{ on: aba === 'tabela' }" @click="aba = 'tabela'">
           <Icon name="tabela" :size="16" /> Navegar tabela
         </button>
         <button type="button" role="tab" :aria-selected="aba === 'sql'" :class="{ on: aba === 'sql' }" @click="aba = 'sql'">
-          <Icon name="api" :size="16" /> Consulta SQL
+          <Icon name="api" :size="16" /> Editor SQL
         </button>
         <span class="chip info plain so-leitura" title="As consultas rodam com um usuário do banco que só pode ler.">Só leitura</span>
       </div>
 
+      <!-- perguntar -->
+      <template v-if="aba === 'perguntar'">
+        <div v-if="ia && !ia.disponivel" class="note">
+          <strong>Falta configurar o assistente.</strong> Para traduzir perguntas em SQL, o servidor precisa de uma chave da
+          API da Anthropic: coloque <span class="mono">ANTHROPIC_API_KEY=...</span> no arquivo <span class="mono">.env</span>
+          do sante-BE e rode <span class="mono">docker compose up -d</span>. Enquanto isso, use as abas Navegar tabela e Editor SQL.
+        </div>
+
+        <div v-if="!conversa.length" class="vazio">
+          <p class="muted">Pergunte em português. O assistente escreve a consulta SQL, ela roda no banco (só leitura) e o resultado aparece aqui.</p>
+          <div class="sugestoes">
+            <button v-for="s in SUGESTOES" :key="s" type="button" class="sugestao" :disabled="!ia?.disponivel" @click="perguntar(s)">{{ s }}</button>
+          </div>
+        </div>
+
+        <div v-else class="conversa">
+          <article v-for="(c, i) in conversa" :key="i" class="troca">
+            <p class="eu">{{ c.pergunta }}</p>
+            <div class="resposta">
+              <p v-if="c.estado === 'traduzindo'" class="muted small"><span class="girando" aria-hidden="true" /> Escrevendo a consulta…</p>
+              <template v-else>
+                <p v-if="c.explicacao" class="explica">{{ c.explicacao }}</p>
+                <div v-if="c.sql" class="sql-bloco">
+                  <div class="toolbar">
+                    <button class="btn sm ghost" type="button" :aria-expanded="c.verSql" @click="c.verSql = !c.verSql">
+                      <Icon name="api" :size="15" /> {{ c.verSql ? 'Esconder SQL' : 'Ver SQL' }}
+                    </button>
+                    <button class="btn sm ghost" type="button" :disabled="c.estado !== 'pronto'" @click="rodarItem(c)"><Icon name="play" :size="14" /> Rodar de novo</button>
+                    <button class="btn sm ghost" type="button" @click="noEditor(c)"><Icon name="edit" :size="14" /> Abrir no editor</button>
+                    <button v-if="c.resultado?.linhas.length" class="btn sm ghost" type="button" @click="exportar(c.resultado, 'pergunta')"><Icon name="download" :size="14" /> CSV</button>
+                  </div>
+                  <textarea v-if="c.verSql" v-model="c.sql" class="editor pequeno" spellcheck="false" aria-label="SQL gerado" @keydown.meta.enter.prevent="rodarItem(c)" @keydown.ctrl.enter.prevent="rodarItem(c)" />
+                </div>
+                <div v-if="c.erro" class="erro"><Icon name="alert" :size="16" /> {{ c.erro }}</div>
+                <p v-if="c.estado === 'rodando'" class="muted small"><span class="girando" aria-hidden="true" /> Consultando o banco…</p>
+                <template v-if="c.resultado">
+                  <p class="muted small tnum">
+                    {{ n(c.resultado.quantidade) }} {{ c.resultado.quantidade === 1 ? 'linha' : 'linhas' }} · {{ ms(c.resultado.tempoMs) }}
+                    <span v-if="c.resultado.truncado" class="chip warn">Mostrando as primeiras {{ n(c.resultado.quantidade) }}</span>
+                  </p>
+                  <GradeDados v-if="c.resultado.colunas.length" :key="i + JSON.stringify(c.resultado.colunas)" class="grade-pergunta" :colunas="c.resultado.colunas" :linhas="c.resultado.linhas" />
+                </template>
+                <p v-else-if="c.sql && !c.erro && c.estado === 'pronto'" class="muted small">Clique em Rodar de novo para ver o resultado.</p>
+              </template>
+            </div>
+          </article>
+          <div ref="fim" />
+        </div>
+
+        <form class="caixa-pergunta" @submit.prevent="perguntar()">
+          <textarea
+            v-model="pergunta" rows="2" :disabled="!ia?.disponivel" aria-label="Sua pergunta"
+            :placeholder="conversa.length ? 'Continue a conversa: “agora só da Sala 1”, “ordene pelo valor”…' : 'Ex.: quanto cada sala faturou com locações neste mês?'"
+            @keydown="teclasPergunta"
+          />
+          <div class="toolbar">
+            <button class="btn primary" type="submit" :disabled="!pergunta.trim() || ocupado || !ia?.disponivel"><Icon name="play" :size="15" /> Perguntar</button>
+            <button v-if="conversa.length" class="btn ghost" type="button" :disabled="ocupado" @click="novaConversa">Nova conversa</button>
+            <span class="muted small aviso-ia">
+              Enter envia; Shift + Enter quebra a linha. Vão para a Anthropic só a pergunta e a estrutura do banco, nunca os dados.
+              <template v-if="ia?.modelo"> Modelo: {{ ia.modelo }}.</template>
+            </span>
+          </div>
+        </form>
+      </template>
+
       <!-- navegar -->
-      <template v-if="aba === 'tabela'">
+      <template v-else-if="aba === 'tabela'">
         <p v-if="!tabela" class="empty">Escolha uma tabela na lista.</p>
         <template v-else>
           <div class="cab">
@@ -368,6 +507,39 @@ p.erro { display: block; color: var(--bad); background: none; padding: 0; }
   background: var(--surface-2); tab-size: 2;
 }
 .carregando { opacity: 0.6; transition: opacity 0.15s; }
+
+/* perguntar */
+.vazio { display: grid; gap: 12px; padding: 8px 0; }
+.vazio p { margin: 0; }
+.sugestoes { display: flex; flex-wrap: wrap; gap: 8px; }
+.sugestao {
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2); font: inherit; font-size: 13px;
+  border-radius: 999px; padding: 6px 12px; cursor: pointer; text-align: left;
+}
+.sugestao:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-ink); }
+.sugestao:disabled { opacity: 0.5; cursor: default; }
+.conversa { display: grid; gap: 18px; }
+.troca { display: grid; gap: 8px; }
+.eu {
+  justify-self: end; max-width: 80%; margin: 0; background: var(--accent-soft); color: var(--text);
+  padding: 8px 12px; border-radius: 14px 14px 4px 14px; white-space: pre-wrap;
+}
+.resposta { display: grid; gap: 8px; border-left: 2px solid var(--border); padding-left: 12px; min-width: 0; }
+.resposta p { margin: 0; }
+.explica { color: var(--text); }
+.sql-bloco { display: grid; gap: 6px; }
+.sql-bloco .toolbar { gap: 2px; margin-left: -8px; }
+.editor.pequeno { min-height: 90px; font-size: 12px; }
+.grade-pergunta :deep(.grade-wrap), .grade-pergunta { max-height: 420px; }
+.caixa-pergunta { position: sticky; bottom: 0; display: grid; gap: 8px; background: var(--surface); padding-top: 8px; border-top: 1px solid var(--border); }
+.caixa-pergunta textarea { width: 100%; resize: vertical; min-height: 56px; }
+.aviso-ia { flex: 1 1 260px; }
+.girando {
+  display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; margin-right: 4px;
+  border: 2px solid var(--border); border-top-color: var(--accent); animation: girar 0.8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .girando { animation: none; } }
 .btn:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 900px) {

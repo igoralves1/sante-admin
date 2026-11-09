@@ -27,8 +27,8 @@ e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 | **Análise de mercado** (Concorrentes) | Mapa dos concorrentes em Maceió: preços, Instagram, Google Maps, sites (Lighthouse), Similarweb, análise SWOT e ações sugeridas |
 | **Custos e equilíbrio** | Custos gerais, impostos, comissões e ponto de equilíbrio (inclui as despesas dos espaços) |
 | **Base de dados** | Importar/exportar Excel e `sante.json`; instruções de publicação; conexão com o servidor |
-| **Diagrama do banco** (`#/dados/diagrama`) | Diagrama das tabelas do PostgreSQL e das chaves estrangeiras, por grupo (cadastro, operação, mercado). Zoom, busca, modo "só chaves", detalhes de cada tabela (colunas, tipos, índices, relações) e exportação em Mermaid |
-| **Tabelas e consultas** (`#/dados/consultas`) | Ferramenta de consultas: navegar nas linhas de cada tabela (ordem, busca, páginas, CSV) e rodar SQL só de leitura, com exemplos e histórico. Precisa do servidor |
+| **Diagrama do banco** (`#/dados/diagrama`) | Diagrama das tabelas do PostgreSQL e das chaves estrangeiras, por grupo (cadastro, operação, mercado), numa área infinita como a do draw.io: arraste as tabelas para arrumar (as posições ficam salvas no servidor, ou no navegador sem servidor), setas do teclado, zoom, busca, modo "só chaves", detalhes de cada tabela e exportação em Mermaid |
+| **Tabelas e consultas** (`#/dados/consultas`) | **Perguntar:** escreva a pergunta em português e o assistente (Claude, no sante-BE) escreve o SQL, roda no banco e mostra o resultado, com perguntas de continuação. Também: navegar nas linhas de cada tabela e um editor de SQL só de leitura. Precisa do servidor |
 | **Documentação da API** (`#/documentacao-api`) | Swagger UI com todas as rotas do sante-BE, exemplos, respostas e erros. Com o servidor conectado, dá para testar as rotas (**Try it out**) |
 
 ## Como os dados são atualizados
