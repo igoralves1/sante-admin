@@ -1,29 +1,13 @@
-// Páginas da base de dados (diagrama e consultas) e documentação da API.
-// Com o servidor ligado, tudo vem ao vivo da API. Sem servidor (ex.: GitHub Pages), o diagrama e a
-// documentação usam a cópia em public/data/ (gerada por `npm run docs:api`); as consultas precisam do servidor.
+// Páginas da base de dados (diagrama e consultas) e documentação da API: tudo ao vivo do servidor.
 
-import { state } from './store'
 import { req, urlApi } from './api'
 
-const copia = (arquivo) => fetch(`${import.meta.env.BASE_URL}data/${arquivo}`, { cache: 'no-store' }).then((r) => {
-  if (!r.ok) throw new Error(`Não foi possível carregar data/${arquivo}.`)
-  return r.json()
-})
-
-export const aoVivo = () => state.modo === 'api'
-
-export async function carregarEsquema() {
-  if (aoVivo()) return { esquema: await req('GET', '/banco/esquema'), aoVivo: true }
-  return { esquema: await copia('esquema.json'), aoVivo: false }
-}
+export const carregarEsquema = () => req('GET', '/banco/esquema')
 
 export async function carregarOpenapi() {
-  if (aoVivo()) {
-    const res = await fetch(`${urlApi()}/openapi.json`, { cache: 'no-store' })
-    if (!res.ok) throw new Error(`O servidor respondeu ${res.status} em /openapi.json.`)
-    return { spec: await res.json(), aoVivo: true }
-  }
-  return { spec: await copia('openapi.json'), aoVivo: false }
+  const res = await fetch(`${urlApi()}/openapi.json`, { cache: 'no-store' })
+  if (!res.ok) throw new Error(`O servidor respondeu ${res.status} em /openapi.json.`)
+  return res.json()
 }
 
 export function linhasTabela(tabela, { limite = 50, pagina = 1, ordem = '', desc = false, busca = '' } = {}) {

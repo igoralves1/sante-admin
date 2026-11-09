@@ -4,22 +4,15 @@ import { normalizar } from './calc'
 import { definirFonteTurnos } from './agenda'
 import { planejar, req, urlApi } from './api'
 
-const KEY = 'sante-admin:v2'
-const KEY_ANTIGA = 'sante-ocupacao:v1'
-
-// data: dados em uso (do servidor, ou publicados / editados neste navegador)
-// publicado: conteúdo de public/data/sante.json, o que todos veem no link
-// modo: 'api' = os dados vivem no servidor (sante-BE); 'local' = sante.json + cópia no navegador
+// Todos os dados vêm do banco PostgreSQL, pela API do sante-BE. Nada fica guardado em arquivo
+// nem no navegador: cada alteração vai para o servidor na hora.
 export const state = reactive({
   loaded: false,
   erro: '',
-  data: null,
-  publicado: null,
-  local: false,
-  salvoEm: null,
+  data: null, // sante.json vindo de GET /api/dados
+  mercado: null, // { concorrentes, social } de /api/mercado/*
   mes: mesAtual(),
   tituloPagina: '', // título da página quando ele depende dos dados (ex.: nome do espaço)
-  modo: 'local',
   servidor: {
     url: '',
     status: '', // ok | salvando | erro | offline
@@ -31,106 +24,46 @@ export const state = reactive({
 // as contas de turnos leem state.data.turnos (o bloco central do sante.json)
 definirFonteTurnos(() => state.data?.turnos)
 
-let pularProximo = false
-
-export function lerSalvo() {
+// restos das versões que guardavam dados no navegador
+for (const k of ['sante-admin:v2', 'sante-ocupacao:v1', 'sante-api', 'sante-diagrama-posicoes']) {
   try {
-    const v2 = JSON.parse(localStorage.getItem(KEY) || 'null')
-    if (v2?.data) return v2
-    const v1 = JSON.parse(localStorage.getItem(KEY_ANTIGA) || 'null')
-    if (v1?.data) return { salvoEm: v1.salvoEm, data: normalizar(v1.data) }
+    localStorage.removeItem(k)
   } catch {
-    /* armazenamento indisponível ou corrompido */
+    /* armazenamento indisponível */
   }
-  return null
 }
 
-export async function carregar() {
-  try {
-    const res = await fetch(`${import.meta.env.BASE_URL}data/sante.json`, { cache: 'no-store' })
-    state.publicado = normalizar(await res.json())
-  } catch {
-    state.erro = 'Não foi possível carregar data/sante.json.'
-  }
-
-  state.servidor.url = urlApi()
-  if (state.servidor.url && (await conectar())) {
-    state.loaded = true
-    return
-  }
-
-  const salvo = lerSalvo()
-  if (!state.publicado && !salvo) return
-  if (salvo) {
-    state.data = normalizar(salvo.data)
-    state.local = true
-    state.salvoEm = salvo.salvoEm
-  } else {
-    state.data = clone(state.publicado)
-  }
-  state.loaded = true
-  iniciarModoLocal()
-}
-
-// ---------- modo local: sante.json + cópia no navegador ----------
-function iniciarModoLocal() {
-  watch(
-    () => state.data,
-    (v) => {
-      if (pularProximo) {
-        pularProximo = false
-        return
-      }
-      state.salvoEm = new Date().toISOString()
-      state.local = true
-      try {
-        localStorage.setItem(KEY, JSON.stringify({ salvoEm: state.salvoEm, data: v }))
-      } catch {
-        /* segue só em memória */
-      }
-    },
-    { deep: true },
-  )
-
-  // outra aba do mesmo navegador salvou (ex.: turnos editados): atualiza esta na hora
-  window.addEventListener('storage', (ev) => {
-    if (ev.key !== KEY) return
-    try {
-      const novo = ev.newValue ? JSON.parse(ev.newValue) : null
-      pularProximo = true
-      if (novo?.data) {
-        state.data = normalizar(novo.data)
-        state.local = true
-        state.salvoEm = novo.salvoEm
-      } else if (state.publicado) {
-        state.data = clone(state.publicado)
-        state.local = false
-        state.salvoEm = null
-      }
-    } catch {
-      /* ignora conteúdo inválido */
-    }
-  })
-}
-
-// ---------- modo servidor ----------
 let base = null // última versão que o servidor confirmou, no formato do front
 let ultimoServidor = '' // resposta crua do último GET, para perceber mudanças de outras pessoas
 let timer = null
 let rodando = false
 let pendente = false
+let pularProximo = false
+let iniciado = false
 
-async function conectar() {
+export async function carregar() {
+  state.servidor.url = urlApi() || window.location.origin
+  state.erro = ''
   try {
-    aplicar(await req('GET', '/dados'))
+    const [doc, concorrentes, social] = await Promise.all([
+      req('GET', '/dados'),
+      req('GET', '/mercado/concorrentes'),
+      req('GET', '/mercado/social'),
+    ])
+    state.mercado = { concorrentes, social }
+    aplicar(doc)
   } catch (e) {
     state.servidor.status = 'offline'
-    state.servidor.erro = e.message === 'Failed to fetch' ? '' : e.message
-    return false
+    state.erro = e.message === 'Failed to fetch' || e.message.startsWith('Erro 50')
+      ? 'O servidor não respondeu.'
+      : e.message
+    return
   }
-  state.modo = 'api'
   state.servidor.status = 'ok'
   state.servidor.erro = ''
+  state.loaded = true
+  if (iniciado) return
+  iniciado = true
 
   watch(
     () => state.data,
@@ -148,7 +81,6 @@ async function conectar() {
   // outra pessoa (ou outra aba) mudou algo: busca a versão nova ao voltar para a aba e a cada 20 s
   window.addEventListener('focus', atualizar)
   setInterval(atualizar, 20000)
-  return true
 }
 
 function aplicar(doc) {
@@ -193,7 +125,7 @@ async function sincronizar() {
 }
 
 async function atualizar() {
-  if (state.modo !== 'api' || rodando || timer) return
+  if (rodando || timer) return
   try {
     const doc = await req('GET', '/dados')
     if (rodando || timer) return
@@ -207,52 +139,15 @@ async function atualizar() {
   }
 }
 
-// substitui tudo no servidor (importar planilha ou arquivo, restaurar o publicado)
-async function enviarTudo(doc) {
+// ---------- ações usadas pelas telas ----------
+// substitui tudo no banco (importar planilha ou arquivo de backup)
+export async function substituirDados(novo) {
   clearTimeout(timer)
   timer = null
-  await req('PUT', '/dados', doc)
+  await req('PUT', '/dados', normalizar(novo))
   aplicar(await req('GET', '/dados'))
   state.servidor.status = 'ok'
   state.servidor.salvoEm = new Date().toISOString()
-}
-
-// manda a cópia guardada neste navegador para o servidor (migração do modo local)
-export async function enviarCopiaLocal() {
-  const salvo = lerSalvo()
-  if (!salvo) throw new Error('Não há cópia neste navegador.')
-  await enviarTudo(normalizar(salvo.data))
-  esquecerCopiaLocal()
-}
-
-function esquecerCopiaLocal() {
-  try {
-    localStorage.removeItem(KEY)
-    localStorage.removeItem(KEY_ANTIGA)
-  } catch {
-    /* ignore */
-  }
-}
-
-// ---------- ações usadas pelas telas ----------
-export async function descartarLocal() {
-  if (state.modo === 'api') return enviarTudo(clone(state.publicado))
-  esquecerCopiaLocal()
-  pularProximo = true
-  state.data = clone(state.publicado)
-  state.local = false
-  state.salvoEm = null
-}
-
-export async function substituirDados(novo) {
-  if (state.modo === 'api') return enviarTudo(normalizar(novo))
-  state.data = normalizar(novo)
-}
-
-export function publicadoMaisNovo() {
-  const pub = state.publicado?.meta?.atualizadoEm
-  if (!state.local || !pub || !state.salvoEm) return false
-  return pub > state.salvoEm.slice(0, 10)
 }
 
 export const espacoPorId = (id) => state.data.espacos.find((e) => e.id === id)
@@ -267,8 +162,7 @@ export function baixar(nome, conteudo, tipo = 'application/json') {
   setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-export function exportarJSON() {
-  const d = clone(state.data)
-  d.meta.atualizadoEm = new Date().toISOString().slice(0, 10)
-  baixar('sante.json', JSON.stringify(d, null, 2))
+// backup: baixa uma cópia de tudo o que está no banco
+export function baixarBackup() {
+  baixar(`sante-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(state.data, null, 2))
 }

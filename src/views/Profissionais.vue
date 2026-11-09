@@ -138,8 +138,8 @@ function excluir(p) {
         </div>
       </div>
       <p class="note small">
-        <strong>Dados pessoais:</strong> o cadastro fica salvo neste navegador. Ao exportar e publicar o <code>sante.json</code>,
-        ele vai para o repositório público no GitHub. Publique telefone e e-mail só com autorização do profissional (LGPD).
+        <strong>Dados pessoais (LGPD):</strong> o cadastro fica no banco de dados do sistema e aparece para todos que têm acesso a ele.
+        Guarde telefone, e-mail e redes só com autorização do profissional, e cuidado ao compartilhar backups e planilhas exportadas.
       </p>
       <div class="table-wrap">
         <table>

@@ -1,20 +1,19 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Icon from '../components/Icon.vue'
 import { carregarOpenapi } from '../lib/banco'
 import { urlApi } from '../lib/api'
-import { baixar, state } from '../lib/store'
+import { baixar } from '../lib/store'
 
 const alvo = ref(null)
 const spec = ref(null)
-const aoVivo = ref(false)
 const erro = ref('')
 const carregando = ref(true)
 
 const operacoes = computed(() =>
   spec.value ? Object.values(spec.value.paths).reduce((n, p) => n + Object.keys(p).length, 0) : 0,
 )
-const servidor = computed(() => urlApi())
+const servidor = computed(() => urlApi() || window.location.origin)
 
 // o Swagger UI tem tema escuro próprio: liga a classe dark-mode no <html> enquanto a página está aberta
 const escuroSistema = window.matchMedia('(prefers-color-scheme: dark)')
@@ -29,17 +28,15 @@ async function montar() {
   carregando.value = true
   erro.value = ''
   try {
-    const [r, mod] = await Promise.all([
+    const [s, mod] = await Promise.all([
       carregarOpenapi(),
       import('swagger-ui-dist/swagger-ui-es-bundle.js'),
       import('swagger-ui-dist/swagger-ui.css'),
     ])
-    spec.value = r.spec
-    aoVivo.value = r.aoVivo
+    spec.value = s
     const SwaggerUI = mod.default || mod
-    const doc = r.aoVivo ? { ...r.spec, servers: [{ url: servidor.value, description: 'Servidor conectado' }] } : r.spec
     SwaggerUI({
-      spec: doc,
+      spec: { ...s, servers: [{ url: servidor.value, description: 'Este servidor' }] },
       domNode: alvo.value,
       deepLinking: false, // o site usa o # da URL para as páginas
       docExpansion: 'list',
@@ -49,8 +46,6 @@ async function montar() {
       filter: true,
       tryItOutEnabled: false,
       persistAuthorization: false,
-      // a cópia publicada não tem servidor: só leitura
-      supportedSubmitMethods: r.aoVivo ? ['get', 'put', 'post', 'delete', 'patch'] : [],
       syntaxHighlight: { activated: true, theme: 'agate' },
     })
   } catch (e) {
@@ -71,11 +66,6 @@ onBeforeUnmount(() => {
   escuroSistema.removeEventListener('change', aplicarTema)
   document.documentElement.classList.remove('dark-mode')
 })
-watch(() => state.modo, () => {
-  if (alvo.value) alvo.value.innerHTML = ''
-  montar()
-})
-
 const baixarSpec = () => baixar('openapi.json', JSON.stringify(spec.value, null, 2))
 </script>
 
@@ -83,14 +73,12 @@ const baixarSpec = () => baixar('openapi.json', JSON.stringify(spec.value, null,
   <div class="stack">
     <section class="card topo">
       <div class="info">
-        <span v-if="aoVivo" class="chip good">Ao vivo do servidor</span>
-        <span v-else-if="spec" class="chip warn">Cópia publicada</span>
         <span v-if="spec" class="muted small">
           {{ spec.info.title }} {{ spec.info.version }} · OpenAPI {{ spec.openapi }} · {{ Object.keys(spec.paths).length }} rotas, {{ operacoes }} operações
         </span>
       </div>
       <div class="toolbar">
-        <template v-if="aoVivo">
+        <template v-if="spec">
           <a class="btn sm" :href="`${servidor}/docs`" target="_blank" rel="noopener"><Icon name="link" :size="15" /> Swagger no servidor</a>
           <a class="btn sm" :href="`${servidor}/redoc`" target="_blank" rel="noopener"><Icon name="link" :size="15" /> ReDoc</a>
         </template>
@@ -98,13 +86,8 @@ const baixarSpec = () => baixar('openapi.json', JSON.stringify(spec.value, null,
       </div>
     </section>
 
-    <p v-if="!aoVivo && spec" class="note">
-      Sem servidor conectado, esta página mostra a cópia da documentação publicada com o site, e o botão
-      <strong>Try it out</strong> fica desligado. Para testar as rotas, suba o sante-BE e conecte em
-      <RouterLink to="/dados">Base de dados → Servidor</RouterLink>.
-    </p>
-    <p v-else-if="aoVivo" class="note">
-      <strong>Try it out</strong> chama o servidor conectado (<span class="mono">{{ servidor }}</span>) de verdade:
+    <p v-if="spec" class="note">
+      <strong>Try it out</strong> chama este servidor (<span class="mono">{{ servidor }}</span>) de verdade:
       <span class="mono">PUT</span>, <span class="mono">POST</span> e <span class="mono">DELETE</span> alteram os dados do sistema.
     </p>
 

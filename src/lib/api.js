@@ -1,34 +1,14 @@
-// Conexão com o backend (repositório sante-BE: FastAPI + PostgreSQL).
+// Conexão com o backend (repositório sante-BE: FastAPI + PostgreSQL). Todos os dados vêm de lá.
 //
 // As telas continuam mexendo em state.data como sempre. Esta camada compara state.data com a
 // última versão que veio do servidor e manda só o que mudou (criar, editar ou excluir),
-// na ordem que o banco exige. Sem servidor configurado, o site funciona como antes
-// (sante.json + cópia no navegador).
+// na ordem que o banco exige.
+//
+// Endereço: por padrão a API fica no mesmo endereço do site (/api), como numa implantação com
+// load balancer (ex.: AWS ECS/Fargate) ou no `npm run dev`, que repassa /api ao backend.
+// VITE_API_URL só é preciso se a API ficar em outro domínio.
 
-const CHAVE_URL = 'sante-api'
-
-// endereço do servidor: o salvo na página Base de dados vale mais que o do build (VITE_API_URL)
-export function urlApi() {
-  let salvo = null
-  try {
-    salvo = localStorage.getItem(CHAVE_URL)
-  } catch {
-    /* armazenamento indisponível */
-  }
-  if (salvo === 'off') return ''
-  return (salvo || import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
-}
-
-export function definirUrlApi(url) {
-  try {
-    if (url === null) localStorage.removeItem(CHAVE_URL)
-    else localStorage.setItem(CHAVE_URL, url || 'off')
-  } catch {
-    /* ignore */
-  }
-}
-
-export const urlPadrao = () => (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
+export const urlApi = () => (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
 
 export async function req(metodo, caminho, corpo) {
   const res = await fetch(`${urlApi()}/api${caminho}`, {

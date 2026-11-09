@@ -92,7 +92,7 @@ const metaPct = computed({
 
     <section class="note">
       <strong>Como a capacidade é calculada:</strong> salas e piscina contam, no calendário do mês de referência, os
-      turnos da Santé guardados no <code>sante.json</code> ({{ turnosSante }}), menos os turnos marcados como não disponíveis.
+      turnos da Santé cadastrados no banco ({{ turnosSante }}), menos os turnos marcados como não disponíveis.
       Em {{ mesLongo(state.mes) }} são {{ num(turnosNoMes) }} turnos por sala antes dos bloqueios. Salas por hora usam as horas desses turnos.
       Salas em contrato mensal e o administrativo usam a capacidade cadastrada. Para mudar os turnos, abra qualquer sala e use “Turnos da agenda”.
     </section>

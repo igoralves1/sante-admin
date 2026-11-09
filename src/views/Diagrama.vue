@@ -5,7 +5,6 @@ import { select, zoom as d3zoom, zoomIdentity } from 'd3'
 import Icon from '../components/Icon.vue'
 import { carregarEsquema } from '../lib/banco'
 import { req } from '../lib/api'
-import { state } from '../lib/store'
 
 const router = useRouter()
 
@@ -22,7 +21,6 @@ const PAINEL = 364 // largura do painel de detalhes + margem
 const ORDEM_GRUPOS = ['cadastro', 'operacao', 'mercado', 'sistema']
 
 const esquema = ref(null)
-const aoVivo = ref(false)
 const erro = ref('')
 const carregando = ref(true)
 const compacto = ref(false)
@@ -35,9 +33,7 @@ async function carregar() {
   carregando.value = true
   erro.value = ''
   try {
-    const r = await carregarEsquema()
-    esquema.value = r.esquema
-    aoVivo.value = r.aoVivo
+    esquema.value = await carregarEsquema()
     await lerPosicoes()
     await nextTick()
     ajustar(false)
@@ -48,7 +44,6 @@ async function carregar() {
   }
 }
 onMounted(carregar)
-watch(() => state.modo, carregar)
 
 // ---------- layout ----------
 const linhasDe = (t) => (compacto.value ? t.colunas.filter((c) => c.pk || c.fk) : t.colunas)
@@ -350,21 +345,12 @@ function fixar(mudancas) {
 }
 
 // ---------- salvar posições ----------
-const CHAVE = 'sante-diagrama-posicoes'
 const salvo = ref({ status: '', quando: null, erro: '' })
 let espera = null
 
 async function lerPosicoes() {
-  if (aoVivo.value) {
-    try {
-      salvas.value = (await req('GET', '/banco/diagrama')).posicoes || {}
-      return
-    } catch {
-      /* usa a cópia do navegador */
-    }
-  }
   try {
-    salvas.value = JSON.parse(localStorage.getItem(CHAVE)) || {}
+    salvas.value = (await req('GET', '/banco/diagrama')).posicoes || {}
   } catch {
     salvas.value = {}
   }
@@ -375,18 +361,8 @@ function agendarSalvar() {
   espera = setTimeout(salvar, 500)
 }
 async function salvar() {
-  const dados = salvas.value
   try {
-    localStorage.setItem(CHAVE, JSON.stringify(dados))
-  } catch {
-    /* sem armazenamento */
-  }
-  if (!aoVivo.value) {
-    salvo.value = { status: 'navegador', quando: new Date(), erro: '' }
-    return
-  }
-  try {
-    await req('PUT', '/banco/diagrama', { posicoes: dados })
+    await req('PUT', '/banco/diagrama', { posicoes: salvas.value })
     salvo.value = { status: 'servidor', quando: new Date(), erro: '' }
   } catch (e) {
     salvo.value = { status: 'erro', quando: null, erro: e.message }
@@ -404,7 +380,6 @@ const textoSalvo = computed(() => {
   if (s.status === 'salvando') return 'Salvando posições…'
   if (s.status === 'erro') return `Não salvou: ${s.erro}`
   if (s.status === 'servidor') return `Posições salvas no servidor às ${hora(s.quando)}`
-  if (s.status === 'navegador') return `Posições salvas neste navegador às ${hora(s.quando)}`
   return arrumadoAMao.value ? 'Arrumado à mão' : 'Arrumação automática'
 })
 
@@ -463,18 +438,12 @@ function mermaid() {
   }
   return linhas.join('\n')
 }
-const quando = computed(() => {
-  const g = esquema.value?.geradoEm
-  return g ? new Date(g).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : ''
-})
 </script>
 
 <template>
   <div class="stack">
     <section class="card topo">
       <div class="info">
-        <span v-if="aoVivo" class="chip good">Ao vivo do servidor</span>
-        <span v-else-if="esquema" class="chip warn">Cópia de {{ quando }}</span>
         <span v-if="esquema" class="muted small">
           {{ esquema.banco }} · {{ esquema.tabelas.length }} tabelas · {{ esquema.relacoes.length }} relações
         </span>
@@ -562,7 +531,7 @@ const quando = computed(() => {
             <template v-if="tabela.linhas != null">{{ n(tabela.linhas) }} {{ tabela.linhas === 1 ? 'linha' : 'linhas' }} · </template>{{ tabela.colunas.length }} colunas
           </p>
           <div class="toolbar">
-            <button v-if="aoVivo" class="btn sm primary" type="button" @click="verLinhas(tabela.nome)"><Icon name="tabela" :size="15" /> Ver linhas</button>
+            <button class="btn sm primary" type="button" @click="verLinhas(tabela.nome)"><Icon name="tabela" :size="15" /> Ver linhas</button>
             <button class="btn sm" type="button" @click="copiar(`SELECT * FROM ${tabela.nome} LIMIT 100;`, 'select')">
               <Icon :name="copiado === 'select' ? 'check' : 'copy'" :size="15" /> {{ copiado === 'select' ? 'Copiado' : 'Copiar SELECT' }}
             </button>
@@ -656,7 +625,7 @@ const quando = computed(() => {
 .er:active { cursor: grabbing; }
 .ponto { fill: var(--border); }
 .salvo { color: var(--muted); }
-.salvo.servidor, .salvo.navegador { color: var(--good); }
+.salvo.servidor { color: var(--good); }
 .salvo.erro { color: var(--bad); }
 .aviso { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); }
 .aviso.bad { color: var(--bad); }

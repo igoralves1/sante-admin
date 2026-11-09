@@ -1,4 +1,4 @@
-// Análise do monitor social (estilo Social Bearing) sobre a coleta de src/data/social.json.
+// Análise do monitor social (estilo Social Bearing) sobre a coleta guardada no banco (/api/mercado/social).
 // Tudo roda no navegador: busca por palavra, @perfil ou #hashtag, filtros e métricas.
 
 export const HOJE_COLETA = (base) => base.coletadoEm

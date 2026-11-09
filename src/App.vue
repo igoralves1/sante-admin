@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import Icon from './components/Icon.vue'
-import { state, carregar, exportarJSON, publicadoMaisNovo, descartarLocal } from './lib/store'
+import { state, carregar } from './lib/store'
 import { addMes, mesLongo } from './lib/format'
 
 const route = useRoute()
@@ -65,7 +65,6 @@ const statusServidor = computed(() => {
   if (s.status === 'offline') return 'Servidor sem conexão'
   return s.salvoEm ? `Salvo no servidor às ${hora(s.salvoEm)}` : 'Conectado ao servidor'
 })
-const recarregar = () => window.location.reload()
 </script>
 
 <template>
@@ -86,7 +85,7 @@ const recarregar = () => window.location.reload()
         </template>
       </nav>
       <div class="side-foot">
-        <RouterLink v-if="state.modo === 'api'" to="/dados" class="nav-item sync" :class="state.servidor.status" :title="`Servidor: ${state.servidor.url}`">
+        <RouterLink to="/dados" class="nav-item sync" :class="state.servidor.status" :title="`Servidor: ${state.servidor.url}`">
           <Icon name="dados" /> <span>{{ statusServidor }}</span>
         </RouterLink>
         <a v-if="instagram" :href="instagram" target="_blank" rel="noopener" class="nav-item">
@@ -111,18 +110,7 @@ const recarregar = () => window.location.reload()
         </div>
       </header>
 
-      <div v-if="state.modo === 'local' && state.servidor.status === 'offline'" class="banner">
-        <Icon name="alert" />
-        <span>
-          O servidor <strong>{{ state.servidor.url }}</strong> não respondeu<template v-if="state.servidor.erro"> ({{ state.servidor.erro }})</template>.
-          Usando os dados deste navegador.
-        </span>
-        <span class="toolbar">
-          <button class="btn sm" type="button" @click="recarregar">Tentar de novo</button>
-          <RouterLink to="/dados" class="btn sm ghost">Configurar servidor</RouterLink>
-        </span>
-      </div>
-      <div v-if="state.modo === 'api' && state.servidor.status === 'erro'" class="banner bad">
+      <div v-if="state.servidor.status === 'erro'" class="banner bad">
         <Icon name="alert" />
         <span>
           <strong>Não foi salvo:</strong> {{ state.servidor.erro }}
@@ -130,24 +118,10 @@ const recarregar = () => window.location.reload()
         </span>
         <span class="toolbar"><button class="btn sm ghost" type="button" @click="state.servidor.status = 'ok'">Fechar</button></span>
       </div>
-      <div v-if="state.modo === 'api' && state.servidor.status === 'offline'" class="banner">
+      <div v-if="state.servidor.status === 'offline'" class="banner">
         <Icon name="alert" />
         <span>Sem conexão com o servidor. Alterações feitas agora podem não ser salvas.</span>
       </div>
-      <div v-if="state.modo === 'local' && state.local" class="banner">
-        <Icon name="alert" />
-        <span>
-          Há alterações salvas <strong>só neste navegador</strong>.
-          Para atualizar o link público, exporte o arquivo e publique no repositório.
-          <template v-if="publicadoMaisNovo()"> A versão publicada é mais recente que a sua cópia.</template>
-        </span>
-        <span class="toolbar">
-          <button class="btn sm" type="button" @click="exportarJSON"><Icon name="download" :size="15" /> Exportar sante.json</button>
-          <RouterLink to="/dados" class="btn sm ghost">Como publicar</RouterLink>
-          <button class="btn sm ghost" type="button" @click="descartarLocal">Descartar</button>
-        </span>
-      </div>
-
       <RouterView />
 
       <footer class="foot muted small">
@@ -157,7 +131,16 @@ const recarregar = () => window.location.reload()
     </main>
   </div>
   <div v-else class="loading">
-    <span v-if="state.erro">{{ state.erro }}</span>
+    <div v-if="state.erro" class="falha">
+      <Icon name="alert" :size="28" />
+      <h1>Não foi possível carregar os dados</h1>
+      <p>{{ state.erro }}</p>
+      <p class="muted small">
+        Os dados ficam no banco, pela API do sante-BE (<code>{{ state.servidor.url }}/api</code>).
+        Na máquina local, confira se ela está rodando: <code>docker compose up -d</code> na pasta sante-BE.
+      </p>
+      <button class="btn primary" type="button" @click="carregar">Tentar de novo</button>
+    </div>
     <span v-else>Carregando…</span>
   </div>
 </template>
@@ -202,7 +185,12 @@ const recarregar = () => window.location.reload()
 .sync.erro > svg { color: var(--bad); }
 .banner > span:first-of-type { flex: 1 1 320px; }
 .foot { padding-top: 8px; }
-.loading { display: grid; place-items: center; min-height: 100vh; color: var(--muted); }
+.loading { display: grid; place-items: center; min-height: 100vh; color: var(--muted); padding: 16px; }
+.falha { display: grid; gap: 10px; justify-items: center; text-align: center; max-width: 480px; color: var(--text-2); }
+.falha > svg { color: var(--warn); }
+.falha h1 { font-size: 18px; color: var(--text); }
+.falha p { margin: 0; }
+.falha code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
 
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); }

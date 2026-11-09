@@ -6,9 +6,11 @@ import D3Scatter from '../components/d3/D3Scatter.vue'
 import D3HBar from '../components/d3/D3HBar.vue'
 import D3Table from '../components/d3/D3Table.vue'
 import Icon from '../components/Icon.vue'
-import base from '../data/concorrentes.json'
+import { state } from '../lib/store'
 import { brl, dataBR, num } from '../lib/format'
 
+// coleta de concorrentes, do banco (GET /api/mercado/concorrentes), carregada junto com o resto dos dados
+const base = state.mercado.concorrentes
 const players = base.players
 const sante = players.find((p) => p.proprio)
 const rivais = players.filter((p) => !p.proprio)

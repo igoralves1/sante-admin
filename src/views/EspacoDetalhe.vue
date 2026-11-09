@@ -904,7 +904,7 @@ const tomStatus = { Confirmada: 'good', 'Base inicial': 'warn', Proposta: 'info'
         <div>
           <h2>Turnos da agenda</h2>
           <p v-if="proprios">Esta sala tem turnos próprios. Salvar muda só esta sala.</p>
-          <p v-else>Turnos da Santé, guardados no <code>sante.json</code>. Salvar atualiza na hora os {{ salasNoPadrao.length }} espaços que usam estes turnos.</p>
+          <p v-else>Turnos da Santé, guardados no banco. Salvar atualiza na hora os {{ salasNoPadrao.length }} espaços que usam estes turnos.</p>
         </div>
         <div class="toolbar">
           <span class="chip" :class="proprios ? 'warn' : 'info'">{{ proprios ? 'Turnos próprios' : 'Turnos da Santé' }}</span>

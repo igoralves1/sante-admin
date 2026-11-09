@@ -4,9 +4,8 @@ Gestão de ocupação, contratos, despesas e marketing da
 [Santé Consultórios](https://santeconsultorios.com.br/) (Jatiúca, Maceió), que aluga consultórios
 para profissionais de saúde.
 
-**Site:** https://igoralves1.github.io/sante-admin/
-
-Feito em Vue 3 + Vite + D3.js, publicado no GitHub Pages. Os números e as fórmulas seguem o documento
+Feito em Vue 3 + Vite + D3.js. Todos os dados ficam num PostgreSQL, pela API do
+[sante-BE](https://github.com/igoralves1/sante-BE) (FastAPI). Os números e as fórmulas seguem o documento
 “Potencial Santé” e a planilha `Sistema_Controle_Sante.xlsx`. As informações públicas sobre a clínica
 e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 
@@ -26,38 +25,31 @@ e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 | **Monitor social** (`#/marketing/social`) | Busca por palavra, @perfil ou #hashtag nos posts da Santé e dos concorrentes no Instagram, Facebook e YouTube, no estilo Social Bearing: linha do tempo, engajamento por perfil, temas, hashtags, palavras, dia da semana e tom |
 | **Análise de mercado** (Concorrentes) | Mapa dos concorrentes em Maceió: preços, Instagram, Google Maps, sites (Lighthouse), Similarweb, análise SWOT e ações sugeridas |
 | **Custos e equilíbrio** | Custos gerais, impostos, comissões e ponto de equilíbrio (inclui as despesas dos espaços) |
-| **Base de dados** | Importar/exportar Excel e `sante.json`; instruções de publicação; conexão com o servidor |
-| **Diagrama do banco** (`#/dados/diagrama`) | Diagrama das tabelas do PostgreSQL e das chaves estrangeiras, por grupo (cadastro, operação, mercado), numa área infinita como a do draw.io: arraste as tabelas para arrumar (as posições ficam salvas no servidor, ou no navegador sem servidor), setas do teclado, zoom, busca, modo "só chaves", detalhes de cada tabela e exportação em Mermaid |
-| **Tabelas e consultas** (`#/dados/consultas`) | **Perguntar:** escreva a pergunta em português e o assistente (Claude, no sante-BE) escreve o SQL, roda no banco e mostra o resultado, com perguntas de continuação. Também: navegar nas linhas de cada tabela e um editor de SQL só de leitura. Precisa do servidor |
-| **Documentação da API** (`#/documentacao-api`) | Swagger UI com todas as rotas do sante-BE, exemplos, respostas e erros. Com o servidor conectado, dá para testar as rotas (**Try it out**) |
+| **Base de dados** | Situação do banco, importar/exportar a planilha Excel e baixar ou restaurar um backup completo |
+| **Diagrama do banco** (`#/dados/diagrama`) | Diagrama das tabelas do PostgreSQL e das chaves estrangeiras, por grupo (cadastro, operação, mercado), numa área infinita como a do draw.io: arraste as tabelas para arrumar (as posições ficam salvas no banco), setas do teclado, zoom, busca, modo "só chaves", detalhes de cada tabela e exportação em Mermaid |
+| **Tabelas e consultas** (`#/dados/consultas`) | **Perguntar:** escreva a pergunta em português e o assistente (Claude, no sante-BE) escreve o SQL, roda no banco e mostra o resultado, com perguntas de continuação. Também: navegar nas linhas de cada tabela e um editor de SQL só de leitura. |
+| **Documentação da API** (`#/documentacao-api`) | Swagger UI com todas as rotas do sante-BE, exemplos, respostas e erros. Dá para testar as rotas direto na página (**Try it out**) |
 
-## Como os dados são atualizados
+## Como os dados funcionam
 
-O site é estático. Todo mundo que abre o link vê o arquivo
-[`public/data/sante.json`](public/data/sante.json).
+Tudo vem do banco, pela API do sante-BE. Nenhum dado fica em arquivo no site nem no navegador.
 
-1. Edite pelo próprio site (as mudanças ficam salvas no navegador de quem editou) ou importe a planilha em **Dados**.
-2. Clique em **Exportar sante.json**.
-3. No GitHub, substitua `public/data/sante.json` pelo arquivo exportado e faça o commit.
-4. O GitHub Actions publica a nova versão em cerca de 1 minuto.
+- **Ao abrir:** o site lê `GET /api/dados` (espaços, turnos, agenda, contratos, locatários, custos, metas e campanhas)
+  e `GET /api/mercado/*` (Análise de mercado e Monitor social).
+- **Ao editar:** cada alteração é enviada à API na hora, só o que mudou (`src/lib/api.js`). Se a API recusar algo
+  (por exemplo, um turno já ocupado), aparece um aviso e a tela volta ao que está gravado.
+- **Outras pessoas:** a tela busca mudanças a cada 20 segundos e ao voltar para a aba.
+- **Sem API:** o site mostra uma tela de erro com o botão "Tentar de novo".
+- **Planilha e backup:** em **Base de dados**, importe ou exporte a planilha Excel e baixe ou restaure um backup completo (JSON).
 
-### Com servidor (sante-BE)
+### Endereço da API
 
-O backend [sante-BE](https://github.com/igoralves1/sante-BE) (FastAPI + PostgreSQL) guarda os dados num banco compartilhado.
+O front chama a API no **mesmo endereço** do site (`/api`, `/openapi.json`, `/docs`, `/redoc`):
 
-- **Como conectar:** o `npm run dev` já conecta a `http://localhost:8000` (arquivo `.env.development`). Em qualquer versão do site também dá para conectar em **Base de dados → Servidor**.
-- **Como funciona conectado:**
-  - os dados vêm de `GET /api/dados`;
-  - cada alteração é enviada à API na hora, só o que mudou (`src/lib/api.js`);
-  - a tela busca mudanças de outras pessoas a cada 20 segundos e ao voltar para a aba;
-  - se a API recusar algo (por exemplo, um turno já ocupado), aparece um aviso e a tela volta ao que está gravado.
-- **Se o servidor não responder:** o site usa o `sante.json` e a cópia do navegador, como antes, e mostra um aviso.
-- **No GitHub Pages:** o build publicado não define `VITE_API_URL`, então o link público continua funcionando sem servidor.
-- **Diagrama e documentação sem servidor:** essas duas páginas usam as cópias `public/data/esquema.json` e `public/data/openapi.json` (só a estrutura, sem dados). Depois de mudar o banco ou a API, atualize as cópias com a API rodando:
-
-  ```bash
-  npm run docs:api
-  ```
+- no `npm run dev`, o Vite repassa essas rotas para `http://localhost:8000` (mude com `API_PROXY=...`);
+- em produção (por exemplo, AWS ECS/Fargate atrás de um load balancer), o load balancer manda essas rotas para o
+  container da API e o resto para o container do front;
+- se a API ficar em outro domínio, defina `VITE_API_URL` no build e libere o domínio do front em `CORS_ORIGINS` na API.
 
 ## Cálculos
 
@@ -71,6 +63,12 @@ O backend [sante-BE](https://github.com/igoralves1/sante-BE) (FastAPI + PostgreS
 
 ## Desenvolvimento
 
+Suba o banco e a API (pasta sante-BE) e depois o front:
+
+```bash
+cd ../sante-BE && docker compose up -d
+```
+
 ```bash
 npm install
 npm run dev
@@ -80,4 +78,4 @@ npm run dev
 npm run build
 ```
 
-O deploy roda sozinho a cada push na branch `main` (`.github/workflows/deploy.yml`).
+O build gera arquivos estáticos em `dist/`, que podem ser servidos por qualquer servidor web (nginx, por exemplo).

@@ -6,8 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview",
-    "docs:api": "node scripts/atualizar-docs-api.mjs"
+    "preview": "vite preview"
   },
   "dependencies": {
     "d3": "^7.9.1",

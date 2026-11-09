@@ -1,6 +1,6 @@
 <script setup>
 // Monitor social no estilo do Social Bearing (tomelliott.com), para Instagram, Facebook e YouTube.
-// Busca por palavra, @perfil ou #hashtag sobre a coleta pública de src/data/social.json.
+// Busca por palavra, @perfil ou #hashtag sobre a coleta pública guardada no banco (GET /api/mercado/social).
 import { computed, ref } from 'vue'
 import Icon from '../components/Icon.vue'
 import StatTile from '../components/StatTile.vue'
@@ -8,10 +8,11 @@ import D3TimeDots from '../components/d3/D3TimeDots.vue'
 import D3HBar from '../components/d3/D3HBar.vue'
 import D3Table from '../components/d3/D3Table.vue'
 import D3SlotGrid from '../components/d3/D3SlotGrid.vue'
-import base from '../data/social.json'
+import { state } from '../lib/store'
 import { DIAS, TEMAS, curtidasValidas, diaDaSemana, filtrarPosts, hashtagsDe, palavras, porGrupo, porPerfil, temaDe, tomDe } from '../lib/social'
 import { dataBR, num, pct } from '../lib/format'
 
+const base = state.mercado.social
 const ref0 = base.coletadoEm
 const REDES = { instagram: { nome: 'Instagram', icon: 'insta' }, facebook: { nome: 'Facebook', icon: 'users' }, youtube: { nome: 'YouTube', icon: 'stats' } }
 const perfilPorId = Object.fromEntries(base.perfis.map((p) => [p.id, p]))

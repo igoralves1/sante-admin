@@ -1,8 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import Icon from '../components/Icon.vue'
-import { state, baixar, descartarLocal, enviarCopiaLocal, exportarJSON, lerSalvo, substituirDados } from '../lib/store'
-import { definirUrlApi, urlPadrao } from '../lib/api'
+import { state, baixar, baixarBackup, substituirDados } from '../lib/store'
 
 const msg = ref(null)
 const xlsxInput = ref(null)
@@ -15,69 +14,44 @@ async function importarPlanilha(ev) {
   try {
     const { importarXLSX } = await import('../lib/excel')
     const novo = await importarXLSX(f, state.data)
-    if (!confirm(`Importar ${novo.espacos.length} espaços e ${novo.contratos.length} contratos de “${f.name}”? Isso substitui espaços, contratos e custos atuais (campanhas são mantidas).`)) return
+    if (!confirm(`Importar ${novo.espacos.length} espaços e ${novo.contratos.length} contratos de “${f.name}”? Isso substitui no banco os espaços, contratos e custos atuais (campanhas são mantidas).`)) return
     await substituirDados(novo)
-    msg.value = { ok: true, t: `Planilha importada: ${novo.espacos.length} espaços, ${novo.contratos.length} contratos.` }
+    msg.value = { ok: true, t: `Planilha importada no banco: ${novo.espacos.length} espaços, ${novo.contratos.length} contratos.` }
   } catch (e) {
-    msg.value = { ok: false, t: `Não foi possível ler a planilha: ${e.message}` }
+    msg.value = { ok: false, t: `Não foi possível importar a planilha: ${e.message}` }
   }
 }
 async function exportarPlanilha() {
   const { exportarXLSX } = await import('../lib/excel')
   baixar(`Sante_Controle_${new Date().toISOString().slice(0, 10)}.xlsx`, exportarXLSX(state.data))
 }
-async function importarJSON(ev) {
+async function restaurarBackup(ev) {
   const f = ev.target.files[0]
   ev.target.value = ''
   if (!f) return
   try {
     const d = JSON.parse(await f.text())
     if (!Array.isArray(d.espacos) || !(Array.isArray(d.contratos) || Array.isArray(d.reservas))) throw new Error('formato inesperado')
+    if (!confirm(`Substituir TUDO o que está no banco pelo backup “${f.name}”? Espaços, contratos, agenda, locatários, custos e campanhas atuais serão apagados.`)) return
     d.campanhas ||= []
     d.custos ||= { fixos: [], impostos: 0, comissoes: 0 }
     d.metas ||= { ocupacaoAlvo: 0.6 }
     d.meta ||= {}
     await substituirDados(d)
-    msg.value = { ok: true, t: state.modo === 'api' ? `Arquivo ${f.name} gravado no servidor.` : `Arquivo ${f.name} carregado.` }
-  } catch (e) {
-    msg.value = { ok: false, t: `Arquivo inválido: ${e.message}` }
-  }
-}
-async function descartar() {
-  const pergunta = state.modo === 'api'
-    ? 'Substituir TUDO o que está no servidor pela versão publicada do sante.json? Locatários e agendamentos que não estão no arquivo serão apagados.'
-    : 'Descartar todas as alterações deste navegador e voltar à versão publicada?'
-  if (!confirm(pergunta)) return
-  try {
-    await descartarLocal()
-    msg.value = { ok: true, t: state.modo === 'api' ? 'O servidor voltou para a versão publicada.' : 'Voltou para a versão publicada.' }
+    msg.value = { ok: true, t: `Backup ${f.name} restaurado no banco.` }
   } catch (e) {
     msg.value = { ok: false, t: `Não foi possível restaurar: ${e.message}` }
   }
 }
 
-// ---------- servidor ----------
-const urlEdit = ref(state.servidor.url || urlPadrao() || 'http://localhost:8000')
-const temCopiaLocal = computed(() => state.modo === 'api' && !!lerSalvo())
-function conectar() {
-  const u = urlEdit.value.trim().replace(/\/+$/, '')
-  if (!/^https?:\/\//.test(u)) return (msg.value = { ok: false, t: 'Informe o endereço completo, por exemplo http://localhost:8000.' })
-  definirUrlApi(u === urlPadrao() ? null : u)
-  window.location.reload()
-}
-function desconectar() {
-  definirUrlApi(urlPadrao() ? '' : null)
-  window.location.reload()
-}
-async function enviarCopia() {
-  if (!confirm('Substituir TUDO o que está no servidor pela cópia guardada neste navegador?')) return
-  try {
-    await enviarCopiaLocal()
-    msg.value = { ok: true, t: 'A cópia deste navegador foi gravada no servidor.' }
-  } catch (e) {
-    msg.value = { ok: false, t: `Não foi possível enviar: ${e.message}` }
-  }
-}
+const hora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+const status = computed(() => {
+  const s = state.servidor
+  if (s.status === 'offline') return { cls: 'warn', t: 'Sem conexão' }
+  if (s.status === 'erro') return { cls: 'bad', t: 'Erro ao salvar' }
+  if (s.status === 'salvando') return { cls: 'info', t: 'Salvando…' }
+  return { cls: 'good', t: 'Conectado' }
+})
 </script>
 
 <template>
@@ -89,29 +63,19 @@ async function enviarCopia() {
     <section class="card servidor">
       <div class="card-head">
         <div>
-          <h2>Servidor</h2>
-          <p v-if="state.modo === 'api'">
-            <span class="chip good">Conectado</span>
-            Os dados vêm do banco em <code>{{ state.servidor.url }}</code> e cada alteração é gravada lá na hora.
-            Quem abrir o sistema conectado ao mesmo servidor vê as mesmas informações (a tela se atualiza a cada 20 segundos).
-          </p>
-          <p v-else-if="state.servidor.status === 'offline'">
-            <span class="chip warn">Sem conexão</span>
-            <code>{{ state.servidor.url }}</code> não respondeu<template v-if="state.servidor.erro"> ({{ state.servidor.erro }})</template>. Confira se o backend está rodando
-            (<code>docker compose up -d</code> na pasta sante-BE).
-          </p>
-          <p v-else>
-            <span class="chip">Sem servidor</span>
-            Os dados vêm do <code>sante.json</code> publicado e as alterações ficam só neste navegador.
-            Conecte ao backend (repositório sante-BE) para gravar num banco compartilhado.
+          <h2>Banco de dados</h2>
+          <p>
+            <span class="chip" :class="status.cls">{{ status.t }}</span>
+            Todos os dados ficam no PostgreSQL e chegam pela API em <code>{{ state.servidor.url }}/api</code>.
+            Cada alteração é gravada na hora, e quem usa o sistema vê as mesmas informações (a tela se atualiza a cada 20 segundos).
+            <template v-if="state.servidor.salvoEm"> Última gravação às {{ hora(state.servidor.salvoEm) }}.</template>
           </p>
         </div>
       </div>
       <div class="toolbar">
-        <label class="field url">Endereço da API<input v-model="urlEdit" placeholder="http://localhost:8000" @keyup.enter="conectar" /></label>
-        <button class="btn primary" type="button" @click="conectar">{{ state.modo === 'api' ? 'Trocar servidor' : 'Conectar' }}</button>
-        <button v-if="state.servidor.url" class="btn ghost" type="button" @click="desconectar">Usar sem servidor</button>
-        <button v-if="temCopiaLocal" class="btn" type="button" @click="enviarCopia"><Icon name="upload" :size="16" /> Enviar cópia deste navegador</button>
+        <RouterLink to="/dados/diagrama" class="btn"><Icon name="diagrama" :size="16" /> Diagrama do banco</RouterLink>
+        <RouterLink to="/dados/consultas" class="btn"><Icon name="tabela" :size="16" /> Tabelas e consultas</RouterLink>
+        <RouterLink to="/documentacao-api" class="btn"><Icon name="api" :size="16" /> Documentação da API</RouterLink>
       </div>
     </section>
 
@@ -120,7 +84,7 @@ async function enviarCopia() {
         <div class="card-head">
           <div>
             <h2>Planilha Excel</h2>
-            <p>Mesmo layout da “Sistema_Controle_Sante.xlsx”: abas Cadastro, Contratos (ou Reservas, da planilha original), Despesas e Custos. Na aba Reservas antiga, cada linha vale só para o mês da data.</p>
+            <p>Mesmo layout da “Sistema_Controle_Sante.xlsx”: abas Cadastro, Contratos (ou Reservas, da planilha original), Despesas e Custos. Importar grava no banco; na aba Reservas antiga, cada linha vale só para o mês da data.</p>
           </div>
         </div>
         <div class="toolbar">
@@ -132,47 +96,16 @@ async function enviarCopia() {
       <div class="card">
         <div class="card-head">
           <div>
-            <h2>Arquivo do site (sante.json)</h2>
-            <p>Contém tudo: espaços, despesas, contratos, custos, metas e campanhas.</p>
+            <h2>Backup</h2>
+            <p>Baixa uma cópia de tudo o que está no banco (espaços, despesas, contratos, agenda, locatários, custos, metas e campanhas). Restaurar substitui tudo no banco pelo conteúdo do arquivo.</p>
           </div>
         </div>
         <div class="toolbar">
-          <button class="btn primary" type="button" @click="exportarJSON"><Icon name="download" :size="16" /> Exportar sante.json</button>
-          <button class="btn" type="button" @click="jsonInput.click()"><Icon name="upload" :size="16" /> Carregar .json</button>
-          <button v-if="state.modo === 'api'" class="btn ghost danger" type="button" :disabled="!state.publicado" @click="descartar">Restaurar o publicado no servidor</button>
-          <button v-else class="btn ghost danger" type="button" :disabled="!state.local" @click="descartar">Descartar alterações locais</button>
-          <input ref="jsonInput" type="file" accept=".json,application/json" hidden @change="importarJSON" />
+          <button class="btn primary" type="button" @click="baixarBackup"><Icon name="download" :size="16" /> Baixar backup</button>
+          <button class="btn ghost danger" type="button" @click="jsonInput.click()"><Icon name="upload" :size="16" /> Restaurar backup</button>
+          <input ref="jsonInput" type="file" accept=".json,application/json" hidden @change="restaurarBackup" />
         </div>
       </div>
-    </section>
-
-    <section class="card">
-      <div class="card-head"><h2>Como o link de acompanhamento funciona</h2></div>
-      <ol class="steps">
-        <li>
-          <strong>O link mostra o arquivo publicado.</strong>
-          Todo mundo que abre o site vê os dados de <code>public/data/sante.json</code> no repositório.
-        </li>
-        <li>
-          <strong>Editar salva no seu navegador.</strong>
-          Espaços, contratos, custos e campanhas que você altera aqui ficam guardados neste navegador e
-          aparecem para você na hora. Um aviso amarelo no topo lembra que ainda não foram publicados.
-        </li>
-        <li>
-          <strong>Para publicar:</strong> clique em <em>Exportar sante.json</em>, substitua o arquivo
-          <code>public/data/sante.json</code> no GitHub (botão “Add file → Upload files” na pasta
-          <code>public/data</code>) e confirme o commit. Em cerca de 1 minuto o link é atualizado para todos.
-        </li>
-        <li>
-          <strong>Prefere a planilha?</strong> Continue lançando no Excel e use <em>Importar .xlsx</em>;
-          depois exporte o JSON e publique como acima.
-        </li>
-        <li>
-          <strong>Com o servidor conectado</strong> (cartão Servidor, acima), nada disso é preciso: cada
-          alteração vai direto para o banco e aparece para todos que usam o mesmo servidor.
-          Exporte o <code>sante.json</code> só quando quiser atualizar o link público.
-        </li>
-      </ol>
     </section>
 
     <section class="card">
@@ -194,14 +127,10 @@ async function enviarCopia() {
 </template>
 
 <style scoped>
-.servidor .toolbar { align-items: end; }
-.servidor .url { flex: 1 1 280px; max-width: 420px; }
 .servidor p .chip { margin-right: 6px; }
 .msg { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
 .msg.ok { background: var(--good-soft); color: var(--good); }
 .msg.bad { background: var(--bad-soft); color: var(--bad); }
-.steps { margin: 0; padding-left: 20px; display: grid; gap: 12px; color: var(--text-2); }
-.steps strong { color: var(--text); }
 code { background: var(--surface-2); padding: 1px 6px; border-radius: 6px; font-size: 12px; }
 .k { font-weight: 500; white-space: nowrap; width: 1%; }
 </style>

@@ -3,8 +3,8 @@ import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Icon from '../components/Icon.vue'
 import GradeDados from '../components/GradeDados.vue'
-import { aoVivo, assistente, carregarEsquema, consultar, csv, linhasTabela, traduzir } from '../lib/banco'
-import { baixar, state } from '../lib/store'
+import { assistente, carregarEsquema, consultar, csv, linhasTabela, traduzir } from '../lib/banco'
+import { baixar } from '../lib/store'
 
 const route = useRoute()
 const router = useRouter()
@@ -54,9 +54,8 @@ const esquema = ref(null)
 const erroEsquema = ref('')
 const filtro = ref('')
 async function carregarLista() {
-  if (!aoVivo()) return
   try {
-    esquema.value = (await carregarEsquema()).esquema
+    esquema.value = await carregarEsquema()
     erroEsquema.value = ''
   } catch (e) {
     erroEsquema.value = e.message
@@ -159,7 +158,7 @@ const erro = ref('')
 let seq = 0
 
 async function abrir() {
-  if (!tabela.value || !aoVivo()) return
+  if (!tabela.value) return
   const minha = ++seq
   carregando.value = true
   erro.value = ''
@@ -265,27 +264,10 @@ onMounted(async () => {
   await carregarLista()
   if (tabela.value) abrir()
 })
-watch(() => state.modo, async () => {
-  await carregarLista()
-  abrir()
-})
 </script>
 
 <template>
-  <section v-if="!aoVivo()" class="card">
-    <div class="card-head">
-      <div>
-        <h2>Esta página precisa do servidor</h2>
-        <p>As tabelas e as consultas são lidas direto do banco PostgreSQL, pela API do sante-BE. Sem servidor, o site usa só o sante.json.</p>
-      </div>
-    </div>
-    <div class="toolbar">
-      <RouterLink to="/dados" class="btn primary"><Icon name="dados" :size="16" /> Conectar ao servidor</RouterLink>
-      <RouterLink to="/dados/diagrama" class="btn"><Icon name="diagrama" :size="16" /> Ver o diagrama do banco</RouterLink>
-    </div>
-  </section>
-
-  <div v-else class="layout">
+  <div class="layout">
     <aside class="card lista">
       <input v-model="filtro" type="search" placeholder="Filtrar tabelas" aria-label="Filtrar tabelas" />
       <p v-if="erroEsquema" class="erro small">{{ erroEsquema }}</p>

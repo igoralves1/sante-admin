@@ -101,9 +101,9 @@ const fontes = [
       <div class="card">
         <h2>Como os dados funcionam</h2>
         <ol class="steps">
-          <li><strong>Um arquivo publicado.</strong> Todos que abrem o link veem o mesmo arquivo de dados do repositório.</li>
-          <li><strong>Edição no navegador.</strong> Cadastrar espaços, contratos ou campanhas salva na hora, no seu navegador.</li>
-          <li><strong>Publicar.</strong> Em <RouterLink to="/dados">Dados</RouterLink>, exporte o arquivo e envie ao GitHub; o link se atualiza em cerca de 1 minuto. A planilha Excel também pode ser importada e exportada.</li>
+          <li><strong>Um banco de dados.</strong> Tudo fica num PostgreSQL, acessado pela API do sistema.</li>
+          <li><strong>Gravação na hora.</strong> Cadastrar espaços, contratos, agenda ou campanhas grava no banco na hora, e todos que usam o sistema veem as mesmas informações.</li>
+          <li><strong>Planilha e backup.</strong> Em <RouterLink to="/dados">Base de dados</RouterLink>, importe ou exporte a planilha Excel e baixe um backup completo.</li>
         </ol>
       </div>
       <div class="card">
