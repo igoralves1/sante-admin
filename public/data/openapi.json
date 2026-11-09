@@ -1,0 +1,4575 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Santé API",
+    "summary": "Espaços, turnos, agenda, contratos, locatários, custos e mercado da Santé Consultórios.",
+    "description": "\nBackend do **Santé Admin**, o sistema de gestão da Santé Consultórios (Maceió).\nGuarda num PostgreSQL os espaços, os turnos, a agenda, os contratos, os locatários, os custos,\nas campanhas e as coletas de mercado.\n\n## Como usar\n\n- Todas as rotas ficam em `/api`.\n- Os campos usam **camelCase**, iguais aos do `sante.json` do front (`espacoId`, `precoTurno`...).\n- Na entrada, texto vazio (`\"\"`) em datas e números opcionais vale como \"sem valor\".\n- Datas no formato `AAAA-MM-DD`, meses no formato `AAAA-MM` e turnos no formato `HH:MM-HH:MM`.\n- IDs são textos (`e1`, `ct1`, `ag3f9a1c2b`...). Na criação, sem `id`, a API gera um.\n\n## Como o front usa a API\n\n1. Lê tudo em `GET /api/dados`.\n2. A cada alteração na tela, envia só o que mudou, pelas rotas de cada cadastro\n   (criar, editar ou excluir), na ordem que o banco exige.\n3. A cada 20 segundos, e ao voltar para a aba, lê `GET /api/dados` de novo para ver mudanças de outras pessoas.\n4. Se o servidor recusar algo, a tela mostra o motivo e volta ao que está gravado.\n\n## Capacidade dos espaços\n\n- **No calendário:** turnos que abrem em cada dia do mês.\n- **Não disponíveis:** turnos bloqueados na agenda.\n- **Em aberto:** no calendário − não disponíveis. É a capacidade real do mês.\n- **Ocupados:** turnos locados. **Livres:** em aberto − ocupados.\n\nEspaços cobrados por hora contam horas. Espaços `Mensal` e `Administrativo` não usam agenda.\n\n## Erros\n\nTodo erro responde com `{\"detail\": \"...\"}`, uma frase em português pronta para mostrar na tela.\nNa validação automática dos campos, `detail` é a lista dos campos com erro.\n\n| Código | Quando |\n|---|---|\n| 400 | Pedido inválido (ex.: SQL com erro) |\n| 403 | Recurso desligado neste servidor |\n| 404 | Registro não encontrado |\n| 409 | Conflito: nome repetido, turno já ocupado, espaço com contratos |\n| 422 | Dados inválidos ou fora das regras (turno fechado no dia, término antes do início...) |\n\n## Segurança e LGPD\n\nA API ainda **não tem login**: use só na sua máquina ou numa rede fechada. Os locatários têm dados\npessoais (nome, telefone, e-mail, redes). Antes de publicar a API, troque a senha do banco e adicione login.\n",
+    "contact": {
+      "name": "Santé Consultórios",
+      "url": "https://github.com/igoralves1/sante-admin"
+    },
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/api/saude": {
+      "get": {
+        "tags": [
+          "sistema"
+        ],
+        "summary": "A API e o banco estão no ar?",
+        "description": "Faz um `SELECT 1` no banco. Usado pelo healthcheck do Docker.",
+        "operationId": "saude_api_saude_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Saude"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dados": {
+      "get": {
+        "tags": [
+          "documento"
+        ],
+        "summary": "Tudo no formato do sante.json",
+        "description": "O sistema inteiro num documento só: clínica, metas, turnos, espaços, custos, campanhas,\ncontratos, agendamentos e locatários.\n\nÉ a primeira chamada do front. Também serve de backup: salve a resposta como `sante.json`.",
+        "operationId": "exportar_api_dados_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "documento"
+        ],
+        "summary": "Substitui tudo por um sante.json (tudo ou nada)",
+        "description": "**Apaga todos os dados de cadastro e operação** e grava os do documento, numa transação só.\nSe algo falhar, nada muda.\n\nUsado em **Base de dados** para importar uma planilha ou um arquivo, ou para restaurar a versão\npublicada. Os dados de mercado (`/api/mercado/*`) não são tocados.",
+        "operationId": "importar_api_dados_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Documento"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Importado"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mercado/concorrentes": {
+      "get": {
+        "tags": [
+          "mercado"
+        ],
+        "summary": "Coleta de concorrentes",
+        "description": "Concorrentes de Maceió (preços, horários, diferenciais, Instagram, Google), buscas no\nGoogle Maps, notas de PageSpeed e tráfego dos sites. Dados de páginas públicas, coletados à mão.",
+        "operationId": "concorrentes_api_mercado_concorrentes_get",
+        "responses": {
+          "200": {
+            "description": "Documento no formato de `concorrentes.json`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response 200 Concorrentes Api Mercado Concorrentes Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "mercado"
+        ],
+        "summary": "Substitui a coleta de concorrentes",
+        "description": "Troca toda a coleta de concorrentes pela do documento, numa transação só.",
+        "operationId": "importar_concorrentes_api_mercado_concorrentes_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Doc",
+                "description": "Documento no formato do arquivo do front (`src/data/concorrentes.json` ou `src/data/social.json`)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A coleta como ficou gravada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response 200 Importar Concorrentes Api Mercado Concorrentes Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/mercado/social": {
+      "get": {
+        "tags": [
+          "mercado"
+        ],
+        "summary": "Monitor social",
+        "description": "Redes sociais acompanhadas, perfis da Santé e dos concorrentes em cada rede (seguidores,\npublicações) e os últimos posts. Dados de páginas públicas, coletados à mão.",
+        "operationId": "social_api_mercado_social_get",
+        "responses": {
+          "200": {
+            "description": "Documento no formato de `social.json`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response 200 Social Api Mercado Social Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "mercado"
+        ],
+        "summary": "Substitui o monitor social",
+        "description": "Troca todo o monitor social pelo do documento, numa transação só.",
+        "operationId": "importar_social_api_mercado_social_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Doc",
+                "description": "Documento no formato do arquivo do front (`src/data/concorrentes.json` ou `src/data/social.json`)."
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "O monitor como ficou gravado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response 200 Importar Social Api Mercado Social Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clinica": {
+      "get": {
+        "tags": [
+          "clínica"
+        ],
+        "summary": "Dados da Santé e meta de ocupação",
+        "description": "Nome, razão social, contatos, site, Instagram e a meta de ocupação (`metas.ocupacaoAlvo`).",
+        "operationId": "ler_clinica_api_clinica_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicaDados"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "clínica"
+        ],
+        "summary": "Atualiza os dados da Santé e a meta de ocupação",
+        "description": "Substitui `meta` e `metas`. Devolve os dados como ficaram.",
+        "operationId": "salvar_clinica_api_clinica_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicaDados"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicaDados"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/turnos": {
+      "get": {
+        "tags": [
+          "turnos"
+        ],
+        "summary": "Turnos da Santé",
+        "description": "Turnos usados por todas as salas que não têm turnos próprios (`agenda: null`).",
+        "operationId": "ler_turnos_api_turnos_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agenda"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "turnos"
+        ],
+        "summary": "Substitui os turnos da Santé",
+        "description": "Troca todos os turnos da Santé. Vale na hora para todas as salas sem turnos próprios.\n\nRecusa (422) turnos com início depois do fim e turnos que se sobrepõem no mesmo dia.\nAgendamentos já gravados não mudam.",
+        "operationId": "salvar_turnos_api_turnos_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Agenda"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Agenda"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/espacos": {
+      "get": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Lista os espaços",
+        "description": "Todos os espaços (salas, piscina, áreas), na ordem da tela, com despesas e turnos próprios.",
+        "operationId": "listar_espacos_api_espacos_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EspacoSaida"
+                  },
+                  "type": "array",
+                  "title": "Response 200 Listar Espacos Api Espacos Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Cria um espaço",
+        "description": "Cria o espaço no fim da lista. Sem `id`, a API gera um. Recusa nome ou ID repetido (409).",
+        "operationId": "criar_espaco_api_espacos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Espaco"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Espaço criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacoSaida"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/espacos/{id}": {
+      "get": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Um espaço",
+        "description": "Um espaço, com despesas e turnos próprios.",
+        "operationId": "ler_espaco_api_espacos__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do espaço.",
+              "examples": [
+                "e1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do espaço."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Atualiza um espaço",
+        "description": "Substitui o espaço inteiro, incluindo despesas e turnos próprios. `agenda: null` volta a usar os turnos da Santé.",
+        "operationId": "atualizar_espaco_api_espacos__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do espaço.",
+              "examples": [
+                "e1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do espaço."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Espaco"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EspacoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Exclui um espaço",
+        "description": "Exclui o espaço com suas despesas, turnos próprios e agenda.\nRecusa (409) se o espaço ainda tem contratos.",
+        "operationId": "excluir_espaco_api_espacos__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do espaço.",
+              "examples": [
+                "e1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do espaço."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/espacos/{id}/capacidade": {
+      "get": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Capacidade e ocupação de um espaço no mês",
+        "description": "Conta os turnos que abrem em cada dia do mês (no calendário), tira os \"Não disponível\"\n(em aberto) e compara com os locados (ocupados).\n\nEspaços cobrados por hora contam horas. Espaços `Mensal` e `Administrativo` não usam agenda\ne voltam com `usaAgenda: false`.",
+        "operationId": "capacidade_api_espacos__id__capacidade_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do espaço.",
+              "examples": [
+                "e1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do espaço."
+          },
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Mês, AAAA-MM. Padrão: o mês atual.",
+              "examples": [
+                "2026-11"
+              ],
+              "title": "Mes"
+            },
+            "description": "Mês, AAAA-MM. Padrão: o mês atual."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Capacidade"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/capacidade": {
+      "get": {
+        "tags": [
+          "espaços"
+        ],
+        "summary": "Capacidade e ocupação de todos os espaços no mês",
+        "description": "O mesmo de `/espacos/{id}/capacidade`, para cada espaço.",
+        "operationId": "capacidade_todos_api_capacidade_get",
+        "parameters": [
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Mês, AAAA-MM. Padrão: o mês atual.",
+              "examples": [
+                "2026-11"
+              ],
+              "title": "Mes"
+            },
+            "description": "Mês, AAAA-MM. Padrão: o mês atual."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Capacidade"
+                  },
+                  "title": "Response 200 Capacidade Todos Api Capacidade Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/custos": {
+      "get": {
+        "tags": [
+          "custos"
+        ],
+        "summary": "Custos fixos, impostos e comissões",
+        "description": "Custos fixos mensais da casa e os percentuais de impostos e comissões sobre a receita.",
+        "operationId": "ler_custos_api_custos_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustosSaida"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "custos"
+        ],
+        "summary": "Substitui os custos",
+        "description": "Troca a lista de custos fixos e os percentuais. Custos fixos que não vierem são excluídos.",
+        "operationId": "salvar_custos_api_custos_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Custos"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustosSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profissionais": {
+      "get": {
+        "tags": [
+          "locatários"
+        ],
+        "summary": "Lista os locatários",
+        "description": "Todos os locatários, com redes sociais e links. Contém dados pessoais (LGPD).",
+        "operationId": "listar_profissionais_api_profissionais_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProfissionalSaida"
+                  },
+                  "type": "array",
+                  "title": "Response 200 Listar Profissionais Api Profissionais Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "locatários"
+        ],
+        "summary": "Cadastra um locatário",
+        "description": "Cadastra um locatário. Recusa (409) um nome que já existe, sem diferenciar maiúsculas.",
+        "operationId": "criar_profissional_api_profissionais_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profissional"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Locatário cadastrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfissionalSaida"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/profissionais/{id}": {
+      "get": {
+        "tags": [
+          "locatários"
+        ],
+        "summary": "Um locatário",
+        "description": "Um locatário, com redes sociais e links.",
+        "operationId": "ler_profissional_api_profissionais__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do locatário.",
+              "examples": [
+                "p1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do locatário."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfissionalSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "locatários"
+        ],
+        "summary": "Atualiza um locatário",
+        "description": "Substitui o cadastro inteiro, incluindo redes e links.",
+        "operationId": "atualizar_profissional_api_profissionais__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do locatário.",
+              "examples": [
+                "p1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do locatário."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Profissional"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfissionalSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "locatários"
+        ],
+        "summary": "Exclui um locatário",
+        "description": "Exclui o locatário e seus links. Contratos e agendamentos dele continuam, sem o vínculo\n(`profissionalId` fica vazio).",
+        "operationId": "excluir_profissional_api_profissionais__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do locatário.",
+              "examples": [
+                "p1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do locatário."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/contratos": {
+      "get": {
+        "tags": [
+          "contratos"
+        ],
+        "summary": "Lista os contratos",
+        "description": "Carteira de contratos (locações recorrentes), por data de início.",
+        "operationId": "listar_contratos_api_contratos_get",
+        "parameters": [
+          {
+            "name": "espaco",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Só deste espaço (ID).",
+              "examples": [
+                "e1"
+              ],
+              "title": "Espaco"
+            },
+            "description": "Só deste espaço (ID)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContratoSaida"
+                  },
+                  "title": "Response 200 Listar Contratos Api Contratos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "contratos"
+        ],
+        "summary": "Cria um contrato",
+        "description": "Cria um contrato. O espaço e o locatário precisam existir (404).\nO término não pode ser antes do início (422).",
+        "operationId": "criar_contrato_api_contratos_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Contrato"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Contrato criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContratoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/contratos/{id}": {
+      "put": {
+        "tags": [
+          "contratos"
+        ],
+        "summary": "Atualiza um contrato",
+        "description": "Substitui o contrato inteiro.",
+        "operationId": "atualizar_contrato_api_contratos__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do contrato.",
+              "examples": [
+                "ct1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do contrato."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Contrato"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContratoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "contratos"
+        ],
+        "summary": "Exclui um contrato",
+        "description": "Exclui o contrato.",
+        "operationId": "excluir_contrato_api_contratos__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do contrato.",
+              "examples": [
+                "ct1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do contrato."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agendamentos": {
+      "get": {
+        "tags": [
+          "agenda"
+        ],
+        "summary": "Lista os agendamentos",
+        "description": "Locações e bloqueios (\"Não disponível\") da agenda, por data.",
+        "operationId": "listar_agendamentos_api_agendamentos_get",
+        "parameters": [
+          {
+            "name": "espaco",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Só deste espaço (ID).",
+              "examples": [
+                "e1"
+              ],
+              "title": "Espaco"
+            },
+            "description": "Só deste espaço (ID)."
+          },
+          {
+            "name": "mes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Só deste mês, AAAA-MM.",
+              "examples": [
+                "2026-11"
+              ],
+              "title": "Mes"
+            },
+            "description": "Só deste mês, AAAA-MM."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgendamentoSaida"
+                  },
+                  "title": "Response 200 Listar Agendamentos Api Agendamentos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "agenda"
+        ],
+        "summary": "Cria um agendamento",
+        "description": "Loca turnos de um dia a um profissional (`locacao`) ou marca como não disponível (`bloqueio`).\n\nRegras:\n\n- o espaço precisa usar agenda: espaços `Mensal` e `Administrativo` são recusados (422);\n- cada turno de `slots` precisa abrir nesse dia da semana, nos turnos do espaço ou da Santé (422);\n- uma locação precisa de `profissionalId` ou `cliente` (422);\n- um turno não pode estar locado ou bloqueado duas vezes no mesmo dia (409);\n- num bloqueio, `profissionalId`, `cliente` e `valor` são zerados.",
+        "operationId": "criar_agendamento_api_agendamentos_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Agendamento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamento criado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendamentoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agendamentos/lote": {
+      "post": {
+        "tags": [
+          "agenda"
+        ],
+        "summary": "Cria vários agendamentos (tudo ou nada)",
+        "description": "Usado ao repetir uma locação ou um bloqueio no mês ou no ano. Se um item falhar, nenhum é gravado.\n\nCada item mantém o `grupo` que veio. Se nenhum item tiver grupo, todos recebem o mesmo grupo novo, para poderem ser excluídos juntos em `DELETE /api/agendamentos/grupo/{grupo}`.\n\nRegras:\n\n- o espaço precisa usar agenda: espaços `Mensal` e `Administrativo` são recusados (422);\n- cada turno de `slots` precisa abrir nesse dia da semana, nos turnos do espaço ou da Santé (422);\n- uma locação precisa de `profissionalId` ou `cliente` (422);\n- um turno não pode estar locado ou bloqueado duas vezes no mesmo dia (409);\n- num bloqueio, `profissionalId`, `cliente` e `valor` são zerados.",
+        "operationId": "criar_lote_api_agendamentos_lote_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/Agendamento"
+                },
+                "type": "array",
+                "title": "Itens"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Agendamentos criados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgendamentoSaida"
+                  },
+                  "type": "array",
+                  "title": "Response 201 Criar Lote Api Agendamentos Lote Post"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agendamentos/{id}": {
+      "put": {
+        "tags": [
+          "agenda"
+        ],
+        "summary": "Atualiza um agendamento",
+        "description": "Substitui o agendamento inteiro.\n\nRegras:\n\n- o espaço precisa usar agenda: espaços `Mensal` e `Administrativo` são recusados (422);\n- cada turno de `slots` precisa abrir nesse dia da semana, nos turnos do espaço ou da Santé (422);\n- uma locação precisa de `profissionalId` ou `cliente` (422);\n- um turno não pode estar locado ou bloqueado duas vezes no mesmo dia (409);\n- num bloqueio, `profissionalId`, `cliente` e `valor` são zerados.",
+        "operationId": "atualizar_agendamento_api_agendamentos__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do agendamento.",
+              "examples": [
+                "ag1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do agendamento."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Agendamento"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendamentoSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflito com dados existentes (nome repetido, turno já ocupado, registro em uso).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "agenda"
+        ],
+        "summary": "Exclui um agendamento",
+        "description": "Exclui um dia da agenda. Os outros dias da mesma repetição continuam.",
+        "operationId": "excluir_agendamento_api_agendamentos__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID do agendamento.",
+              "examples": [
+                "ag1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID do agendamento."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/agendamentos/grupo/{grupo}": {
+      "delete": {
+        "tags": [
+          "agenda"
+        ],
+        "summary": "Exclui todos os dias de uma repetição",
+        "description": "Exclui todos os agendamentos com este `grupo` e diz quantos foram.",
+        "operationId": "excluir_grupo_api_agendamentos_grupo__grupo__delete",
+        "parameters": [
+          {
+            "name": "grupo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Valor de `grupo` dos agendamentos.",
+              "examples": [
+                "g1a2b3c4d"
+              ],
+              "title": "Grupo"
+            },
+            "description": "Valor de `grupo` dos agendamentos."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Excluidos"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/campanhas": {
+      "get": {
+        "tags": [
+          "campanhas"
+        ],
+        "summary": "Lista as campanhas",
+        "description": "Ações comerciais, com os espaços divulgados e os resultados (leads e visitas).",
+        "operationId": "listar_campanhas_api_campanhas_get",
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CampanhaSaida"
+                  },
+                  "type": "array",
+                  "title": "Response 200 Listar Campanhas Api Campanhas Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "campanhas"
+        ],
+        "summary": "Cria uma campanha",
+        "description": "Cria uma campanha. IDs de espaços que não existem são ignorados.",
+        "operationId": "criar_campanha_api_campanhas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Campanha"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Campanha criada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampanhaSaida"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/campanhas/{id}": {
+      "put": {
+        "tags": [
+          "campanhas"
+        ],
+        "summary": "Atualiza uma campanha",
+        "description": "Substitui a campanha inteira, incluindo a lista de espaços.",
+        "operationId": "atualizar_campanha_api_campanhas__id__put",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID da campanha.",
+              "examples": [
+                "cp1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID da campanha."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Campanha"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sucesso.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampanhaSaida"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos. `detail` explica o motivo (texto) ou lista os campos com erro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErroValidacao"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "campanhas"
+        ],
+        "summary": "Exclui uma campanha",
+        "description": "Exclui a campanha. Contratos ligados a ela continuam, sem o vínculo.",
+        "operationId": "excluir_campanha_api_campanhas__id__delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "ID da campanha.",
+              "examples": [
+                "cp1"
+              ],
+              "title": "Id"
+            },
+            "description": "ID da campanha."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/banco/esquema": {
+      "get": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "Esquema do banco (tabelas, colunas, chaves e relações)",
+        "description": "Lê o catálogo do PostgreSQL e devolve cada tabela com colunas, tipos, chave primária,\nrestrições únicas, índices, número de linhas e as chaves estrangeiras entre tabelas.\n\nAlimenta a página **Base de dados → Diagrama do banco**. O grupo e a descrição de cada tabela\nvêm dos modelos do Tortoise (`app/models`).",
+        "operationId": "esquema_api_banco_esquema_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Esquema"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/banco/tabelas/{tabela}": {
+      "get": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "Linhas de uma tabela, com página, ordem e busca",
+        "description": "Mostra as linhas de uma tabela, como uma planilha. A busca compara o texto com a linha\ninteira convertida em texto, então encontra o valor em qualquer coluna.\n\nRoda numa transação só de leitura, com o papel `sante_leitura`.",
+        "operationId": "linhas_api_banco_tabelas__tabela__get",
+        "parameters": [
+          {
+            "name": "tabela",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Nome da tabela, como aparece em `/api/banco/esquema`.",
+              "examples": [
+                "espaco"
+              ],
+              "title": "Tabela"
+            },
+            "description": "Nome da tabela, como aparece em `/api/banco/esquema`."
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Linhas por página.",
+              "default": 50,
+              "title": "Limite"
+            },
+            "description": "Linhas por página."
+          },
+          {
+            "name": "pagina",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Página, começando em 1.",
+              "default": 1,
+              "title": "Pagina"
+            },
+            "description": "Página, começando em 1."
+          },
+          {
+            "name": "ordem",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Coluna para ordenar. Sem ela, usa a chave primária.",
+              "title": "Ordem"
+            },
+            "description": "Coluna para ordenar. Sem ela, usa a chave primária."
+          },
+          {
+            "name": "desc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Ordem decrescente.",
+              "default": false,
+              "title": "Desc"
+            },
+            "description": "Ordem decrescente."
+          },
+          {
+            "name": "busca",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Texto procurado em qualquer coluna (sem diferenciar maiúsculas).",
+              "title": "Busca"
+            },
+            "description": "Texto procurado em qualquer coluna (sem diferenciar maiúsculas)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pedido inválido (ex.: erro de sintaxe no SQL).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Recurso desligado neste servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Registro não encontrado.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/banco/consulta": {
+      "post": {
+        "tags": [
+          "base de dados"
+        ],
+        "summary": "Roda uma consulta SQL só de leitura",
+        "description": "Executa **um** comando SQL e devolve as colunas e as linhas.\n\nProteções:\n\n- roda numa transação `READ ONLY` com o papel `sante_leitura`, que só tem `SELECT`;\n  `INSERT`, `UPDATE`, `DELETE`, `CREATE`... são recusados pelo próprio PostgreSQL;\n- a transação sempre termina em `ROLLBACK`;\n- um comando por vez (o comando é preparado, e o PostgreSQL recusa vários);\n- tempo máximo de `BANCO_TEMPO_MS` (5 s por padrão);\n- no máximo `limite` linhas voltam; `truncado` diz se havia mais.\n\nAceita `SELECT`, `WITH`, `EXPLAIN`, `SHOW` e `VALUES`.",
+        "operationId": "consulta_api_banco_consulta_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Consulta"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resultado"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Pedido inválido (ex.: erro de sintaxe no SQL).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Recurso desligado neste servidor.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Erro"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Agenda": {
+        "properties": {
+          "versao": {
+            "type": "integer",
+            "title": "Versao",
+            "description": "Versão do formato da agenda.",
+            "default": 3
+          },
+          "minimo": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Minimo",
+            "description": "Mínimo de turnos por locação.",
+            "default": 1
+          },
+          "horarios": {
+            "items": {
+              "$ref": "#/components/schemas/Horario"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Horarios"
+          }
+        },
+        "type": "object",
+        "required": [
+          "horarios"
+        ],
+        "title": "Agenda",
+        "description": "Conjunto de turnos. Turnos que abrem no mesmo dia não podem se sobrepor.",
+        "examples": [
+          {
+            "horarios": [
+              {
+                "dias": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5,
+                  6
+                ],
+                "fim": "12:00",
+                "ini": "08:00",
+                "nome": "Manhã"
+              },
+              {
+                "dias": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "fim": "17:00",
+                "ini": "13:00",
+                "nome": "Tarde"
+              },
+              {
+                "dias": [
+                  1,
+                  2,
+                  3,
+                  4,
+                  5
+                ],
+                "fim": "21:00",
+                "ini": "17:00",
+                "nome": "Noite"
+              }
+            ],
+            "minimo": 1,
+            "versao": 3
+          }
+        ]
+      },
+      "Agendamento": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "espacoId": {
+            "type": "string",
+            "title": "Espacoid",
+            "description": "ID do espaço. Precisa ser um espaço que usa agenda."
+          },
+          "data": {
+            "type": "string",
+            "format": "date",
+            "title": "Data"
+          },
+          "slots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Slots",
+            "description": "Turnos do dia, no formato \"HH:MM-HH:MM\". Precisam abrir nesse dia da semana."
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoAgendamento",
+            "description": "`locacao` = turno locado; `bloqueio` = turno não disponível (sai da capacidade do mês).",
+            "default": "locacao"
+          },
+          "profissionalId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profissionalid",
+            "description": "ID do locatário. Obrigatório numa locação sem `cliente`."
+          },
+          "cliente": {
+            "type": "string",
+            "title": "Cliente",
+            "description": "Nome de quem loca. Preenchido com o nome do locatário quando vazio.",
+            "default": ""
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "R$ cobrados por este dia. Zero num bloqueio.",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAgenda",
+            "default": "Confirmada"
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          },
+          "grupo": {
+            "type": "string",
+            "title": "Grupo",
+            "description": "Mesmo valor nos dias criados juntos numa repetição (para excluir todos de uma vez).",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacoId",
+          "data",
+          "slots"
+        ],
+        "title": "Agendamento",
+        "description": "Turnos de um dia na agenda de um espaço: locação a um profissional, ou bloqueio (\"Não disponível\").",
+        "examples": [
+          {
+            "data": "2026-11-10",
+            "espacoId": "e1",
+            "grupo": "",
+            "obs": "",
+            "profissionalId": "p1",
+            "slots": [
+              "08:00-12:00"
+            ],
+            "status": "Confirmada",
+            "tipo": "locacao",
+            "valor": 120
+          },
+          {
+            "data": "2026-11-11",
+            "espacoId": "e6",
+            "obs": "Manutenção",
+            "slots": [
+              "17:00-21:00"
+            ],
+            "tipo": "bloqueio"
+          }
+        ]
+      },
+      "AgendamentoSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "espacoId": {
+            "type": "string",
+            "title": "Espacoid",
+            "description": "ID do espaço. Precisa ser um espaço que usa agenda."
+          },
+          "data": {
+            "type": "string",
+            "title": "Data",
+            "description": "AAAA-MM-DD."
+          },
+          "slots": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Slots",
+            "description": "Turnos do dia, no formato \"HH:MM-HH:MM\". Precisam abrir nesse dia da semana."
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoAgendamento",
+            "description": "`locacao` = turno locado; `bloqueio` = turno não disponível (sai da capacidade do mês).",
+            "default": "locacao"
+          },
+          "profissionalId": {
+            "type": "string",
+            "title": "Profissionalid",
+            "description": "ID do locatário. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "cliente": {
+            "type": "string",
+            "title": "Cliente",
+            "description": "Nome de quem loca. Preenchido com o nome do locatário quando vazio.",
+            "default": ""
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "R$ cobrados por este dia. Zero num bloqueio.",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusAgenda",
+            "default": "Confirmada"
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          },
+          "grupo": {
+            "type": "string",
+            "title": "Grupo",
+            "description": "Mesmo valor nos dias criados juntos numa repetição (para excluir todos de uma vez).",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "espacoId",
+          "data",
+          "slots"
+        ],
+        "title": "AgendamentoSaida",
+        "examples": [
+          {
+            "data": "2026-11-10",
+            "espacoId": "e1",
+            "grupo": "",
+            "obs": "",
+            "profissionalId": "p1",
+            "slots": [
+              "08:00-12:00"
+            ],
+            "status": "Confirmada",
+            "tipo": "locacao",
+            "valor": 120
+          },
+          {
+            "data": "2026-11-11",
+            "espacoId": "e6",
+            "obs": "Manutenção",
+            "slots": [
+              "17:00-21:00"
+            ],
+            "tipo": "bloqueio"
+          }
+        ]
+      },
+      "Campanha": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "canal": {
+            "type": "string",
+            "title": "Canal",
+            "default": ""
+          },
+          "espacos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Espacos",
+            "description": "IDs dos espaços divulgados.",
+            "default": []
+          },
+          "inicio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inicio"
+          },
+          "fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim"
+          },
+          "orcamento": {
+            "type": "number",
+            "title": "Orcamento",
+            "description": "R$.",
+            "default": 0
+          },
+          "leads": {
+            "type": "integer",
+            "title": "Leads",
+            "default": 0
+          },
+          "visitas": {
+            "type": "integer",
+            "title": "Visitas",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusCampanha",
+            "default": "Planejada"
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "Campanha",
+        "description": "Ação comercial (anúncio, parceria, evento) e seus resultados.",
+        "examples": [
+          {
+            "canal": "Instagram",
+            "espacos": [
+              "e1",
+              "e2"
+            ],
+            "fim": "2026-11-30",
+            "inicio": "2026-11-01",
+            "leads": 0,
+            "nome": "Anúncio Instagram novembro",
+            "obs": "",
+            "orcamento": 600,
+            "status": "Planejada",
+            "visitas": 0
+          }
+        ]
+      },
+      "CampanhaSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Nome"
+          },
+          "canal": {
+            "type": "string",
+            "title": "Canal",
+            "default": ""
+          },
+          "espacos": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Espacos",
+            "description": "IDs dos espaços divulgados.",
+            "default": []
+          },
+          "inicio": {
+            "type": "string",
+            "title": "Inicio",
+            "description": "AAAA-MM-DD. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "fim": {
+            "type": "string",
+            "title": "Fim",
+            "description": "AAAA-MM-DD. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "orcamento": {
+            "type": "number",
+            "title": "Orcamento",
+            "description": "R$.",
+            "default": 0
+          },
+          "leads": {
+            "type": "integer",
+            "title": "Leads",
+            "default": 0
+          },
+          "visitas": {
+            "type": "integer",
+            "title": "Visitas",
+            "default": 0
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusCampanha",
+            "default": "Planejada"
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome"
+        ],
+        "title": "CampanhaSaida",
+        "examples": [
+          {
+            "canal": "Instagram",
+            "espacos": [
+              "e1",
+              "e2"
+            ],
+            "fim": "2026-11-30",
+            "inicio": "2026-11-01",
+            "leads": 0,
+            "nome": "Anúncio Instagram novembro",
+            "obs": "",
+            "orcamento": 600,
+            "status": "Planejada",
+            "visitas": 0
+          }
+        ]
+      },
+      "Capacidade": {
+        "properties": {
+          "espacoId": {
+            "type": "string",
+            "title": "Espacoid"
+          },
+          "mes": {
+            "type": "string",
+            "title": "Mes",
+            "description": "AAAA-MM."
+          },
+          "usaAgenda": {
+            "type": "boolean",
+            "title": "Usaagenda",
+            "description": "Falso para espaços `Mensal` e `Administrativo`; os demais campos vêm zerados."
+          },
+          "unidade": {
+            "type": "string",
+            "title": "Unidade",
+            "description": "`turnos` ou `horas` (espaços cobrados por hora)."
+          },
+          "noCalendario": {
+            "type": "number",
+            "title": "Nocalendario",
+            "description": "Turnos que abrem nos dias do mês."
+          },
+          "naoDisponiveis": {
+            "type": "number",
+            "title": "Naodisponiveis",
+            "description": "Turnos bloqueados (\"Não disponível\")."
+          },
+          "emAberto": {
+            "type": "number",
+            "title": "Emaberto",
+            "description": "No calendário − não disponíveis. É a capacidade real do mês."
+          },
+          "ocupados": {
+            "type": "number",
+            "title": "Ocupados",
+            "description": "Turnos locados."
+          },
+          "livres": {
+            "type": "number",
+            "title": "Livres",
+            "description": "Em aberto − ocupados."
+          },
+          "ocupacao": {
+            "type": "number",
+            "title": "Ocupacao",
+            "description": "Ocupados ÷ em aberto (0 a 1)."
+          },
+          "profissionais": {
+            "type": "integer",
+            "title": "Profissionais",
+            "description": "Locatários diferentes no mês."
+          },
+          "receitaLocada": {
+            "type": "number",
+            "title": "Receitalocada",
+            "description": "Soma dos valores das locações, em R$."
+          },
+          "receitaBloqueada": {
+            "type": "number",
+            "title": "Receitabloqueada",
+            "description": "Receita não realizada: não disponíveis × preço do turno."
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacoId",
+          "mes",
+          "usaAgenda",
+          "unidade",
+          "noCalendario",
+          "naoDisponiveis",
+          "emAberto",
+          "ocupados",
+          "livres",
+          "ocupacao",
+          "profissionais",
+          "receitaLocada",
+          "receitaBloqueada"
+        ],
+        "title": "Capacidade",
+        "description": "Turnos (ou horas) de um espaço num mês, contando os dias reais do calendário.",
+        "examples": [
+          {
+            "emAberto": 67,
+            "espacoId": "e1",
+            "livres": 65,
+            "mes": "2026-11",
+            "naoDisponiveis": 4,
+            "noCalendario": 71,
+            "ocupacao": 0.0299,
+            "ocupados": 2,
+            "profissionais": 1,
+            "receitaBloqueada": 480,
+            "receitaLocada": 240,
+            "unidade": "turnos",
+            "usaAgenda": true
+          }
+        ]
+      },
+      "ClinicaDados": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta",
+            "default": {
+              "clinica": "Santé Consultórios",
+              "razaoSocial": "",
+              "endereco": "",
+              "telefone": "",
+              "whatsapp": "",
+              "site": "",
+              "instagram": ""
+            }
+          },
+          "metas": {
+            "$ref": "#/components/schemas/Metas",
+            "default": {
+              "ocupacaoAlvo": 0.6
+            }
+          }
+        },
+        "type": "object",
+        "title": "ClinicaDados",
+        "description": "Dados da Santé e meta de ocupação (`meta` e `metas` do sante.json)."
+      },
+      "Coluna": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "Tipo no PostgreSQL.",
+            "examples": [
+              "varchar",
+              "numeric",
+              "_int2"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "tipo"
+        ],
+        "title": "Coluna"
+      },
+      "ColunaEsquema": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "examples": [
+              "character varying(40)",
+              "numeric(10,2)",
+              "smallint[]"
+            ]
+          },
+          "nulo": {
+            "type": "boolean",
+            "title": "Nulo",
+            "description": "Aceita NULL."
+          },
+          "padrao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Padrao",
+            "description": "Valor padrão no banco."
+          },
+          "pk": {
+            "type": "boolean",
+            "title": "Pk",
+            "description": "Faz parte da chave primária."
+          },
+          "fk": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fk",
+            "description": "Chave estrangeira: `{tabela, coluna}` referenciada."
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "tipo",
+          "nulo",
+          "pk"
+        ],
+        "title": "ColunaEsquema"
+      },
+      "Consulta": {
+        "properties": {
+          "sql": {
+            "type": "string",
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Sql",
+            "description": "Um comando: SELECT, WITH, EXPLAIN, SHOW ou VALUES."
+          },
+          "limite": {
+            "type": "integer",
+            "maximum": 5000,
+            "minimum": 1,
+            "title": "Limite",
+            "description": "Máximo de linhas na resposta.",
+            "default": 500
+          }
+        },
+        "type": "object",
+        "required": [
+          "sql"
+        ],
+        "title": "Consulta",
+        "description": "Uma consulta SQL só de leitura.",
+        "examples": [
+          {
+            "limite": 500,
+            "sql": "SELECT nome, tipo, modalidade, preco FROM espaco ORDER BY ordem"
+          }
+        ]
+      },
+      "Contrato": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "espacoId": {
+            "type": "string",
+            "title": "Espacoid",
+            "description": "ID do espaço."
+          },
+          "profissionalId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profissionalid",
+            "description": "ID do locatário."
+          },
+          "campanha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Campanha",
+            "description": "ID da campanha que trouxe o contrato."
+          },
+          "cliente": {
+            "type": "string",
+            "title": "Cliente",
+            "description": "Nome de quem loca (usado quando não há locatário cadastrado).",
+            "default": ""
+          },
+          "modalidade": {
+            "$ref": "#/components/schemas/Modalidade"
+          },
+          "quantidade": {
+            "type": "number",
+            "title": "Quantidade",
+            "description": "Unidades por mês.",
+            "default": 0
+          },
+          "preco": {
+            "type": "number",
+            "title": "Preco",
+            "description": "Preço da unidade, em R$.",
+            "default": 0
+          },
+          "inicio": {
+            "type": "string",
+            "format": "date",
+            "title": "Inicio"
+          },
+          "fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fim",
+            "description": "Vazio = sem data para terminar."
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusContrato",
+            "default": "Confirmada"
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "espacoId",
+          "modalidade",
+          "inicio"
+        ],
+        "title": "Contrato",
+        "description": "Locação recorrente: quantidade de unidades (horas, turnos ou meses) por mês.",
+        "examples": [
+          {
+            "campanha": "",
+            "cliente": "Dra. Ana Exemplo",
+            "espacoId": "e1",
+            "fim": "",
+            "inicio": "2026-11-01",
+            "modalidade": "Turno",
+            "obs": "",
+            "preco": 120,
+            "profissionalId": "p1",
+            "quantidade": 8,
+            "status": "Confirmada"
+          }
+        ]
+      },
+      "ContratoSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "espacoId": {
+            "type": "string",
+            "title": "Espacoid",
+            "description": "ID do espaço."
+          },
+          "profissionalId": {
+            "type": "string",
+            "title": "Profissionalid",
+            "description": "ID do locatário. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "campanha": {
+            "type": "string",
+            "title": "Campanha",
+            "description": "ID da campanha. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "cliente": {
+            "type": "string",
+            "title": "Cliente",
+            "description": "Nome de quem loca (usado quando não há locatário cadastrado).",
+            "default": ""
+          },
+          "modalidade": {
+            "$ref": "#/components/schemas/Modalidade"
+          },
+          "quantidade": {
+            "type": "number",
+            "title": "Quantidade",
+            "description": "Unidades por mês.",
+            "default": 0
+          },
+          "preco": {
+            "type": "number",
+            "title": "Preco",
+            "description": "Preço da unidade, em R$.",
+            "default": 0
+          },
+          "inicio": {
+            "type": "string",
+            "title": "Inicio",
+            "description": "AAAA-MM-DD."
+          },
+          "fim": {
+            "type": "string",
+            "title": "Fim",
+            "description": "AAAA-MM-DD. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "status": {
+            "$ref": "#/components/schemas/StatusContrato",
+            "default": "Confirmada"
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "espacoId",
+          "modalidade",
+          "inicio"
+        ],
+        "title": "ContratoSaida",
+        "examples": [
+          {
+            "campanha": "",
+            "cliente": "Dra. Ana Exemplo",
+            "espacoId": "e1",
+            "fim": "",
+            "inicio": "2026-11-01",
+            "modalidade": "Turno",
+            "obs": "",
+            "preco": 120,
+            "profissionalId": "p1",
+            "quantidade": 8,
+            "status": "Confirmada"
+          }
+        ]
+      },
+      "CustoFixo": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "examples": [
+              "Aluguel"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "R$ por mês.",
+            "default": 0,
+            "examples": [
+              6500
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "descricao"
+        ],
+        "title": "CustoFixo",
+        "description": "Custo fixo mensal da casa (aluguel, energia, recepção...)."
+      },
+      "CustoFixoSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "examples": [
+              "Aluguel"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "R$ por mês.",
+            "default": 0,
+            "examples": [
+              6500
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descricao"
+        ],
+        "title": "CustoFixoSaida"
+      },
+      "Custos": {
+        "properties": {
+          "fixos": {
+            "items": {
+              "$ref": "#/components/schemas/CustoFixo"
+            },
+            "type": "array",
+            "title": "Fixos",
+            "default": []
+          },
+          "impostos": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Impostos",
+            "description": "Fração da receita (0,06 = 6%).",
+            "default": 0
+          },
+          "comissoes": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Comissoes",
+            "description": "Fração da receita (0,05 = 5%).",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "Custos",
+        "description": "Custos fixos da casa e percentuais sobre a receita.",
+        "examples": [
+          {
+            "comissoes": 0.05,
+            "fixos": [
+              {
+                "descricao": "Aluguel",
+                "id": "cf1",
+                "valor": 6500
+              }
+            ],
+            "impostos": 0.06
+          }
+        ]
+      },
+      "CustosSaida": {
+        "properties": {
+          "fixos": {
+            "items": {
+              "$ref": "#/components/schemas/CustoFixoSaida"
+            },
+            "type": "array",
+            "title": "Fixos",
+            "default": []
+          },
+          "impostos": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Impostos",
+            "description": "Fração da receita (0,06 = 6%).",
+            "default": 0
+          },
+          "comissoes": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Comissoes",
+            "description": "Fração da receita (0,05 = 5%).",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "CustosSaida",
+        "examples": [
+          {
+            "comissoes": 0.05,
+            "fixos": [
+              {
+                "descricao": "Aluguel",
+                "id": "cf1",
+                "valor": 6500
+              }
+            ],
+            "impostos": 0.06
+          }
+        ]
+      },
+      "Despesa": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "examples": [
+              "Manutenção da piscina"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "R$ por mês.",
+            "default": 0,
+            "examples": [
+              350
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "descricao"
+        ],
+        "title": "Despesa",
+        "description": "Despesa própria de um espaço (centro de custo), por mês."
+      },
+      "DespesaSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "examples": [
+              "Manutenção da piscina"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "R$ por mês.",
+            "default": 0,
+            "examples": [
+              350
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "descricao"
+        ],
+        "title": "DespesaSaida"
+      },
+      "Documento": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta",
+            "default": {
+              "clinica": "Santé Consultórios",
+              "razaoSocial": "",
+              "endereco": "",
+              "telefone": "",
+              "whatsapp": "",
+              "site": "",
+              "instagram": ""
+            }
+          },
+          "metas": {
+            "$ref": "#/components/schemas/Metas",
+            "default": {
+              "ocupacaoAlvo": 0.6
+            }
+          },
+          "turnos": {
+            "$ref": "#/components/schemas/Agenda",
+            "description": "Turnos da Santé."
+          },
+          "espacos": {
+            "items": {
+              "$ref": "#/components/schemas/Espaco"
+            },
+            "type": "array",
+            "title": "Espacos",
+            "default": []
+          },
+          "custos": {
+            "$ref": "#/components/schemas/Custos",
+            "default": {
+              "fixos": [],
+              "impostos": 0,
+              "comissoes": 0
+            }
+          },
+          "campanhas": {
+            "items": {
+              "$ref": "#/components/schemas/Campanha"
+            },
+            "type": "array",
+            "title": "Campanhas",
+            "default": []
+          },
+          "contratos": {
+            "items": {
+              "$ref": "#/components/schemas/Contrato"
+            },
+            "type": "array",
+            "title": "Contratos",
+            "default": []
+          },
+          "agendamentos": {
+            "items": {
+              "$ref": "#/components/schemas/Agendamento"
+            },
+            "type": "array",
+            "title": "Agendamentos",
+            "default": []
+          },
+          "profissionais": {
+            "items": {
+              "$ref": "#/components/schemas/Profissional"
+            },
+            "type": "array",
+            "title": "Profissionais",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "turnos"
+        ],
+        "title": "Documento",
+        "description": "O sistema inteiro, no formato do arquivo `public/data/sante.json` do front."
+      },
+      "DocumentoSaida": {
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/Meta",
+            "default": {
+              "clinica": "Santé Consultórios",
+              "razaoSocial": "",
+              "endereco": "",
+              "telefone": "",
+              "whatsapp": "",
+              "site": "",
+              "instagram": ""
+            }
+          },
+          "metas": {
+            "$ref": "#/components/schemas/Metas",
+            "default": {
+              "ocupacaoAlvo": 0.6
+            }
+          },
+          "turnos": {
+            "$ref": "#/components/schemas/Agenda",
+            "description": "Turnos da Santé."
+          },
+          "espacos": {
+            "items": {
+              "$ref": "#/components/schemas/EspacoSaida"
+            },
+            "type": "array",
+            "title": "Espacos",
+            "default": []
+          },
+          "custos": {
+            "$ref": "#/components/schemas/CustosSaida",
+            "default": {
+              "fixos": [],
+              "impostos": 0,
+              "comissoes": 0
+            }
+          },
+          "campanhas": {
+            "items": {
+              "$ref": "#/components/schemas/CampanhaSaida"
+            },
+            "type": "array",
+            "title": "Campanhas",
+            "default": []
+          },
+          "contratos": {
+            "items": {
+              "$ref": "#/components/schemas/ContratoSaida"
+            },
+            "type": "array",
+            "title": "Contratos",
+            "default": []
+          },
+          "agendamentos": {
+            "items": {
+              "$ref": "#/components/schemas/AgendamentoSaida"
+            },
+            "type": "array",
+            "title": "Agendamentos",
+            "default": []
+          },
+          "profissionais": {
+            "items": {
+              "$ref": "#/components/schemas/ProfissionalSaida"
+            },
+            "type": "array",
+            "title": "Profissionais",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "turnos"
+        ],
+        "title": "DocumentoSaida"
+      },
+      "Erro": {
+        "properties": {
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "description": "O que deu errado.",
+            "examples": [
+              "Espaço e9 não encontrado."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "Erro",
+        "description": "Erro devolvido pela API. `detail` é uma frase em português, pronta para mostrar na tela."
+      },
+      "ErroValidacao": {
+        "properties": {
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            ],
+            "title": "Detail",
+            "examples": [
+              "Sala 1 não abre 21:00-23:00 em 2026-11-10.",
+              [
+                {
+                  "loc": [
+                    "body",
+                    "nome"
+                  ],
+                  "msg": "Field required",
+                  "type": "missing"
+                }
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "detail"
+        ],
+        "title": "ErroValidacao",
+        "description": "Dados inválidos. `detail` é uma frase (regra do sistema) ou a lista de campos com erro (validação)."
+      },
+      "Espaco": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Nome",
+            "description": "Nome único do espaço."
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEspaco",
+            "description": "Tipo do espaço.",
+            "default": "Consultório"
+          },
+          "modalidade": {
+            "$ref": "#/components/schemas/Modalidade",
+            "description": "Como é cobrado: por hora, por turno ou por mês. Espaços `Mensal` e `Administrativo` não usam agenda.",
+            "default": "Turno"
+          },
+          "capacidade": {
+            "type": "number",
+            "title": "Capacidade",
+            "description": "Pessoas atendidas ao mesmo tempo.",
+            "default": 0
+          },
+          "preco": {
+            "type": "number",
+            "title": "Preco",
+            "description": "Preço da unidade (hora, turno ou mês), em R$.",
+            "default": 0
+          },
+          "precoTurno": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precoturno",
+            "description": "Preço de um turno, quando diferente de `preco`. Usado na receita não realizada."
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "default": ""
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          },
+          "despesas": {
+            "items": {
+              "$ref": "#/components/schemas/Despesa"
+            },
+            "type": "array",
+            "title": "Despesas",
+            "default": []
+          },
+          "agenda": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Agenda"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Turnos próprios do espaço. `null` = usa os turnos da Santé (`/api/turnos`)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "Espaco",
+        "description": "Sala, piscina ou área que a Santé aluga (centro de custo).",
+        "examples": [
+          {
+            "capacidade": 1,
+            "descricao": "Consultório com maca e pia.",
+            "despesas": [],
+            "id": "e1",
+            "modalidade": "Turno",
+            "nome": "Sala 1",
+            "obs": "",
+            "preco": 120,
+            "tipo": "Consultório"
+          }
+        ]
+      },
+      "EspacoSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Nome",
+            "description": "Nome único do espaço."
+          },
+          "tipo": {
+            "$ref": "#/components/schemas/TipoEspaco",
+            "description": "Tipo do espaço.",
+            "default": "Consultório"
+          },
+          "modalidade": {
+            "$ref": "#/components/schemas/Modalidade",
+            "description": "Como é cobrado: por hora, por turno ou por mês. Espaços `Mensal` e `Administrativo` não usam agenda.",
+            "default": "Turno"
+          },
+          "capacidade": {
+            "type": "number",
+            "title": "Capacidade",
+            "description": "Pessoas atendidas ao mesmo tempo.",
+            "default": 0
+          },
+          "preco": {
+            "type": "number",
+            "title": "Preco",
+            "description": "Preço da unidade (hora, turno ou mês), em R$.",
+            "default": 0
+          },
+          "precoTurno": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precoturno",
+            "description": "Preço de um turno, quando diferente de `preco`. Usado na receita não realizada."
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "default": ""
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          },
+          "despesas": {
+            "items": {
+              "$ref": "#/components/schemas/DespesaSaida"
+            },
+            "type": "array",
+            "title": "Despesas",
+            "default": []
+          },
+          "agenda": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Agenda"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Turnos próprios do espaço. `null` = usa os turnos da Santé (`/api/turnos`)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome"
+        ],
+        "title": "EspacoSaida",
+        "examples": [
+          {
+            "capacidade": 1,
+            "descricao": "Consultório com maca e pia.",
+            "despesas": [],
+            "id": "e1",
+            "modalidade": "Turno",
+            "nome": "Sala 1",
+            "obs": "",
+            "preco": 120,
+            "tipo": "Consultório"
+          }
+        ]
+      },
+      "Esquema": {
+        "properties": {
+          "banco": {
+            "type": "string",
+            "title": "Banco",
+            "examples": [
+              "PostgreSQL 18.1"
+            ]
+          },
+          "geradoEm": {
+            "type": "string",
+            "title": "Geradoem"
+          },
+          "grupos": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Grupos",
+            "description": "Código do grupo → nome para mostrar."
+          },
+          "tabelas": {
+            "items": {
+              "$ref": "#/components/schemas/TabelaEsquema"
+            },
+            "type": "array",
+            "title": "Tabelas"
+          },
+          "relacoes": {
+            "items": {
+              "$ref": "#/components/schemas/Relacao"
+            },
+            "type": "array",
+            "title": "Relacoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "banco",
+          "geradoEm",
+          "grupos",
+          "tabelas",
+          "relacoes"
+        ],
+        "title": "Esquema"
+      },
+      "Excluidos": {
+        "properties": {
+          "excluidos": {
+            "type": "integer",
+            "title": "Excluidos",
+            "description": "Quantos registros foram excluídos.",
+            "examples": [
+              12
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "excluidos"
+        ],
+        "title": "Excluidos"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Horario": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 30,
+            "minLength": 1,
+            "title": "Nome",
+            "description": "Nome do turno."
+          },
+          "ini": {
+            "type": "string",
+            "title": "Ini",
+            "description": "Início, HH:MM.",
+            "examples": [
+              "08:00"
+            ]
+          },
+          "fim": {
+            "type": "string",
+            "title": "Fim",
+            "description": "Fim, HH:MM. Precisa ser depois do início.",
+            "examples": [
+              "12:00"
+            ]
+          },
+          "dias": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Dias",
+            "description": "Dias em que o turno abre: 0 = domingo ... 6 = sábado."
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "ini",
+          "fim",
+          "dias"
+        ],
+        "title": "Horario",
+        "description": "Turno que pode ser locado (ex.: Manhã, 08:00 a 12:00, de segunda a sábado).",
+        "examples": [
+          {
+            "dias": [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ],
+            "fim": "12:00",
+            "ini": "08:00",
+            "nome": "Manhã"
+          }
+        ]
+      },
+      "Importado": {
+        "properties": {
+          "importado": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Importado",
+            "description": "Quantos registros ficaram em cada tabela depois da importação.",
+            "examples": [
+              {
+                "agendamento": 40,
+                "contrato": 12,
+                "espaco": 8,
+                "profissional": 9,
+                "turno": 3
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "importado"
+        ],
+        "title": "Importado"
+      },
+      "Indice": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "definicao": {
+            "type": "string",
+            "title": "Definicao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "definicao"
+        ],
+        "title": "Indice"
+      },
+      "Meta": {
+        "properties": {
+          "clinica": {
+            "type": "string",
+            "title": "Clinica",
+            "default": "Santé Consultórios"
+          },
+          "razaoSocial": {
+            "type": "string",
+            "title": "Razaosocial",
+            "default": ""
+          },
+          "endereco": {
+            "type": "string",
+            "title": "Endereco",
+            "default": ""
+          },
+          "telefone": {
+            "type": "string",
+            "title": "Telefone",
+            "default": ""
+          },
+          "whatsapp": {
+            "type": "string",
+            "title": "Whatsapp",
+            "default": ""
+          },
+          "site": {
+            "type": "string",
+            "title": "Site",
+            "default": ""
+          },
+          "instagram": {
+            "type": "string",
+            "title": "Instagram",
+            "default": ""
+          },
+          "atualizadoEm": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Atualizadoem",
+            "description": "Data da última revisão dos dados."
+          }
+        },
+        "type": "object",
+        "title": "Meta",
+        "description": "Dados da Santé (bloco `meta` do sante.json)."
+      },
+      "Metas": {
+        "properties": {
+          "ocupacaoAlvo": {
+            "type": "number",
+            "maximum": 1,
+            "minimum": 0,
+            "title": "Ocupacaoalvo",
+            "description": "Ocupação desejada (0,6 = 60%).",
+            "default": 0.6
+          }
+        },
+        "type": "object",
+        "title": "Metas"
+      },
+      "Modalidade": {
+        "type": "string",
+        "enum": [
+          "Hora",
+          "Turno",
+          "Mensal"
+        ],
+        "title": "Modalidade"
+      },
+      "Outra": {
+        "properties": {
+          "rotulo": {
+            "type": "string",
+            "title": "Rotulo",
+            "description": "Nome do link (ex.: Doctoralia).",
+            "default": ""
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "Outra"
+      },
+      "Profissional": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Identificador. Na criação, pode ficar vazio: a API gera um."
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Nome",
+            "description": "Nome único (sem diferenciar maiúsculas)."
+          },
+          "profissao": {
+            "type": "string",
+            "title": "Profissao",
+            "default": ""
+          },
+          "especialidade": {
+            "type": "string",
+            "title": "Especialidade",
+            "default": ""
+          },
+          "registro": {
+            "type": "string",
+            "title": "Registro",
+            "description": "Registro no conselho (CRM, CRP, CREFITO...).",
+            "default": ""
+          },
+          "anoFormatura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anoformatura"
+          },
+          "telefone": {
+            "type": "string",
+            "title": "Telefone",
+            "default": ""
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "default": ""
+          },
+          "canal": {
+            "type": "string",
+            "title": "Canal",
+            "description": "Como chegou até a Santé.",
+            "default": ""
+          },
+          "redes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Redes",
+            "description": "Rede → link (instagram, linkedin, facebook, site...).",
+            "default": {}
+          },
+          "outras": {
+            "items": {
+              "$ref": "#/components/schemas/Outra"
+            },
+            "type": "array",
+            "title": "Outras",
+            "description": "Outros links, com rótulo.",
+            "default": []
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "Profissional",
+        "description": "Locatário: profissional de saúde que aluga turnos ou salas. Contém dados pessoais (LGPD).",
+        "examples": [
+          {
+            "anoFormatura": 2024,
+            "canal": "Instagram",
+            "email": "ana@exemplo.com",
+            "especialidade": "TCC",
+            "nome": "Dra. Ana Exemplo",
+            "obs": "",
+            "outras": [],
+            "profissao": "Psicóloga",
+            "redes": {
+              "instagram": "https://instagram.com/exemplo"
+            },
+            "registro": "CRP 15/0000",
+            "telefone": "(82) 90000-0000"
+          }
+        ]
+      },
+      "ProfissionalSaida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Nome",
+            "description": "Nome único (sem diferenciar maiúsculas)."
+          },
+          "profissao": {
+            "type": "string",
+            "title": "Profissao",
+            "default": ""
+          },
+          "especialidade": {
+            "type": "string",
+            "title": "Especialidade",
+            "default": ""
+          },
+          "registro": {
+            "type": "string",
+            "title": "Registro",
+            "description": "Registro no conselho (CRM, CRP, CREFITO...).",
+            "default": ""
+          },
+          "anoFormatura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Anoformatura",
+            "description": "Ano em que se formou. Texto vazio (\"\") quando não há.",
+            "default": ""
+          },
+          "telefone": {
+            "type": "string",
+            "title": "Telefone",
+            "default": ""
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "default": ""
+          },
+          "canal": {
+            "type": "string",
+            "title": "Canal",
+            "description": "Como chegou até a Santé.",
+            "default": ""
+          },
+          "redes": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Redes",
+            "description": "Rede → link (instagram, linkedin, facebook, site...).",
+            "default": {}
+          },
+          "outras": {
+            "items": {
+              "$ref": "#/components/schemas/Outra"
+            },
+            "type": "array",
+            "title": "Outras",
+            "description": "Outros links, com rótulo.",
+            "default": []
+          },
+          "obs": {
+            "type": "string",
+            "title": "Obs",
+            "default": ""
+          },
+          "criadoEm": {
+            "type": "string",
+            "title": "Criadoem",
+            "description": "Data do cadastro (AAAA-MM-DD).",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome"
+        ],
+        "title": "ProfissionalSaida",
+        "examples": [
+          {
+            "anoFormatura": 2024,
+            "canal": "Instagram",
+            "email": "ana@exemplo.com",
+            "especialidade": "TCC",
+            "nome": "Dra. Ana Exemplo",
+            "obs": "",
+            "outras": [],
+            "profissao": "Psicóloga",
+            "redes": {
+              "instagram": "https://instagram.com/exemplo"
+            },
+            "registro": "CRP 15/0000",
+            "telefone": "(82) 90000-0000"
+          }
+        ]
+      },
+      "Relacao": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome da chave estrangeira no banco."
+          },
+          "de": {
+            "type": "string",
+            "title": "De",
+            "description": "Tabela que referencia."
+          },
+          "colunas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "para": {
+            "type": "string",
+            "title": "Para",
+            "description": "Tabela referenciada."
+          },
+          "refColunas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Refcolunas"
+          },
+          "aoExcluir": {
+            "type": "string",
+            "title": "Aoexcluir",
+            "description": "O que acontece ao excluir a linha referenciada (CASCADE, RESTRICT, SET NULL...)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "de",
+          "colunas",
+          "para",
+          "refColunas",
+          "aoExcluir"
+        ],
+        "title": "Relacao"
+      },
+      "Resultado": {
+        "properties": {
+          "colunas": {
+            "items": {
+              "$ref": "#/components/schemas/Coluna"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "linhas": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Linhas"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade",
+            "description": "Linhas nesta resposta."
+          },
+          "total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total",
+            "description": "Linhas na tabela (com a busca aplicada). Só na navegação por tabela."
+          },
+          "truncado": {
+            "type": "boolean",
+            "title": "Truncado",
+            "description": "Há mais linhas além das que vieram."
+          },
+          "tempoMs": {
+            "type": "number",
+            "title": "Tempoms",
+            "description": "Tempo da consulta, em milissegundos."
+          },
+          "comando": {
+            "type": "string",
+            "title": "Comando",
+            "description": "Primeira palavra do comando (SELECT, WITH...)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "colunas",
+          "linhas",
+          "quantidade",
+          "truncado",
+          "tempoMs",
+          "comando"
+        ],
+        "title": "Resultado",
+        "description": "Resultado de uma consulta: colunas e linhas (cada linha é uma lista, na ordem das colunas).",
+        "examples": [
+          {
+            "colunas": [
+              {
+                "nome": "nome",
+                "tipo": "varchar"
+              },
+              {
+                "nome": "preco",
+                "tipo": "numeric"
+              }
+            ],
+            "comando": "SELECT",
+            "linhas": [
+              [
+                "Sala 1",
+                120
+              ],
+              [
+                "Piscina",
+                90
+              ]
+            ],
+            "quantidade": 2,
+            "tempoMs": 3.2,
+            "truncado": false
+          }
+        ]
+      },
+      "Saude": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "examples": [
+              "ok"
+            ]
+          },
+          "banco": {
+            "type": "string",
+            "title": "Banco",
+            "examples": [
+              "ok"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "banco"
+        ],
+        "title": "Saude"
+      },
+      "StatusAgenda": {
+        "type": "string",
+        "enum": [
+          "Confirmada",
+          "Proposta",
+          "Cancelada"
+        ],
+        "title": "StatusAgenda"
+      },
+      "StatusCampanha": {
+        "type": "string",
+        "enum": [
+          "Planejada",
+          "Ativa",
+          "Pausada",
+          "Concluída"
+        ],
+        "title": "StatusCampanha"
+      },
+      "StatusContrato": {
+        "type": "string",
+        "enum": [
+          "Confirmada",
+          "Proposta",
+          "Base inicial",
+          "Cancelada"
+        ],
+        "title": "StatusContrato"
+      },
+      "TabelaEsquema": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "grupo": {
+            "type": "string",
+            "title": "Grupo",
+            "description": "cadastro, operacao, mercado ou sistema."
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "linhas": {
+            "type": "integer",
+            "title": "Linhas",
+            "description": "Número de linhas agora."
+          },
+          "colunas": {
+            "items": {
+              "$ref": "#/components/schemas/ColunaEsquema"
+            },
+            "type": "array",
+            "title": "Colunas"
+          },
+          "chavePrimaria": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Chaveprimaria"
+          },
+          "unicas": {
+            "items": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Unicas",
+            "description": "Restrições UNIQUE (cada uma, uma lista de colunas)."
+          },
+          "indices": {
+            "items": {
+              "$ref": "#/components/schemas/Indice"
+            },
+            "type": "array",
+            "title": "Indices"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "grupo",
+          "descricao",
+          "linhas",
+          "colunas",
+          "chavePrimaria",
+          "unicas",
+          "indices"
+        ],
+        "title": "TabelaEsquema"
+      },
+      "TipoAgendamento": {
+        "type": "string",
+        "enum": [
+          "locacao",
+          "bloqueio"
+        ],
+        "title": "TipoAgendamento"
+      },
+      "TipoEspaco": {
+        "type": "string",
+        "enum": [
+          "Consultório",
+          "Piscina",
+          "Administrativo",
+          "Sala de procedimentos",
+          "Outro"
+        ],
+        "title": "TipoEspaco"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "documento",
+      "description": "O sistema inteiro num documento só, no formato do `sante.json`. Leitura, backup e importação."
+    },
+    {
+      "name": "clínica",
+      "description": "Dados da Santé (contatos, site, Instagram) e a meta de ocupação."
+    },
+    {
+      "name": "turnos",
+      "description": "Turnos da Santé. Valem para todas as salas que não têm turnos próprios."
+    },
+    {
+      "name": "espaços",
+      "description": "Salas, piscina e áreas (centros de custo), com despesas, turnos próprios e a capacidade do mês."
+    },
+    {
+      "name": "agenda",
+      "description": "Turnos locados e turnos \"Não disponível\", dia a dia. Recusa conflitos e turnos que o espaço não abre."
+    },
+    {
+      "name": "contratos",
+      "description": "Carteira de contratos: locações recorrentes (horas, turnos ou meses por mês)."
+    },
+    {
+      "name": "locatários",
+      "description": "Profissionais de saúde que alugam turnos ou salas. **Contém dados pessoais.**"
+    },
+    {
+      "name": "custos",
+      "description": "Custos fixos mensais e os percentuais de impostos e comissões."
+    },
+    {
+      "name": "campanhas",
+      "description": "Ações comerciais e seus resultados."
+    },
+    {
+      "name": "mercado",
+      "description": "Concorrentes e monitor social: coletas manuais de páginas públicas."
+    },
+    {
+      "name": "base de dados",
+      "description": "Esquema do banco, navegação nas tabelas e consultas SQL **só de leitura**. Tudo roda numa transação read-only com o papel `sante_leitura`, que só tem `SELECT`. Desligue com `BANCO_CONSULTAS=false`."
+    },
+    {
+      "name": "sistema",
+      "description": "Saúde da API."
+    }
+  ]
+}

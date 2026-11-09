@@ -19,7 +19,16 @@ const nav = [
   { to: '/marketing', label: 'Comercial', icon: 'marketing' },
   { to: '/concorrentes', label: 'Análise de mercado', icon: 'users' },
   { to: '/financeiro', label: 'Custos e equilíbrio', icon: 'financeiro' },
-  { to: '/dados', label: 'Base de dados', icon: 'dados' },
+  {
+    to: '/dados',
+    label: 'Base de dados',
+    icon: 'dados',
+    filhos: [
+      { to: '/dados/diagrama', label: 'Diagrama do banco', icon: 'diagrama' },
+      { to: '/dados/consultas', label: 'Tabelas e consultas', icon: 'tabela' },
+    ],
+  },
+  { to: '/documentacao-api', label: 'Documentação da API', icon: 'api' },
 ]
 
 // tema: auto -> claro -> escuro
@@ -67,9 +76,14 @@ const recarregar = () => window.location.reload()
         <span class="brand-txt"><strong>Santé Admin</strong><small>Consultórios · Maceió</small></span>
       </RouterLink>
       <nav class="nav">
-        <RouterLink v-for="n in nav" :key="n.to" :to="n.to" class="nav-item" :class="{ 'router-link-active': route.meta.secao === n.to }">
-          <Icon :name="n.icon" /> <span>{{ n.label }}</span>
-        </RouterLink>
+        <template v-for="n in nav" :key="n.to">
+          <RouterLink :to="n.to" class="nav-item" :class="{ 'router-link-active': route.meta.secao === n.to }">
+            <Icon :name="n.icon" /> <span>{{ n.label }}</span>
+          </RouterLink>
+          <RouterLink v-for="f in n.filhos || []" :key="f.to" :to="f.to" class="nav-item sub">
+            <Icon :name="f.icon" :size="16" /> <span>{{ f.label }}</span>
+          </RouterLink>
+        </template>
       </nav>
       <div class="side-foot">
         <RouterLink v-if="state.modo === 'api'" to="/dados" class="nav-item sync" :class="state.servidor.status" :title="`Servidor: ${state.servidor.url}`">
@@ -165,6 +179,7 @@ const recarregar = () => window.location.reload()
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .nav-item:hover { background: var(--surface-2); color: var(--text); }
+.nav-item.sub { height: 32px; padding-left: 38px; font-size: 13px; }
 .nav-item.router-link-exact-active, .nav-item.router-link-active:not([href='#/']) { background: var(--accent-soft); color: var(--accent-ink); }
 .side-foot { margin-top: auto; display: grid; gap: 2px; border-top: 1px solid var(--border); padding-top: 12px; }
 .side-foot .nav-item span { overflow: hidden; text-overflow: ellipsis; }
@@ -194,6 +209,7 @@ const recarregar = () => window.location.reload()
   .side { position: sticky; z-index: 5; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px; border-right: 0; border-bottom: 1px solid var(--border); }
   .nav { display: flex; order: 3; width: 100%; overflow-x: auto; gap: 4px; scrollbar-width: none; }
   .nav-item { width: auto; flex: none; height: 34px; }
+  .nav-item.sub { height: 34px; padding-left: 10px; font-size: inherit; }
   .side-foot { margin: 0 0 0 auto; border: 0; padding: 0; display: flex; }
   .side-foot .nav-item span { display: none; }
   .main { padding: 16px; }

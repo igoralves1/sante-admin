@@ -26,7 +26,10 @@ e suas fontes estão em [`docs/REFERENCIAS.md`](docs/REFERENCIAS.md).
 | **Monitor social** (`#/marketing/social`) | Busca por palavra, @perfil ou #hashtag nos posts da Santé e dos concorrentes no Instagram, Facebook e YouTube, no estilo Social Bearing: linha do tempo, engajamento por perfil, temas, hashtags, palavras, dia da semana e tom |
 | **Análise de mercado** (Concorrentes) | Mapa dos concorrentes em Maceió: preços, Instagram, Google Maps, sites (Lighthouse), Similarweb, análise SWOT e ações sugeridas |
 | **Custos e equilíbrio** | Custos gerais, impostos, comissões e ponto de equilíbrio (inclui as despesas dos espaços) |
-| **Base de dados** | Importar/exportar Excel e `sante.json`; instruções de publicação |
+| **Base de dados** | Importar/exportar Excel e `sante.json`; instruções de publicação; conexão com o servidor |
+| **Diagrama do banco** (`#/dados/diagrama`) | Diagrama das tabelas do PostgreSQL e das chaves estrangeiras, por grupo (cadastro, operação, mercado). Zoom, busca, modo "só chaves", detalhes de cada tabela (colunas, tipos, índices, relações) e exportação em Mermaid |
+| **Tabelas e consultas** (`#/dados/consultas`) | Ferramenta de consultas: navegar nas linhas de cada tabela (ordem, busca, páginas, CSV) e rodar SQL só de leitura, com exemplos e histórico. Precisa do servidor |
+| **Documentação da API** (`#/documentacao-api`) | Swagger UI com todas as rotas do sante-BE, exemplos, respostas e erros. Com o servidor conectado, dá para testar as rotas (**Try it out**) |
 
 ## Como os dados são atualizados
 
@@ -50,6 +53,11 @@ O backend [sante-BE](https://github.com/igoralves1/sante-BE) (FastAPI + PostgreS
   - se a API recusar algo (por exemplo, um turno já ocupado), aparece um aviso e a tela volta ao que está gravado.
 - **Se o servidor não responder:** o site usa o `sante.json` e a cópia do navegador, como antes, e mostra um aviso.
 - **No GitHub Pages:** o build publicado não define `VITE_API_URL`, então o link público continua funcionando sem servidor.
+- **Diagrama e documentação sem servidor:** essas duas páginas usam as cópias `public/data/esquema.json` e `public/data/openapi.json` (só a estrutura, sem dados). Depois de mudar o banco ou a API, atualize as cópias com a API rodando:
+
+  ```bash
+  npm run docs:api
+  ```
 
 ## Cálculos
 

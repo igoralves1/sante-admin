@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docs:api": "node scripts/atualizar-docs-api.mjs"
   },
   "dependencies": {
     "d3": "^7.9.1",
+    "swagger-ui-dist": "^5.34.1",
     "vue": "^3.5.44",
     "vue-router": "^4.6.4",
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"

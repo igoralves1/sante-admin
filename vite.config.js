@@ -5,4 +5,6 @@ import vue from '@vitejs/plugin-vue'
 export default defineConfig({
   plugins: [vue()],
   base: './',
+  // o Swagger UI (~1,5 MB) só é baixado ao abrir a página Documentação da API
+  build: { chunkSizeWarningLimit: 1600 },
 })

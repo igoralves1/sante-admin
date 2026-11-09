@@ -18,6 +18,10 @@
   --s-track: #e4ecf7;
   --s-cost: #eb6834;
   --grid: #eceef2;
+  /* grupos do diagrama do banco (sempre com o nome do grupo em texto) */
+  --g-cadastro: #2a78d6;
+  --g-operacao: #eb6834;
+  --g-mercado: #7a5af5;
 
   --good: #1d7f46;
   --good-soft: #e5f4ea;
@@ -49,6 +53,9 @@
     --s-track: #212a37;
   --s-cost: #d95926;
     --grid: #232933;
+    --g-cadastro: #5598e7;
+    --g-operacao: #d95926;
+    --g-mercado: #9d86f7;
     --good: #5cc98a;
     --good-soft: #15291e;
     --warn: #f0b45b;
@@ -76,6 +83,9 @@
   --s-track: #212a37;
   --s-cost: #d95926;
   --grid: #232933;
+  --g-cadastro: #5598e7;
+  --g-operacao: #d95926;
+  --g-mercado: #9d86f7;
   --good: #5cc98a;
   --good-soft: #15291e;
   --warn: #f0b45b;
