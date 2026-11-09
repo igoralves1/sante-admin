@@ -395,6 +395,87 @@ const porGrupo = computed(() => {
   return d.caixas.map((s) => ({ ...s, tabelas: esquema.value.tabelas.filter((t) => t.grupo === s.grupo) }))
 })
 
+// ---------- popup da lista de tabelas: o que é, para que serve, relações e telas ----------
+const dica = ref(null) // { nome, r: posição do nome na tela }
+const dicaEl = ref(null)
+const dicaPos = ref({})
+let dicaTimer = null
+function mostrarDica(nome, ev) {
+  hover.value = nome
+  clearTimeout(dicaTimer)
+  const r = ev.currentTarget.getBoundingClientRect()
+  // espera um pouco na primeira vez, para o popup não piscar quando o mouse só passa pela lista
+  dicaTimer = setTimeout(() => (dica.value = { nome, r }), dica.value ? 0 : 220)
+}
+function esconderDica() {
+  hover.value = ''
+  clearTimeout(dicaTimer)
+  dica.value = null
+}
+watch(dica, async (d) => {
+  if (!d) return
+  dicaPos.value = { visibility: 'hidden', top: '0px', left: '0px' }
+  await nextTick()
+  const el = dicaEl.value
+  if (!el) return
+  const h = el.offsetHeight
+  const w = el.offsetWidth
+  const borda = painel.value?.getBoundingClientRect().left ?? d.r.left
+  const cabe = (y) => Math.min(Math.max(8, y), window.innerHeight - h - 8)
+  if (borda - w - 12 >= 8) {
+    // ao lado do painel, alinhado ao nome
+    dicaPos.value = { top: `${cabe(d.r.top + d.r.height / 2 - h / 2)}px`, left: `${borda - w - 12}px` }
+  } else {
+    // tela estreita: logo abaixo (ou acima) do nome
+    const baixo = d.r.bottom + 6
+    const top = baixo + h <= window.innerHeight - 8 ? baixo : d.r.top - h - 6
+    dicaPos.value = { top: `${cabe(top)}px`, left: `${Math.max(8, Math.min(d.r.left, window.innerWidth - w - 8))}px` }
+  }
+})
+const dicaTabela = computed(() => (dica.value && esquema.value?.tabelas.find((t) => t.nome === dica.value.nome)) || null)
+
+const EXCLUIR_PAI = {
+  CASCADE: (p) => `Se a linha de ${p} for excluída, a linha daqui some junto.`,
+  'SET NULL': (p) => `Se a linha de ${p} for excluída, a coluna fica vazia.`,
+}
+const EXCLUIR_FILHO = {
+  CASCADE: (f) => `Excluir uma linha daqui apaga as de ${f} junto.`,
+  'SET NULL': (f) => `Excluir uma linha daqui deixa a coluna vazia em ${f}.`,
+}
+const dicaRelacoes = computed(() => {
+  const t = dicaTabela.value
+  if (!t) return []
+  const rel = esquema.value.relacoes
+  const de = rel.filter((r) => r.de === t.nome)
+  const para = rel.filter((r) => r.para === t.nome)
+  const out = []
+  // tabela que só tem as duas chaves estrangeiras (ex.: campanha_espaco)
+  const ligacao = de.length === 2 && t.colunas.every((c) => c.fk)
+  if (ligacao) {
+    out.push({ tipo: 'N:N', antes: 'Tabela de ligação: cada linha junta', tabelas: de.map((r) => r.para), depois: '(muitos para muitos).' })
+  }
+  for (const r of de) {
+    if (ligacao) continue
+    out.push({
+      tipo: 'N:1',
+      antes: 'Cada linha pertence a uma de',
+      tabelas: [r.para],
+      depois: `pela coluna ${r.colunas.join(', ')}.`,
+      obs: (EXCLUIR_PAI[r.aoExcluir] || ((p) => `Não dá para excluir uma linha de ${p} enquanto ela for usada aqui.`))(r.para),
+    })
+  }
+  for (const r of para) {
+    out.push({
+      tipo: '1:N',
+      antes: 'Cada linha pode ter várias em',
+      tabelas: [r.de],
+      depois: `(coluna ${r.colunas.join(', ')}).`,
+      obs: (EXCLUIR_FILHO[r.aoExcluir] || ((f) => `Não dá para excluir uma linha daqui enquanto ${f} a usar.`))(r.de),
+    })
+  }
+  return out
+})
+
 const TIPOS = [
   [/^timestamp with time zone$/, 'timestamptz'],
   [/^timestamp without time zone$/, 'timestamp'],
@@ -517,7 +598,47 @@ function mermaid() {
         <button class="btn sm" type="button" @click="carregar">Tentar de novo</button>
       </div>
 
-      <aside v-if="esquema" ref="painel" class="painel" aria-live="polite">
+      <Teleport to="body">
+        <div v-if="dicaTabela" id="dica-tabela" ref="dicaEl" class="dica" role="tooltip" :style="dicaPos">
+          <div class="dica-head">
+            <span class="grupo-tag" :class="`g-${dicaTabela.grupo}`">{{ esquema.grupos[dicaTabela.grupo] || dicaTabela.grupo }}</span>
+            <span class="muted small tnum">{{ n(dicaTabela.linhas) }} {{ dicaTabela.linhas === 1 ? 'linha' : 'linhas' }} · {{ dicaTabela.colunas.length }} colunas</span>
+          </div>
+          <strong class="mono dica-nome">{{ dicaTabela.nome }}</strong>
+          <p v-if="dicaTabela.descricao" class="desc">{{ dicaTabela.descricao }}</p>
+
+          <template v-if="dicaTabela.usos?.length">
+            <h4>Para que serve</h4>
+            <ul class="usos">
+              <li v-for="u in dicaTabela.usos" :key="u">{{ u }}</li>
+            </ul>
+          </template>
+
+          <h4>Relações</h4>
+          <ul v-if="dicaRelacoes.length" class="rels">
+            <li v-for="(r, i) in dicaRelacoes" :key="i">
+              <span class="card">{{ r.tipo }}</span>
+              <span>
+                {{ r.antes }}
+                <template v-for="(tb, j) in r.tabelas" :key="tb"><template v-if="j"> e </template><span class="mono forte">{{ tb }}</span></template>
+                {{ r.depois }}
+                <span v-if="r.obs" class="muted block">{{ r.obs }}</span>
+              </span>
+            </li>
+          </ul>
+          <p v-else class="muted small">Não se liga a outras tabelas.</p>
+
+          <template v-if="dicaTabela.telas?.length">
+            <h4>Usada nas telas</h4>
+            <div class="telas">
+              <span v-for="tl in dicaTabela.telas" :key="tl" class="chip plain">{{ tl }}</span>
+            </div>
+          </template>
+          <p class="muted small dica-pe">Clique para ver colunas, chaves e índices.</p>
+        </div>
+      </Teleport>
+
+      <aside v-if="esquema" ref="painel" class="painel" aria-live="polite" @scroll="esconderDica">
         <template v-if="tabela">
           <div class="painel-head">
             <div>
@@ -594,7 +715,12 @@ function mermaid() {
             <span class="grupo-tag" :class="`g-${g.grupo}`">{{ g.nome }}</span>
             <ul>
               <li v-for="t in g.tabelas" :key="t.nome">
-                <button class="lnk mono" type="button" @click="focar(t.nome)" @mouseenter="hover = t.nome" @mouseleave="hover = ''">{{ t.nome }}</button>
+                <button
+                  class="lnk mono" type="button" :aria-describedby="dica?.nome === t.nome ? 'dica-tabela' : undefined"
+                  @click="esconderDica(); focar(t.nome)"
+                  @mouseenter="mostrarDica(t.nome, $event)" @mouseleave="esconderDica"
+                  @focus="mostrarDica(t.nome, $event)" @blur="esconderDica"
+                >{{ t.nome }}</button>
                 <span v-if="t.linhas != null" class="muted small tnum">{{ n(t.linhas) }}</span>
               </li>
             </ul>
@@ -694,6 +820,28 @@ span.col-tag.fk { color: var(--accent-ink); background: var(--accent-soft); }
 .lista-grupo li { display: flex; justify-content: space-between; gap: 8px; }
 .legenda li { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
 .leg { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+
+.dica {
+  position: fixed; z-index: 50; width: min(360px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow: hidden;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.22); padding: 14px 16px; display: grid; gap: 6px; pointer-events: none;
+  font-size: 13px; line-height: 1.45;
+}
+.dica p { margin: 0; }
+.dica-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.dica-nome { font-size: 14px; }
+.dica h4 { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 6px 0 0; }
+.usos { margin: 0; padding-left: 18px; display: grid; gap: 3px; color: var(--text-2); }
+.rels { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; color: var(--text-2); }
+.rels li { display: flex; gap: 8px; align-items: baseline; }
+.rels .card {
+  flex: none; font-size: 10px; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  padding: 1px 5px; border-radius: 4px; background: var(--accent-soft); color: var(--accent-ink);
+}
+.rels .block { font-size: 12px; }
+.forte { color: var(--text); font-weight: 600; }
+.telas { display: flex; flex-wrap: wrap; gap: 4px; }
+.dica-pe { margin-top: 4px; }
 
 @media (max-width: 900px) {
   .tela { height: auto; overflow: visible; }
