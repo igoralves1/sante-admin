@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import Icon from '../components/Icon.vue'
-import { state, baixar, descartarLocal, exportarJSON, substituirDados } from '../lib/store'
+import { state, baixar, descartarLocal, enviarCopiaLocal, exportarJSON, lerSalvo, substituirDados } from '../lib/store'
+import { definirUrlApi, urlPadrao } from '../lib/api'
 
 const msg = ref(null)
 const xlsxInput = ref(null)
@@ -15,7 +16,7 @@ async function importarPlanilha(ev) {
     const { importarXLSX } = await import('../lib/excel')
     const novo = await importarXLSX(f, state.data)
     if (!confirm(`Importar ${novo.espacos.length} espaços e ${novo.contratos.length} contratos de “${f.name}”? Isso substitui espaços, contratos e custos atuais (campanhas são mantidas).`)) return
-    substituirDados(novo)
+    await substituirDados(novo)
     msg.value = { ok: true, t: `Planilha importada: ${novo.espacos.length} espaços, ${novo.contratos.length} contratos.` }
   } catch (e) {
     msg.value = { ok: false, t: `Não foi possível ler a planilha: ${e.message}` }
@@ -36,16 +37,45 @@ async function importarJSON(ev) {
     d.custos ||= { fixos: [], impostos: 0, comissoes: 0 }
     d.metas ||= { ocupacaoAlvo: 0.6 }
     d.meta ||= {}
-    substituirDados(d)
-    msg.value = { ok: true, t: `Arquivo ${f.name} carregado.` }
+    await substituirDados(d)
+    msg.value = { ok: true, t: state.modo === 'api' ? `Arquivo ${f.name} gravado no servidor.` : `Arquivo ${f.name} carregado.` }
   } catch (e) {
     msg.value = { ok: false, t: `Arquivo inválido: ${e.message}` }
   }
 }
-function descartar() {
-  if (confirm('Descartar todas as alterações deste navegador e voltar à versão publicada?')) {
-    descartarLocal()
-    msg.value = { ok: true, t: 'Voltou para a versão publicada.' }
+async function descartar() {
+  const pergunta = state.modo === 'api'
+    ? 'Substituir TUDO o que está no servidor pela versão publicada do sante.json? Locatários e agendamentos que não estão no arquivo serão apagados.'
+    : 'Descartar todas as alterações deste navegador e voltar à versão publicada?'
+  if (!confirm(pergunta)) return
+  try {
+    await descartarLocal()
+    msg.value = { ok: true, t: state.modo === 'api' ? 'O servidor voltou para a versão publicada.' : 'Voltou para a versão publicada.' }
+  } catch (e) {
+    msg.value = { ok: false, t: `Não foi possível restaurar: ${e.message}` }
+  }
+}
+
+// ---------- servidor ----------
+const urlEdit = ref(state.servidor.url || urlPadrao() || 'http://localhost:8000')
+const temCopiaLocal = computed(() => state.modo === 'api' && !!lerSalvo())
+function conectar() {
+  const u = urlEdit.value.trim().replace(/\/+$/, '')
+  if (!/^https?:\/\//.test(u)) return (msg.value = { ok: false, t: 'Informe o endereço completo, por exemplo http://localhost:8000.' })
+  definirUrlApi(u === urlPadrao() ? null : u)
+  window.location.reload()
+}
+function desconectar() {
+  definirUrlApi(urlPadrao() ? '' : null)
+  window.location.reload()
+}
+async function enviarCopia() {
+  if (!confirm('Substituir TUDO o que está no servidor pela cópia guardada neste navegador?')) return
+  try {
+    await enviarCopiaLocal()
+    msg.value = { ok: true, t: 'A cópia deste navegador foi gravada no servidor.' }
+  } catch (e) {
+    msg.value = { ok: false, t: `Não foi possível enviar: ${e.message}` }
   }
 }
 </script>
@@ -55,6 +85,35 @@ function descartar() {
     <div v-if="msg" class="msg" :class="msg.ok ? 'ok' : 'bad'">
       <Icon :name="msg.ok ? 'check' : 'alert'" :size="16" /> {{ msg.t }}
     </div>
+
+    <section class="card servidor">
+      <div class="card-head">
+        <div>
+          <h2>Servidor</h2>
+          <p v-if="state.modo === 'api'">
+            <span class="chip good">Conectado</span>
+            Os dados vêm do banco em <code>{{ state.servidor.url }}</code> e cada alteração é gravada lá na hora.
+            Quem abrir o sistema conectado ao mesmo servidor vê as mesmas informações (a tela se atualiza a cada 20 segundos).
+          </p>
+          <p v-else-if="state.servidor.status === 'offline'">
+            <span class="chip warn">Sem conexão</span>
+            <code>{{ state.servidor.url }}</code> não respondeu<template v-if="state.servidor.erro"> ({{ state.servidor.erro }})</template>. Confira se o backend está rodando
+            (<code>docker compose up -d</code> na pasta sante-BE).
+          </p>
+          <p v-else>
+            <span class="chip">Sem servidor</span>
+            Os dados vêm do <code>sante.json</code> publicado e as alterações ficam só neste navegador.
+            Conecte ao backend (repositório sante-BE) para gravar num banco compartilhado.
+          </p>
+        </div>
+      </div>
+      <div class="toolbar">
+        <label class="field url">Endereço da API<input v-model="urlEdit" placeholder="http://localhost:8000" @keyup.enter="conectar" /></label>
+        <button class="btn primary" type="button" @click="conectar">{{ state.modo === 'api' ? 'Trocar servidor' : 'Conectar' }}</button>
+        <button v-if="state.servidor.url" class="btn ghost" type="button" @click="desconectar">Usar sem servidor</button>
+        <button v-if="temCopiaLocal" class="btn" type="button" @click="enviarCopia"><Icon name="upload" :size="16" /> Enviar cópia deste navegador</button>
+      </div>
+    </section>
 
     <section class="grid cols-2">
       <div class="card">
@@ -80,7 +139,8 @@ function descartar() {
         <div class="toolbar">
           <button class="btn primary" type="button" @click="exportarJSON"><Icon name="download" :size="16" /> Exportar sante.json</button>
           <button class="btn" type="button" @click="jsonInput.click()"><Icon name="upload" :size="16" /> Carregar .json</button>
-          <button class="btn ghost danger" type="button" :disabled="!state.local" @click="descartar">Descartar alterações locais</button>
+          <button v-if="state.modo === 'api'" class="btn ghost danger" type="button" :disabled="!state.publicado" @click="descartar">Restaurar o publicado no servidor</button>
+          <button v-else class="btn ghost danger" type="button" :disabled="!state.local" @click="descartar">Descartar alterações locais</button>
           <input ref="jsonInput" type="file" accept=".json,application/json" hidden @change="importarJSON" />
         </div>
       </div>
@@ -107,6 +167,11 @@ function descartar() {
           <strong>Prefere a planilha?</strong> Continue lançando no Excel e use <em>Importar .xlsx</em>;
           depois exporte o JSON e publique como acima.
         </li>
+        <li>
+          <strong>Com o servidor conectado</strong> (cartão Servidor, acima), nada disso é preciso: cada
+          alteração vai direto para o banco e aparece para todos que usam o mesmo servidor.
+          Exporte o <code>sante.json</code> só quando quiser atualizar o link público.
+        </li>
       </ol>
     </section>
 
@@ -129,6 +194,9 @@ function descartar() {
 </template>
 
 <style scoped>
+.servidor .toolbar { align-items: end; }
+.servidor .url { flex: 1 1 280px; max-width: 420px; }
+.servidor p .chip { margin-right: 6px; }
 .msg { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; font-size: 13px; }
 .msg.ok { background: var(--good-soft); color: var(--good); }
 .msg.bad { background: var(--bad-soft); color: var(--bad); }

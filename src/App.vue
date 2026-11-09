@@ -48,6 +48,15 @@ const temaIcone = computed(() => ({ auto: 'auto', light: 'sun', dark: 'moon' })[
 const temaLabel = computed(() => ({ auto: 'Tema automático', light: 'Tema claro', dark: 'Tema escuro' })[tema.value])
 
 const instagram = computed(() => state.data?.meta?.instagram)
+const hora = (iso) => new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+const statusServidor = computed(() => {
+  const s = state.servidor
+  if (s.status === 'salvando') return 'Salvando no servidor…'
+  if (s.status === 'erro') return 'Erro ao salvar'
+  if (s.status === 'offline') return 'Servidor sem conexão'
+  return s.salvoEm ? `Salvo no servidor às ${hora(s.salvoEm)}` : 'Conectado ao servidor'
+})
+const recarregar = () => window.location.reload()
 </script>
 
 <template>
@@ -63,6 +72,9 @@ const instagram = computed(() => state.data?.meta?.instagram)
         </RouterLink>
       </nav>
       <div class="side-foot">
+        <RouterLink v-if="state.modo === 'api'" to="/dados" class="nav-item sync" :class="state.servidor.status" :title="`Servidor: ${state.servidor.url}`">
+          <Icon name="dados" /> <span>{{ statusServidor }}</span>
+        </RouterLink>
         <a v-if="instagram" :href="instagram" target="_blank" rel="noopener" class="nav-item">
           <Icon name="insta" /> <span>@santeconsultoriosmaceio</span>
         </a>
@@ -85,7 +97,30 @@ const instagram = computed(() => state.data?.meta?.instagram)
         </div>
       </header>
 
-      <div v-if="state.local" class="banner">
+      <div v-if="state.modo === 'local' && state.servidor.status === 'offline'" class="banner">
+        <Icon name="alert" />
+        <span>
+          O servidor <strong>{{ state.servidor.url }}</strong> não respondeu<template v-if="state.servidor.erro"> ({{ state.servidor.erro }})</template>.
+          Usando os dados deste navegador.
+        </span>
+        <span class="toolbar">
+          <button class="btn sm" type="button" @click="recarregar">Tentar de novo</button>
+          <RouterLink to="/dados" class="btn sm ghost">Configurar servidor</RouterLink>
+        </span>
+      </div>
+      <div v-if="state.modo === 'api' && state.servidor.status === 'erro'" class="banner bad">
+        <Icon name="alert" />
+        <span>
+          <strong>Não foi salvo:</strong> {{ state.servidor.erro }}
+          A tela voltou para o que está gravado no servidor.
+        </span>
+        <span class="toolbar"><button class="btn sm ghost" type="button" @click="state.servidor.status = 'ok'">Fechar</button></span>
+      </div>
+      <div v-if="state.modo === 'api' && state.servidor.status === 'offline'" class="banner">
+        <Icon name="alert" />
+        <span>Sem conexão com o servidor. Alterações feitas agora podem não ser salvas.</span>
+      </div>
+      <div v-if="state.modo === 'local' && state.local" class="banner">
         <Icon name="alert" />
         <span>
           Há alterações salvas <strong>só neste navegador</strong>.
@@ -145,6 +180,11 @@ const instagram = computed(() => state.data?.meta?.instagram)
   background: var(--warn-soft); color: var(--text); border-radius: 12px; padding: 10px 14px; font-size: 13px;
 }
 .banner > svg { color: var(--warn); flex: none; }
+.banner.bad { background: var(--bad-soft); }
+.banner.bad > svg { color: var(--bad); }
+.sync > svg { color: var(--good); }
+.sync.salvando > svg, .sync.offline > svg { color: var(--warn); }
+.sync.erro > svg { color: var(--bad); }
 .banner > span:first-of-type { flex: 1 1 320px; }
 .foot { padding-top: 8px; }
 .loading { display: grid; place-items: center; min-height: 100vh; color: var(--muted); }

@@ -38,9 +38,22 @@ O site é estático. Todo mundo que abre o link vê o arquivo
 3. No GitHub, substitua `public/data/sante.json` pelo arquivo exportado e faça o commit.
 4. O GitHub Actions publica a nova versão em cerca de 1 minuto.
 
+### Com servidor (sante-BE)
+
+O backend [sante-BE](https://github.com/igoralves1/sante-BE) (FastAPI + PostgreSQL) guarda os dados num banco compartilhado.
+
+- **Como conectar:** o `npm run dev` já conecta a `http://localhost:8000` (arquivo `.env.development`). Em qualquer versão do site também dá para conectar em **Base de dados → Servidor**.
+- **Como funciona conectado:**
+  - os dados vêm de `GET /api/dados`;
+  - cada alteração é enviada à API na hora, só o que mudou (`src/lib/api.js`);
+  - a tela busca mudanças de outras pessoas a cada 20 segundos e ao voltar para a aba;
+  - se a API recusar algo (por exemplo, um turno já ocupado), aparece um aviso e a tela volta ao que está gravado.
+- **Se o servidor não responder:** o site usa o `sante.json` e a cópia do navegador, como antes, e mostra um aviso.
+- **No GitHub Pages:** o build publicado não define `VITE_API_URL`, então o link público continua funcionando sem servidor.
+
 ## Cálculos
 
-- **Capacidade mensal**: 4,33 semanas por mês (ex.: 173,2 horas, 50 turnos, 51,96 turnos na piscina, 16 posições no administrativo).
+- **Capacidade mensal**: turnos que abrem em cada dia do mês na agenda (ex.: 71 turnos em novembro de 2026), menos os marcados como "Não disponível". Salas por hora contam horas; salas mensais e o administrativo usam a capacidade cadastrada.
 - **Contrato**: quantidade por mês × preço unitário = valor mensal. Duração = meses entre início e término (inclusive). Valor total = valor mensal × duração. Sem término, o contrato segue vigente e fica fora da soma de valor total.
 - **Ocupação do espaço** = unidades dos contratos vigentes no mês ÷ capacidade (cancelados não contam).
 - **Ocupação geral** = receita ocupada ÷ receita potencial. Horas, turnos e contratos são unidades diferentes; a ponderação pela receita é a mesma usada no “Potencial Santé”.
