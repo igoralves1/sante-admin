@@ -7,6 +7,7 @@ import { state, espacoPorId } from '../lib/store'
 import { STATUS_CAMPANHA, resumoMes, resultadoCampanha } from '../lib/calc'
 import { brl, brl0, clone, dataBR, num, pct, uid } from '../lib/format'
 import { CENARIOS, simular, adicionarAoPlano } from '../lib/estrategia'
+import { INICIO as INICIO12, capacidadeSalas, simularPlano } from '../lib/campanha'
 
 const r = computed(() => resumoMes(state.data, state.mes))
 const meta = computed(() => state.data.metas?.ocupacaoAlvo || 0)
@@ -44,6 +45,7 @@ const tom = { Ativa: 'good', Planejada: 'info', Pausada: 'warn', 'Concluída': '
 
 // ---------- estratégia Primeiro Consultório ----------
 const estr = simular(CENARIOS.recomendado)
+const plano12 = computed(() => simularPlano(capacidadeSalas(resumoMes(state.data, INICIO12))))
 const avisoPlano = ref('')
 function addPlano() {
   const n = adicionarAoPlano(state.data, CENARIOS.recomendado)
@@ -110,6 +112,36 @@ function funil(c) {
         </p>
       </div>
       <RouterLink to="/marketing/social" class="btn primary">Abrir o monitor social</RouterLink>
+    </section>
+
+    <section class="card estr">
+      <div class="estr-main">
+        <span class="chip info"><Icon name="target" :size="13" /> Plano de campanha</span>
+        <h2>12 meses para encher as salas: todos os profissionais de saúde</h2>
+        <p class="muted">
+          Público amplo (psicólogos, médicos, nutricionistas, fisioterapeutas, terapeutas infantis e coworking), estratégia
+          e métricas de cada rede com destaque para Instagram e Facebook, canais tradicionais e metas mês a mês para
+          comparar com o realizado. Baseado no Social Media Guide e em dados atuais do Brasil e de Maceió.
+        </p>
+        <ul class="estr-list small">
+          <li><strong>Público:</strong> 8 segmentos, com dados do CFP, CFM e IBGE</li>
+          <li><strong>Redes:</strong> 11 redes com o que diz o guia, o Brasil de hoje, estratégia, formatos e metas</li>
+          <li><strong>Outros canais:</strong> indicação, eventos, faculdades, conselhos, folhetos, elevador, fachada e mais</li>
+        </ul>
+        <div class="toolbar">
+          <RouterLink to="/marketing/campanha" class="btn primary">Ver o plano de campanha</RouterLink>
+          <RouterLink to="/marketing/campanha?aba=metas" class="btn">Metas mês a mês</RouterLink>
+        </div>
+      </div>
+      <dl class="estr-kpis">
+        <div><dt>Investimento em 12 meses</dt><dd class="tnum">{{ brl0(plano12.investTotal) }}</dd></div>
+        <div><dt>Contratos novos</dt><dd class="tnum">≈ {{ Math.round(plano12.novosTotal) }}</dd></div>
+        <div><dt>Ocupação no 12º mês</dt><dd class="tnum">{{ Math.round(plano12.fim.ocupacao * 100) }}%</dd></div>
+        <div><dt>Receita nova no 12º mês</dt><dd class="tnum">{{ brl0(plano12.fim.receita) }}</dd></div>
+        <div><dt>CAC médio</dt><dd class="tnum">{{ brl0(plano12.cacMedio) }}</dd></div>
+        <div><dt>Se paga em</dt><dd class="tnum">{{ plano12.equilibrio }}º mês</dd></div>
+        <p class="small muted">Caminho esperado. Detalhes e premissas na aba Metas mês a mês.</p>
+      </dl>
     </section>
 
     <section class="card estr">
