@@ -19,6 +19,7 @@ const router = createRouter({
     { path: '/estatisticas', component: () => import('./views/Estatisticas.vue'), meta: { title: 'Projeções e cenários', mes: true } },
     { path: '/marketing', component: () => import('./views/Marketing.vue'), meta: { title: 'Comercial', mes: true } },
     { path: '/marketing/social', component: () => import('./views/Social.vue'), meta: { title: 'Monitor social', secao: '/marketing' } },
+    { path: '/marketing/odontologia', component: () => import('./views/Odonto.vue'), meta: { title: 'Estudo: sala de odontologia estética', secao: '/marketing' } },
     { path: '/marketing/campanha', component: () => import('./views/Campanha.vue'), meta: { title: 'Plano de campanha (12 meses)', secao: '/marketing', mes: false } },
     { path: '/marketing/estrategia', component: () => import('./views/Estrategia.vue'), meta: { title: 'Estratégia: recém-formados', secao: '/marketing' } },
     { path: '/concorrentes', component: () => import('./views/Concorrentes.vue'), meta: { title: 'Análise de mercado' } },

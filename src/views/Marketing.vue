@@ -8,6 +8,7 @@ import { STATUS_CAMPANHA, resumoMes, resultadoCampanha } from '../lib/calc'
 import { brl, brl0, clone, dataBR, num, pct, uid } from '../lib/format'
 import { CENARIOS, simular, adicionarAoPlano } from '../lib/estrategia'
 import { INICIO as INICIO12, capacidadeSalas, simularPlano } from '../lib/campanha'
+import { CENARIOS as CEN_ODONTO, simularAluguel } from '../lib/odonto'
 
 const r = computed(() => resumoMes(state.data, state.mes))
 const meta = computed(() => state.data.metas?.ocupacaoAlvo || 0)
@@ -46,6 +47,7 @@ const tom = { Ativa: 'good', Planejada: 'info', Pausada: 'warn', 'Concluída': '
 // ---------- estratégia Primeiro Consultório ----------
 const estr = simular(CENARIOS.recomendado)
 const plano12 = computed(() => simularPlano(capacidadeSalas(resumoMes(state.data, INICIO12))))
+const odonto = simularAluguel(CEN_ODONTO.base)
 const avisoPlano = ref('')
 function addPlano() {
   const n = adicionarAoPlano(state.data, CENARIOS.recomendado)
@@ -112,6 +114,22 @@ function funil(c) {
         </p>
       </div>
       <RouterLink to="/marketing/social" class="btn primary">Abrir o monitor social</RouterLink>
+    </section>
+
+    <section class="card odonto">
+      <div>
+        <span class="chip warn">Em estudo</span>
+        <h2>Sala de odontologia estética: harmonização orofacial e cirurgia Tipo I</h2>
+        <p class="muted">
+          A Santé monta uma sala (cerca de R$ 70 mil) e aluga por turno a dentistas, de 2 a 4 turnos por semana no início.
+          Concorrência em Maceió, SWOT, planejamento, regras do CFO e da Vigilância Sanitária, cenários e simulador de payback.
+        </p>
+      </div>
+      <dl class="odonto-kpis">
+        <div><dt>Payback no cenário base</dt><dd class="tnum">{{ odonto.payback ? `${odonto.payback} meses` : '> 36 meses' }}</dd></div>
+        <div><dt>Resultado no 12º mês</dt><dd class="tnum">{{ brl0(odonto.resultadoMes12) }}</dd></div>
+      </dl>
+      <RouterLink to="/marketing/odontologia" class="btn primary">Ver o estudo</RouterLink>
     </section>
 
     <section class="card estr">
@@ -308,6 +326,14 @@ function funil(c) {
 .social h2 { font-size: 17px; }
 .social p { margin: 0; line-height: 1.55; }
 .social .chip { justify-self: start; }
+.odonto { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 20px; align-items: center; border-color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn); }
+.odonto h2 { font-size: 17px; margin: 8px 0 4px; }
+.odonto p { margin: 0; line-height: 1.55; max-width: 760px; }
+.odonto-kpis { margin: 0; display: flex; gap: 8px; }
+.odonto-kpis div { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.odonto-kpis dt { font-size: 12px; color: var(--muted); }
+.odonto-kpis dd { margin: 0; font-weight: 600; font-size: 16px; }
+@media (max-width: 900px) { .odonto { grid-template-columns: minmax(0, 1fr); } .odonto .btn { justify-self: start; } }
 .estr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 320px); gap: 20px; border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 @media (max-width: 900px) { .estr { grid-template-columns: minmax(0, 1fr); } }
 .estr-main { display: grid; gap: 10px; align-content: start; }
