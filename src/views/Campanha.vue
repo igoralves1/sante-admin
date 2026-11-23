@@ -11,6 +11,7 @@ import { addMes, brl0, brlCompact, mesCurto, pct } from '../lib/format'
 import {
   mercado, segmentos, pontoPartida, redes, outrosCanais, indicadores, rotina, cuidados, fontes,
 } from '../data/campanha'
+import { gojiberry, sinaisSante, frentes, roteiro, cuidadosIA } from '../data/ia'
 
 const route = useRoute()
 const router = useRouter()
@@ -20,6 +21,7 @@ const ABAS = [
   { k: 'redes', t: 'Redes sociais' },
   { k: 'canais', t: 'Outros canais' },
   { k: 'metas', t: 'Metas mês a mês' },
+  { k: 'ia', t: 'IA e automação' },
   { k: 'indicadores', t: 'Indicadores' },
 ]
 const aba = ref(ABAS.some((a) => a.k === route.query.aba) ? route.query.aba : 'resumo')
@@ -468,6 +470,103 @@ function criar() {
       </section>
     </template>
 
+    <!-- ===== IA e automação ===== -->
+    <template v-if="aba === 'ia'">
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Gojiberry: o que é</h2>
+            <p><a :href="gojiberry.url" target="_blank" rel="noopener">gojiberry.ai</a> · referência listada em Análise de mercado</p>
+          </div>
+          <span class="chip info">Agente de vendas com IA</span>
+        </div>
+        <p class="txt">{{ gojiberry.resumo }}</p>
+        <p class="muted small">Para quem: {{ gojiberry.publico }}</p>
+        <ol class="passos-ia">
+          <li v-for="(s, i) in gojiberry.passos" :key="s.t"><span class="n">{{ i + 1 }}</span><div><strong>{{ s.t }}</strong><p>{{ s.d }}</p></div></li>
+        </ol>
+      </section>
+
+      <section class="grid cols-2">
+        <div class="card">
+          <h2>Sinais de intenção que ela monitora</h2>
+          <ul class="bullets"><li v-for="s in gojiberry.sinais" :key="s">{{ s }}</li></ul>
+          <h3 class="sub-h">Recursos</h3>
+          <ul class="bullets"><li v-for="s in gojiberry.recursos" :key="s">{{ s }}</li></ul>
+        </div>
+        <div class="card">
+          <h2>Preço, resultados e limites</h2>
+          <p class="small">{{ gojiberry.preco }}</p>
+          <h3 class="sub-h">Resultados divulgados pela empresa</h3>
+          <ul class="bullets"><li v-for="s in gojiberry.resultados" :key="s">{{ s }}</li></ul>
+          <h3 class="sub-h">Limites para a Santé</h3>
+          <ul class="bullets"><li v-for="s in gojiberry.limites" :key="s">{{ s }}</li></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Serve para a Santé?</h2>
+        <div class="gaps">
+          <div v-for="e in gojiberry.encaixe" :key="e.t" class="gap" :class="{ veredito: e.t === 'Veredito' }"><strong>{{ e.t }}</strong><p>{{ e.d }}</p></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Os sinais de intenção aplicados à Santé</h2>
+            <p>A ideia da Gojiberry com as ferramentas que funcionam para o público de Maceió</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="redes">
+            <thead><tr><th>Sinal</th><th>Na Santé</th><th>Como usar</th><th>Ferramenta</th><th>Custo</th></tr></thead>
+            <tbody>
+              <tr v-for="s in sinaisSante" :key="s.sinal">
+                <td class="fw">{{ s.sinal }}</td><td>{{ s.sante }}</td><td class="muted">{{ s.como }}</td><td class="muted">{{ s.ferramenta }}</td><td class="muted">{{ s.custo }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head">
+          <div>
+            <h2>Onde IA e robôs aumentam a performance</h2>
+            <p>9 frentes, em ordem de prioridade, com ferramenta, custo e o indicador do plano que deve melhorar</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="redes">
+            <thead><tr><th>Frente</th><th>Prioridade</th><th>O que faz</th><th>Ferramentas</th><th>Custo</th><th>Indicador</th></tr></thead>
+            <tbody>
+              <tr v-for="f in [...frentes].sort((a, b) => a.prio - b.prio)" :key="f.area">
+                <td class="fw">{{ f.area }}</td>
+                <td><span class="chip" :class="PRIO[f.prio].c">{{ PRIO[f.prio].t }}</span></td>
+                <td class="muted">{{ f.faz }}</td>
+                <td class="muted">{{ f.ferramentas }}</td>
+                <td class="muted">{{ f.custo }}</td>
+                <td class="muted">{{ f.kpi }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="grid cols-3">
+        <div v-for="r in roteiro" :key="r.f" class="card fase">
+          <span class="chip info plain">{{ r.f }}</span>
+          <ul class="bullets"><li v-for="x in r.itens" :key="x">{{ x }}</li></ul>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Cuidados</h2>
+        <ul class="bullets"><li v-for="c in cuidadosIA" :key="c.t"><strong>{{ c.t }}.</strong> {{ c.d }}</li></ul>
+      </section>
+    </template>
+
     <!-- ===== indicadores ===== -->
     <template v-if="aba === 'indicadores'">
       <section class="card">
@@ -576,6 +675,11 @@ function criar() {
 .kgrid strong { font-size: 16px; font-weight: 600; }
 .bullets { margin: 8px 0 0; padding-left: 18px; display: grid; gap: 8px; color: var(--text-2); line-height: 1.55; font-size: 13px; }
 .bullets strong { color: var(--text); }
+.passos-ia { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.passos-ia li { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--border); border-radius: 12px; padding: 12px; font-size: 13px; }
+.passos-ia p { margin: 2px 0 0; color: var(--text-2); line-height: 1.45; }
+.n { width: 26px; height: 26px; flex: none; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent-ink); font-weight: 600; font-size: 13px; }
+.gap.veredito { background: var(--good-soft); }
 .fontes { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; }
 .fontes li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
 </style>

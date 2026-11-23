@@ -45,6 +45,7 @@ Os dados ficam em [`src/data/concorrentes.json`](../src/data/concorrentes.json).
 | Fonte | O que foi coletado |
 |---|---|
 | [Similarweb](https://www.similarweb.com/) | Tráfego dos domínios. Sem dados para santeconsultorios.com.br, clintimesaude.com.br e amplaconsultorios.com.br; “menos de 20 mil visitas” (jul–set/2026) para medicineservice.com.br e transmutarconsultorios.com.br |
+| [Gojiberry](https://gojiberry.ai/) | Agente de prospecção B2B com IA (LinkedIn e e-mail) por sinais de intenção. Plano Pro US$ 99/mês, em inglês. Lido em nov/2026 (home, FAQ, cases, privacidade); análise em Plano de campanha › IA e automação |
 | Google Maps | Nota, número de avaliações, categoria e posição em 4 buscas: “aluguel de consultório Maceió”, “aluguel de sala consultório Maceió”, “coworking saúde Maceió” e “consultório por hora Maceió” |
 | Perfis públicos do Instagram | Seguidores, seguindo e número de posts (meta descrição pública do perfil) |
 | [Biblioteca de Anúncios da Meta](https://www.facebook.com/ads/library/) | Anúncios ativos no Brasil. Só a Innate Saúde Integrada anunciava (desde 21/10/2026) |

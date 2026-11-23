@@ -206,8 +206,16 @@ const ferramentasSocial = [
   { n: 'Meta Business Suite + Biblioteca de Anúncios', uso: 'Insights reais do próprio Instagram/Facebook; anúncios ativos de qualquer página', res: 'Gratuitos. A biblioteca mostrou que só a Innate anuncia hoje.' },
 ]
 
+const ferramentasIA = [
+  { n: 'Gojiberry', u: 'https://gojiberry.ai/', uso: 'Agente de vendas com IA: acha quem mostrou sinal de interesse (interação com você ou com concorrentes, mudança de emprego, visita ao site), pontua pelo cliente ideal e inicia conversa no LinkedIn e por e-mail', res: 'US$ 99/mês, em inglês e focado em B2B. Serve para testar com médicos, dentistas e coworking; para os outros públicos, a mesma ideia se faz com a Meta e o WhatsApp.' },
+  { n: 'LinkedIn Sales Navigator', u: 'https://business.linkedin.com/sales-solutions/sales-navigator', uso: 'Busca e alertas de profissionais por cargo, cidade e mudança de emprego', res: 'Pago. Alternativa manual à Gojiberry para achar médicos e dentistas em Maceió.' },
+  { n: 'ManyChat', u: 'https://manychat.com/', uso: 'Automação oficial do Instagram e do WhatsApp: comentário com palavra-chave vira mensagem no Direct, fluxos com IA', res: 'Tem plano gratuito. Transforma alcance dos Reels em conversas.' },
+  { n: 'BotConversa', u: 'https://botconversa.com.br/', uso: 'Robô de WhatsApp brasileiro para qualificar e agendar', res: 'Pago, em português. Bom para atendimento 24 h e follow-up.' },
+]
+
 const fontes = [
   { u: 'https://www.similarweb.com/', t: 'Similarweb', d: 'consulta dos 5 domínios' },
+  { u: 'https://gojiberry.ai/', t: 'Gojiberry', d: 'agente de prospecção B2B com IA e sinais de intenção; análise em Plano de campanha › IA e automação' },
   { u: 'https://www.google.com/maps/search/aluguel+de+consult%C3%B3rio+Macei%C3%B3', t: 'Google Maps', d: '4 buscas, notas e avaliações' },
   { u: 'https://www.facebook.com/ads/library/', t: 'Biblioteca de Anúncios da Meta', d: 'anúncios ativos no Brasil' },
   { u: 'https://rdap.registro.br/', t: 'Registro.br (RDAP)', d: 'data de registro dos domínios' },
@@ -460,6 +468,19 @@ const fontes = [
     </section>
 
     <section class="card">
+      <div class="card-head">
+        <div>
+          <h2>IA e automação de prospecção</h2>
+          <p>Gojiberry e ferramentas que aplicam a mesma ideia: falar primeiro com quem mostrou sinal de interesse</p>
+        </div>
+        <RouterLink to="/marketing/campanha?aba=ia" class="btn sm">Ver a análise completa</RouterLink>
+      </div>
+      <ul class="tools tools-ia">
+        <li v-for="f in ferramentasIA" :key="f.n"><a :href="f.u" target="_blank" rel="noopener"><strong>{{ f.n }}</strong></a><span>{{ f.uso }}</span><span class="muted small">{{ f.res }}</span></li>
+      </ul>
+    </section>
+
+    <section class="card">
       <h2>Fontes</h2>
       <ul class="refs">
         <li v-for="f in fontes" :key="f.u"><a :href="f.u" target="_blank" rel="noopener">{{ f.t }}</a><span class="muted small">{{ f.d }}</span></li>
@@ -514,4 +535,5 @@ const fontes = [
 .refs { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 10px; }
 .refs li { display: grid; gap: 1px; }
 @media (max-width: 900px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tools-ia { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 </style>
