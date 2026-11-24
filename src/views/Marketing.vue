@@ -162,6 +162,19 @@ function funil(c) {
       </dl>
     </section>
 
+    <section class="card trafego">
+      <div>
+        <span class="chip info"><Icon name="target" :size="13" /> Tráfego pago</span>
+        <h2>Plano de tráfego: o que o especialista faz em cada mídia</h2>
+        <p class="muted">
+          Instagram, Facebook, Google busca e Maps, TikTok, YouTube, LinkedIn, site, WhatsApp, mídia tradicional e a sala de
+          odontologia: cada ação com indicador, meta e alerta, a fundação de rastreamento, metas de verba e leads por canal
+          mês a mês, rotina diária, semanal e mensal e como contratar e avaliar o especialista.
+        </p>
+      </div>
+      <RouterLink to="/marketing/trafego" class="btn primary">Ver o plano de tráfego</RouterLink>
+    </section>
+
     <section class="card estr">
       <div class="estr-main">
         <span class="chip info"><Icon name="target" :size="13" /> Estratégia</span>
@@ -326,6 +339,10 @@ function funil(c) {
 .social h2 { font-size: 17px; }
 .social p { margin: 0; line-height: 1.55; }
 .social .chip { justify-self: start; }
+.trafego { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; }
+.trafego h2 { font-size: 17px; margin: 8px 0 4px; }
+.trafego p { margin: 0; line-height: 1.55; max-width: 820px; }
+@media (max-width: 900px) { .trafego { grid-template-columns: minmax(0, 1fr); } .trafego .btn { justify-self: start; } }
 .odonto { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 20px; align-items: center; border-color: var(--warn); box-shadow: inset 0 0 0 1px var(--warn); }
 .odonto h2 { font-size: 17px; margin: 8px 0 4px; }
 .odonto p { margin: 0; line-height: 1.55; max-width: 760px; }
